@@ -1,0 +1,12 @@
+{
+  "skill_name": "example-skill",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "A realistic user task prompt",
+      "expected_output": "Description of what a successful result looks like",
+      "files": [],
+      "expectations": []
+    }
+  ]
+}
