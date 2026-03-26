@@ -1,0 +1,39 @@
+Analyze this image and output a JSON object with these exact keys in this exact order:
+
+{
+  "subject": "",
+  "action": "",
+  "details": "",
+  "scene": "",
+  "composition": "",
+  "camera": "",
+  "lighting": "",
+  "style": ""
+}
+
+Requirements:
+- Output JSON only.
+- All keys must be present.
+- All values must be strings.
+- Use English for all fields.
+- Preserve the key order exactly as given.
+- Keep every field concise, factual, and directly useful for image generation.
+- Each field should be short and compact, not a full sentence.
+- Do not repeat the same information across fields.
+- The entire JSON output must be between 100 and 128 tokens.
+
+Field rules:
+- "subject": the main subject, clear and concise.
+- "action": pose, gesture, state, or behavior.
+- "details": the most important visible details, such as clothing, texture, material, props, or notable features.
+- "scene": environment, background, and spatial context.
+- "composition": framing, angle, shot type, subject placement, or cropping.
+- "camera": photographic characteristics such as close-up, 35mm, shallow depth of field, studio shot; if uncertain, use a neutral plausible description.
+- "lighting": light source, direction, softness or hardness, contrast, and color temperature when visible.
+- "style": concise visual style description.
+
+Constraints:
+- Do not invent details that are not clearly visible.
+- Do not use negative wording.
+- Do not use empty hype terms or generic quality tags such as masterpiece, best quality, 4k, 8k, HD, UHD, ultra-detailed, highly detailed, trending on ArtStation, or similar filler language.
+- Do not add explanations, notes, or extra text outside the JSON.

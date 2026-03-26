@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "mode": "tag",
+  "input_path": "D:\\github\\skills\\skills\\skill-lora-tagger\\exsample",
+  "dataset_dir": "D:\\github\\skills\\skills\\skill-lora-tagger\\exsample\\dataset",
+  "created_at": 1774543588,
+  "config_snapshot": {
+    "ratio_long_edge_map": {
+      "1:1": 1280,
+      "2:3": 1536
+    },
+    "user_prompt_path": "D:\\github\\skills\\skills\\skill-lora-tagger\\references\\user-prompt.txt",
+    "shuffle_values": false
+  },
+  "items": [
+    {
+      "id": "image_0001",
+      "source_path": "D:\\github\\skills\\skills\\skill-lora-tagger\\exsample\\2454680.8321287604_00000.JPG",
+      "source_rel_path": "2454680.8321287604_00000.JPG",
+      "source_fingerprint": "02983750cee86214d7873336750df81ee1c8bb520f6a7d73e2652b787dba3c52",
+      "text_path": "D:\\github\\skills\\skills\\skill-lora-tagger\\exsample\\dataset\\image_0001.txt",
+      "raw_response_path": "D:\\github\\skills\\skills\\skill-lora-tagger\\exsample\\dataset\\_meta\\raw_responses\\image_0001.json",
+      "parsed_json_path": "D:\\github\\skills\\skills\\skill-lora-tagger\\exsample\\dataset\\_meta\\parsed\\image_0001.json",
+      "final_caption": "",
+      "status": "pending",
+      "last_error": ""
+    }
+  ]
+}

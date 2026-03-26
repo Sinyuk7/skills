@@ -1,0 +1,13 @@
+# User-facing config for the two-step LoRA dataset workflow.
+# The CLI input directory is provided on the command line.
+
+resolutions:
+  ratio_long_edge_map:
+    "1:1": 1280
+    "2:3": 1536
+
+captioning:
+  user_prompt_path: ./user-prompt.txt
+
+caption_assembly:
+  shuffle_values: false
