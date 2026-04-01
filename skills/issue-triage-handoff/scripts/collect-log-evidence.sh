@@ -97,12 +97,18 @@ if [[ -n "$EVENT_TIME" ]]; then
   mkdir -p "$UNPACK_DIR"
 
   # Find candidate archives
-  mapfile -t ARCHIVES < <(find "$LOG_DIR" -type f \( -name "*.zip" -o -name "*.tar" -o -name "*.tgz" -o -name "*.tar.gz" -o -name "*.gz" \) 2>/dev/null)
+  ARCHIVES=()
+  while IFS= read -r -d '' archive; do
+    ARCHIVES+=("$archive")
+  done < <(find "$LOG_DIR" -type f \( -name "*.zip" -o -name "*.tar" -o -name "*.tgz" -o -name "*.tar.gz" -o -name "*.gz" \) -print0 2>/dev/null)
 
   if [[ ${#ARCHIVES[@]} -gt 0 ]]; then
     # Use python to decide which archives match the event time window based on filename timestamps.
     # Output: one archive path per line.
-    mapfile -t MATCHED_ARCHIVES < <(python3 - <<'PY'
+    MATCHED_ARCHIVES=()
+    while IFS= read -r archive; do
+      [[ -n "$archive" ]] && MATCHED_ARCHIVES+=("$archive")
+    done < <(EVENT_TIME="$EVENT_TIME" WINDOW_SECONDS="$WINDOW_SECONDS" python3 - <<'PY'
 import os, re, sys
 from datetime import datetime, timedelta
 
@@ -181,9 +187,9 @@ PY
     <<<"$(printf '%s\n' "${ARCHIVES[@]}")")
 
     if [[ ${#MATCHED_ARCHIVES[@]} -eq 0 ]]; then
-      echo "ERROR: No archives matched EVENT_TIME±WINDOW_SECONDS based on filename timestamps." >&2
-      echo "Hint: pass --event \"YYYY-MM-DDTHH:MM:SS\" and ensure archive names contain readable timestamps." >&2
-      exit 2
+      echo "WARNING: No archives matched EVENT_TIME±WINDOW_SECONDS based on filename timestamps." >&2
+      echo "WARNING: Falling back to all archives under $LOG_DIR so relevant evidence is not missed." >&2
+      MATCHED_ARCHIVES=("${ARCHIVES[@]}")
     fi
 
     # Extract matched archives into UNPACK_DIR (per-archive subdir)
@@ -213,74 +219,90 @@ else
   LOG_DIRS_TO_SEARCH=("$LOG_DIR")
 fi
 
-# Step 1: Survey directory structure
-echo '  "directory_survey": ['
-# Survey both original and unpacked dirs
-for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
-  find "$d" -type f \( -name "*.log" -o -name "*.txt" -o -name "*.json" \) 2>/dev/null | \
-    head -100 | \
-    while IFS= read -r file; do
-      size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
-      mtime=$(stat -f%m "$file" 2>/dev/null || stat -c%Y "$file" 2>/dev/null || echo "0")
-      echo "    {\"path\": \"$file\", \"size\": $size, \"mtime\": $mtime},"
-    done
-done | sed '$ s/,$//'
-echo "  ],"
+(
+  set +o pipefail
+
+  echo "{"
+
+  # Step 1: Survey directory structure
+  echo '  "directory_survey": ['
+  # Survey both original and unpacked dirs
+  for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
+    find "$d" -type f \( -name "*.log" -o -name "*.txt" -o -name "*.json" \) 2>/dev/null | \
+      head -100 | \
+      while IFS= read -r file; do
+        size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+        mtime=$(stat -f%m "$file" 2>/dev/null || stat -c%Y "$file" 2>/dev/null || echo "0")
+        echo "    {\"path\": \"$file\", \"size\": $size, \"mtime\": $mtime},"
+      done
+  done | sed '$ s/,$//'
+  echo "  ],"
+)
 
 # Step 2: Search for error patterns
-echo '  "error_matches": ['
-if command -v rg &> /dev/null; then
-  for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
-    rg -i -n --json "$ERROR_PATTERNS" "$d" 2>/dev/null | \
-      head -200 | \
-      jq -c 'select(.type == "match") | {path: .data.path.text, line: .data.line_number, content: .data.lines.text}' 2>/dev/null || true
-  done | sed 's/$/,/' | sed '$ s/,$//'
-else
-  mkdir -p "$WORK_DIR"
-  : > "$WORK_DIR/error_matches.json"
-  for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
-    grep -r -i -n -E "$ERROR_PATTERNS" "$d" 2>/dev/null | \
-      head -200 | \
-      while IFS=: read -r file line content; do
-        content_escaped=$(printf '%s' "$content" | head -c 500 | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r/\\r/g; s/\n/\\n/g')
-        printf '    {"path": "%s", "line": %s, "content": "%s"}\n' "$file" "$line" "$content_escaped"
-      done
-  done >> "$WORK_DIR/error_matches.json"
-  cat "$WORK_DIR/error_matches.json" | sed 's/$/,/' | sed '$ s/,$//'
-fi
-echo "  ],"
+(
+  set +o pipefail
+
+  echo '  "error_matches": ['
+  if command -v rg &> /dev/null; then
+    for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
+      rg -i -n --json "$ERROR_PATTERNS" "$d" 2>/dev/null | \
+        head -200 | \
+        jq -c 'select(.type == "match") | {path: .data.path.text, line: .data.line_number, content: .data.lines.text}' 2>/dev/null || true
+    done | sed 's/$/,/' | sed '$ s/,$//'
+  else
+    mkdir -p "$WORK_DIR"
+    : > "$WORK_DIR/error_matches.json"
+    for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
+      grep -r -i -n -E "$ERROR_PATTERNS" "$d" 2>/dev/null | \
+        head -200 | \
+        while IFS=: read -r file line content; do
+          content_escaped=$(printf '%s' "$content" | head -c 500 | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r/\\r/g; s/\n/\\n/g')
+          printf '    {"path": "%s", "line": %s, "content": "%s"}\n' "$file" "$line" "$content_escaped"
+        done
+    done >> "$WORK_DIR/error_matches.json"
+    cat "$WORK_DIR/error_matches.json" | sed 's/$/,/' | sed '$ s/,$//'
+  fi
+  echo "  ],"
+)
 
 # Step 3: Search for identifiers
-echo '  "identifier_matches": ['
-if [[ -n "$IDENTIFIERS" ]]; then
-  mkdir -p "$WORK_DIR"
-  : > "$WORK_DIR/identifier_matches.json"
-  IFS=',' read -ra ID_ARRAY <<< "$IDENTIFIERS"
-  for id in "${ID_ARRAY[@]}"; do
-    if command -v rg &> /dev/null; then
-      for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
-        rg -n --json "$id" "$d" 2>/dev/null | \
-          head -50 | \
-          jq -c 'select(.type == "match") | {identifier: "'"$id"'", path: .data.path.text, line: .data.line_number}' 2>/dev/null || true
-      done >> "$WORK_DIR/identifier_matches.json"
-    else
-      for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
-        grep -r -n "$id" "$d" 2>/dev/null | \
-          head -50 | \
-          while IFS=: read -r file line content; do
-            printf '    {"identifier": "%s", "path": "%s", "line": %s}\n' "$id" "$file" "$line"
-          done || true
-      done >> "$WORK_DIR/identifier_matches.json"
-    fi
-  done
-  # Emit valid JSON with proper comma handling
-  cat "$WORK_DIR/identifier_matches.json" | sed 's/$/,/' | sed '$ s/,$//'
-fi
-echo "  ],"
+(
+  set +o pipefail
+
+  echo '  "identifier_matches": ['
+  if [[ -n "$IDENTIFIERS" ]]; then
+    mkdir -p "$WORK_DIR"
+    : > "$WORK_DIR/identifier_matches.json"
+    IFS=',' read -ra ID_ARRAY <<< "$IDENTIFIERS"
+    for id in "${ID_ARRAY[@]}"; do
+      if command -v rg &> /dev/null; then
+        for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
+          rg -n --json "$id" "$d" 2>/dev/null | \
+            head -50 | \
+            jq -c 'select(.type == "match") | {identifier: "'"$id"'", path: .data.path.text, line: .data.line_number}' 2>/dev/null || true
+        done >> "$WORK_DIR/identifier_matches.json"
+      else
+        for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
+          grep -r -n "$id" "$d" 2>/dev/null | \
+            head -50 | \
+            while IFS=: read -r file line content; do
+              printf '    {"identifier": "%s", "path": "%s", "line": %s}\n' "$id" "$file" "$line"
+            done || true
+        done >> "$WORK_DIR/identifier_matches.json"
+      fi
+    done
+    # Emit valid JSON with proper comma handling
+    cat "$WORK_DIR/identifier_matches.json" | sed 's/$/,/' | sed '$ s/,$//'
+  fi
+  echo "  ],"
+)
 
 # Step 4: Generate selected files list
 echo '  "selected_files": ['
 selected_count=0
+mkdir -p "$WORK_DIR"
+: > "$WORK_DIR/selected_files.json"
 {
   # Files with errors
   if command -v rg &> /dev/null; then
@@ -313,13 +335,13 @@ while IFS= read -r file; do
 
   # Optional: second-stage time window filter by file mtime around EVENT_TIME
   if [[ -n "$EVENT_TIME" ]]; then
-    python3 - <<'PY'
+    if ! CANDIDATE_FILE="$file" EVENT_TIME="$EVENT_TIME" WINDOW_SECONDS="$WINDOW_SECONDS" python3 - <<'PY' >/dev/null 2>&1; then
 import os, sys
 from datetime import datetime, timedelta
 
-path = os.environ.get('CANDIDATE_FILE','')
-event = os.environ.get('EVENT_TIME','').strip()
-window_s = int(os.environ.get('WINDOW_SECONDS','300') or '300')
+path = os.environ.get('CANDIDATE_FILE', '')
+event = os.environ.get('EVENT_TIME', '').strip()
+window_s = int(os.environ.get('WINDOW_SECONDS', '300') or '300')
 
 def parse_iso(s: str) -> datetime:
     s = s.strip().replace(' ', 'T')
@@ -346,16 +368,15 @@ if start_dt <= mtime <= end_dt:
 else:
     sys.exit(2)
 PY
-    CANDIDATE_FILE="$file" EVENT_TIME="$EVENT_TIME" WINDOW_SECONDS="$WINDOW_SECONDS" >/dev/null 2>&1
-    rc=$?
-    if [[ $rc -ne 0 ]]; then
       continue
     fi
   fi
 
   selected_count=$((selected_count+1))
-  echo "    {\"path\": \"$file\", \"reason\": \"contains error pattern or identifier\"},"
-done <"$WORK_DIR/selected_candidates.txt" | sed '$ s/,$//'
+  echo "    {\"path\": \"$file\", \"reason\": \"contains error pattern or identifier\"}," >> "$WORK_DIR/selected_files.json"
+done <"$WORK_DIR/selected_candidates.txt"
+
+cat "$WORK_DIR/selected_files.json" | sed '$ s/,$//'
 echo "  ],"
 
 # Fail fast if nothing selected (after second-stage filter)
