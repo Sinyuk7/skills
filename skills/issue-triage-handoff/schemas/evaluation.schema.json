@@ -1,0 +1,155 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Handoff Evaluation",
+  "description": "Evaluation result for a handoff package",
+  "type": "object",
+  "required": ["evaluation_timestamp", "handoff_version", "scores", "verdict"],
+  "properties": {
+    "evaluation_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "handoff_version": {
+      "type": ["integer", "string"]
+    },
+    "structural_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["field", "issue"],
+        "properties": {
+          "field": { "type": "string" },
+          "issue": { "type": "string" },
+          "severity": { "enum": ["error", "warning"] }
+        }
+      }
+    },
+    "evidence_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["issue_type", "description"],
+        "properties": {
+          "issue_type": {
+            "enum": ["orphan", "missing", "duplicate", "invalid_format"]
+          },
+          "evidence_id": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "traceability_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["finding_type", "description"],
+        "properties": {
+          "finding_type": {
+            "enum": ["confirmed_fact", "bounded_inference", "code_mapping"]
+          },
+          "finding_index": { "type": "integer" },
+          "description": { "type": "string" },
+          "missing_refs": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "code_mapping_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "issue"],
+        "properties": {
+          "file": { "type": "string" },
+          "issue": { "type": "string" },
+          "expected_confidence": { "enum": ["high", "medium", "low"] },
+          "actual_confidence": { "enum": ["high", "medium", "low"] }
+        }
+      }
+    },
+    "boundary_violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["violation_type", "description"],
+        "properties": {
+          "violation_type": {
+            "enum": [
+              "root_cause_claim",
+              "patch_suggestion",
+              "fix_recommendation",
+              "blame_attribution",
+              "performance_recommendation"
+            ]
+          },
+          "location": { "type": "string" },
+          "description": { "type": "string" },
+          "excerpt": { "type": "string" }
+        }
+      }
+    },
+    "downstream_readiness": {
+      "type": "object",
+      "required": ["rca_agent", "patch_agent", "human_reviewer"],
+      "properties": {
+        "rca_agent": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": { "enum": ["ready", "usable", "not_ready"] },
+            "notes": { "type": "string" }
+          }
+        },
+        "patch_agent": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": { "enum": ["ready", "usable", "not_ready"] },
+            "notes": { "type": "string" }
+          }
+        },
+        "human_reviewer": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": { "enum": ["ready", "usable", "not_ready"] },
+            "notes": { "type": "string" }
+          }
+        }
+      }
+    },
+    "scores": {
+      "type": "object",
+      "required": [
+        "completeness",
+        "traceability",
+        "precision",
+        "boundary",
+        "clarity",
+        "overall"
+      ],
+      "properties": {
+        "completeness": { "type": "number", "minimum": 1, "maximum": 5 },
+        "traceability": { "type": "number", "minimum": 1, "maximum": 5 },
+        "precision": { "type": "number", "minimum": 1, "maximum": 5 },
+        "boundary": { "type": "number", "minimum": 1, "maximum": 5 },
+        "clarity": { "type": "number", "minimum": 1, "maximum": 5 },
+        "overall": { "type": "number", "minimum": 1, "maximum": 5 }
+      }
+    },
+    "verdict": {
+      "enum": ["ready", "usable_with_caveats", "needs_work"]
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["priority", "issue", "recommendation"],
+        "properties": {
+          "priority": { "enum": ["high", "medium", "low"] },
+          "issue": { "type": "string" },
+          "recommendation": { "type": "string" }
+        }
+      }
+    }
+  }
+}

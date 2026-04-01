@@ -1,173 +1,204 @@
 # New Triage Handoff Workflow
 
-Use this workflow when the user provides raw troubleshooting materials and wants to generate a new handoff package.
+Generate a new handoff package from raw troubleshooting materials.
 
 ## Prerequisites
 
-Before starting, load:
+Read these files before starting:
+
 - `knowledge/triage-principles.md` - Core operating principles
-- `knowledge/handoff-schema.md` - Output structure definition
+- `knowledge/handoff-schema.md` - Output structure
 - `knowledge/evidence-protocol.md` - Evidence referencing rules
 
-## Step 1: Material Intake
+---
 
-Accept whatever the user provides without requiring pre-formatting:
+## Step 1: Material Intake (Deterministic)
+
+Record what user provides in the handoff's `sources` field.
+
+Accept any format:
 - Issue title and body
-- Issue comments
-- Chat logs / discussion threads
+- Comments and chat logs
 - Log files, directories, or archives
 - Repository access
-- Trace IDs, request IDs, or other identifiers
+- Trace IDs, request IDs
 
-**Do not** ask the user to reorganize materials into a template first. The skill's job is to handle messy input.
+**Do not** ask user to reorganize materials.
 
-Record what was provided in the handoff's `sources` field.
+Output: `case_meta.sources[]` populated
 
-## Step 2: Context Extraction
+---
 
-Extract structured information from human-written content (issue, comments, chat):
+## Step 2: Log Collection (Deterministic)
 
-| Extract | Source Weight |
-|---------|---------------|
-| Problem phenomenon (what's broken) | narrative |
+Run log evidence collection script.
+
+```
+Script: ./scripts/collect-log-evidence.sh
+Input: log directory path, key identifiers, time window
+Output: list of relevant log files with line ranges
+```
+
+The script handles:
+- Directory structure survey
+- Error pattern search (`error`, `exception`, `failed`, `timeout`, `panic`)
+- Identifier matching
+- Time window filtering
+
+Record selection reasons and excluded files.
+
+---
+
+## Step 3: Code Location Search (Deterministic)
+
+Run code symbol search script.
+
+```
+Script: ./scripts/search-code-symbols.sh
+Input: repo path, symbols from logs (function names, class names, routes)
+Output: file:line mappings with match type
+```
+
+Match types:
+- `stacktrace`: from exception stack frames
+- `symbol_search`: function/class name match
+- `route_mapping`: API route handler lookup
+- `keyword`: generic text search
+
+---
+
+## Step 4: Context Extraction (LLM)
+
+From human-written content (issue, comments, chat), extract:
+
+| Field | Source Weight |
+|-------|---------------|
+| Problem phenomenon | narrative |
 | Expected vs actual behavior | narrative |
 | Environment (OS, version, branch, commit) | narrative |
 | Key timestamps | narrative |
-| Key identifiers (trace_id, request_id, user_id) | narrative |
-| Actions already attempted | narrative |
-| Human hypotheses / suspicions | narrative (mark as `people_hypotheses`) |
+| Key identifiers (trace_id, request_id) | narrative |
+| Actions attempted | narrative |
+| Human hypotheses | narrative (mark as `people_hypotheses`) |
 
-**Critical**: Human narratives are claims, not facts. Mark them accordingly:
-- `claimed_by: [source_ref]`
-- Never promote to `confirmed_facts` without evidence
+**Critical**: Human narratives are claims, not facts.
+- Add `claimed_by: [source_ref]`
+- Do not promote to `confirmed_facts` without evidence
 
-## Step 3: Log Triage
+Output: `context_summary` populated
 
-For large log directories, do NOT attempt full-text summarization. Instead:
+---
 
-### 3.1 Quick Survey
-List directory structure, identify log types, note file sizes and timestamps.
+## Step 5: Evidence Extraction (LLM)
 
-### 3.2 Targeted Search
-Use `ripgrep` or equivalent for:
-- Error patterns: `error`, `exception`, `failed`, `timeout`, `panic`
-- Key identifiers extracted from context
-- Timestamps within the incident window
-- Service/process names mentioned in the issue
+From collected log file contents, extract:
 
-### 3.3 Evidence Selection
-Select files based on:
-1. Contains error/exception within time window
-2. Contains key identifiers
-3. Time-proximate to reported incident
-
-Record for each selected file:
-- Path
-- Selection reason
-- Key line numbers
-
-Record for excluded files:
-- Why excluded (no errors, wrong time window, unrelated service)
-
-### 3.4 Evidence Extraction
-From selected files, extract:
-- Timestamps (with timezone if available)
+- Timestamps (with timezone)
 - Log levels
 - Service/process identifiers
 - Exception types and messages
 - Request/trace/span IDs
 - Endpoints, routes, method names
-- Error signature patterns (for deduplication)
+- Error signature patterns
 
-## Step 4: Code Mapping
+Create evidence inventory entries with:
+- `evidence_id`: E001, E002, ...
+- `source_ref`: file path + line numbers
+- `content`: excerpt
+- `tags`: error, warning, stacktrace, etc.
 
-Based on evidence from logs and context, locate relevant code:
+Output: `evidence_inventory[]` populated
 
-### 4.1 Stacktrace-Driven
-If logs contain stacktraces:
-- Map each frame to file:line in the repo
-- Note which frames are in user code vs libraries
+---
 
-### 4.2 Symbol-Driven
-If logs mention function/class names:
-- Search repo for definitions
-- Record file, line range, and match confidence
+## Step 6: Code Mapping Analysis (LLM)
 
-### 4.3 Route/Endpoint-Driven
-If logs mention API routes or endpoints:
-- Find handler definitions
-- Trace middleware chain if relevant
+Using search results from Step 3 and evidence from Step 5:
 
-For each code location, record:
-- `file`: Path relative to repo root
-- `lines`: Line range (start-end)
-- `symbols`: Function/class names
-- `match_type`: `stacktrace` | `symbol_search` | `route_mapping` | `keyword`
-- `confidence`: `high` (stacktrace) | `medium` (symbol match) | `low` (keyword)
-- `evidence_ref`: Which log entry led here
+For each code location, determine:
+- `file`: path relative to repo root
+- `lines`: start-end range
+- `symbols`: function/class names
+- `match_type`: stacktrace|symbol_search|route_mapping|keyword
+- `confidence`: high (stacktrace) | medium (symbol) | low (keyword)
+- `evidence_refs`: which evidence led here
 
-**Rule**: No code location without evidence. Do not speculate.
+**Rule**: No code location without evidence backing.
 
-## Step 5: Timeline Construction
+Output: `code_mapping[]` populated
 
-Build a timeline of events:
+---
 
+## Step 7: Timeline & Findings Synthesis (LLM)
+
+### Timeline
+Build chronological event sequence:
 ```
 timestamp | source | event | evidence_ref
 ```
 
-Include:
-- First error occurrence
-- Subsequent errors
-- User-reported observation times
-- Deployment/change events if mentioned
-- Recovery attempts
+Include: first error, subsequent errors, user observations, recovery attempts.
+Mark gaps explicitly.
 
-Mark gaps where timeline is uncertain.
+### Findings (Three Tiers)
 
-## Step 6: Findings Synthesis
+**Confirmed Facts**: Direct evidence exists
+- "Error X at timestamp Y" (with log ref)
 
-Organize findings into three tiers:
+**Bounded Inferences**: Reasonable conclusions with stated assumptions
+- "Likely timeout issue (evidence: timeout log at T1, error at T2)"
 
-### Confirmed Facts
-Things with direct evidence:
-- "Error X occurred at timestamp Y" (with log ref)
-- "Service A returned 500 to Service B" (with log ref)
+**Open Questions**: Need more investigation
+- "Why did retry not succeed?"
 
-### Bounded Inferences
-Reasonable conclusions with stated assumptions:
-- "Error likely triggered by timeout (evidence: timeout log at T1, error log at T2)"
-- "Suspect database connection issue (evidence: connection pool exhausted message)"
+Output: `timeline[]`, `findings.*` populated
 
-### Open Questions
-Things that need more investigation:
-- "Why did the retry not succeed?"
-- "What changed between working state and broken state?"
+---
 
-## Step 7: Output Generation
+## Step 8: Output Generation (Deterministic)
 
-Generate handoff package following `templates/handoff-template.json`.
+Generate handoff JSON following template.
 
-Ensure:
-- All `evidence_ref` fields are populated
-- No findings without supporting evidence
-- Clear distinction between facts/inferences/questions
-- Code mappings include confidence levels
-- Timeline gaps are explicitly noted
+```
+Template: ./templates/handoff-template.json
+Schema: ./schemas/handoff.schema.json
+```
 
-## Step 8: Self-Check
+Validate against schema.
 
-Before delivering, verify:
-- [ ] All key identifiers from context appear in evidence search
+---
+
+## Step 9: Self-Check (Deterministic)
+
+Verify checklist:
+
+- [ ] All key identifiers appear in evidence search
 - [ ] Selected log files are justified
 - [ ] Excluded files are documented
 - [ ] Code mappings have evidence backing
 - [ ] No human narrative promoted to fact without verification
 - [ ] Open questions include obvious gaps
-- [ ] Output follows schema
+- [ ] Output passes schema validation
+
+---
+
+## Data Flow Summary
+
+```
+Step 1 (D): sources[] ─────────────────────────────────────┐
+Step 2 (D): log_files[] ──────────────────────────────────┐│
+Step 3 (D): code_search_results[] ────────────────────────┐││
+Step 4 (L): context_summary ───────────────────────────┐  │││
+Step 5 (L): evidence_inventory[] ──────────────────────┤  │││
+Step 6 (L): code_mapping[] ◄───────────────────────────┴──┘││
+Step 7 (L): timeline[], findings.* ◄───────────────────────┘│
+Step 8 (D): handoff.json ◄─────────────────────────────────┘
+Step 9 (D): validation_result
+```
+
+---
 
 ## Next Move
 
-If user wants to refine the handoff with new materials, load `workflows/handoff-refinement.md`.
-
-If user wants to evaluate handoff quality, load `workflows/handoff-evaluation.md`.
+If user wants to refine with new materials: load `workflows/handoff-refinement.md`
+If user wants to evaluate quality: load `workflows/handoff-evaluation.md`

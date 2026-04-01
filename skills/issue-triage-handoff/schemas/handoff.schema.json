@@ -1,0 +1,320 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Handoff Package",
+  "description": "Structured handoff package for issue triage",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "case_meta",
+    "context_summary",
+    "evidence_inventory",
+    "findings",
+    "handoff_summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "case_meta": {
+      "type": "object",
+      "required": ["title", "created_at", "sources"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "handoff_id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "last_modified": { "type": "string", "format": "date-time" },
+        "version": { "type": "integer", "minimum": 1 },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["type", "identifier"],
+            "properties": {
+              "type": {
+                "enum": [
+                  "issue",
+                  "comment",
+                  "chat",
+                  "log",
+                  "repo",
+                  "trace",
+                  "config"
+                ]
+              },
+              "identifier": { "type": "string" },
+              "added_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "revision_notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "context_summary": {
+      "type": "object",
+      "required": ["problem_statement"],
+      "properties": {
+        "problem_statement": { "type": "string", "minLength": 1 },
+        "expected_behavior": { "type": "string" },
+        "actual_behavior": { "type": "string" },
+        "environment": {
+          "type": "object",
+          "properties": {
+            "os": { "type": "string" },
+            "version": { "type": "string" },
+            "branch": { "type": "string" },
+            "commit": { "type": "string" },
+            "additional": { "type": "object" }
+          }
+        },
+        "key_identifiers": {
+          "type": "object",
+          "properties": {
+            "trace_ids": { "type": "array", "items": { "type": "string" } },
+            "request_ids": { "type": "array", "items": { "type": "string" } },
+            "user_ids": { "type": "array", "items": { "type": "string" } },
+            "session_ids": { "type": "array", "items": { "type": "string" } },
+            "additional": { "type": "object" }
+          }
+        },
+        "incident_window": {
+          "type": "object",
+          "properties": {
+            "first_observed": {
+              "type": ["string", "null"],
+              "format": "date-time"
+            },
+            "last_observed": {
+              "type": ["string", "null"],
+              "format": "date-time"
+            },
+            "timezone": { "type": "string" }
+          }
+        },
+        "actions_attempted": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "action": { "type": "string" },
+              "result": { "type": "string" },
+              "source_ref": { "type": "string" }
+            }
+          }
+        },
+        "people_hypotheses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "hypothesis": { "type": "string" },
+              "source": { "type": "string" },
+              "source_ref": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "evidence_inventory": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["evidence_id", "type", "source_ref"],
+        "properties": {
+          "evidence_id": { "type": "string", "pattern": "^E[0-9]{3}$" },
+          "type": {
+            "enum": [
+              "log_entry",
+              "stacktrace",
+              "comment",
+              "chat_message",
+              "config",
+              "metric",
+              "screenshot"
+            ]
+          },
+          "source_ref": {
+            "type": "object",
+            "required": ["source_type"],
+            "properties": {
+              "source_type": { "enum": ["file", "url", "inline"] },
+              "path": { "type": "string" },
+              "line_start": { "type": ["integer", "null"] },
+              "line_end": { "type": ["integer", "null"] }
+            }
+          },
+          "timestamp": { "type": ["string", "null"], "format": "date-time" },
+          "content": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "key_signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "signal_type": {
+            "enum": [
+              "error",
+              "exception",
+              "timeout",
+              "connection_failure",
+              "resource_exhaustion",
+              "permission_denied",
+              "data_inconsistency"
+            ]
+          },
+          "signature": { "type": "string" },
+          "first_occurrence": { "type": "string" },
+          "occurrence_count": { "type": "integer" },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "event"],
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "event": { "type": "string" },
+          "source": { "enum": ["log", "comment", "inferred"] },
+          "evidence_ref": { "type": ["string", "null"] },
+          "confidence": { "enum": ["high", "medium", "low"] }
+        }
+      }
+    },
+    "code_mapping": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "evidence_refs"],
+        "properties": {
+          "file": { "type": "string" },
+          "lines": {
+            "type": "object",
+            "properties": {
+              "start": { "type": "integer" },
+              "end": { "type": "integer" }
+            }
+          },
+          "symbols": { "type": "array", "items": { "type": "string" } },
+          "match_type": {
+            "enum": ["stacktrace", "symbol_search", "route_mapping", "keyword"]
+          },
+          "confidence": { "enum": ["high", "medium", "low"] },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "findings": {
+      "type": "object",
+      "required": ["confirmed_facts", "bounded_inferences", "open_questions"],
+      "properties": {
+        "confirmed_facts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["fact", "evidence_refs"],
+            "properties": {
+              "fact": { "type": "string" },
+              "evidence_refs": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "bounded_inferences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["inference", "evidence_refs"],
+            "properties": {
+              "inference": { "type": "string" },
+              "assumptions": { "type": "array", "items": { "type": "string" } },
+              "evidence_refs": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "confidence": { "enum": ["high", "medium", "low"] }
+            }
+          }
+        },
+        "open_questions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["question"],
+            "properties": {
+              "question": { "type": "string" },
+              "why_unknown": { "type": "string" },
+              "suggested_action": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["description", "original", "contradicting", "resolution"],
+        "properties": {
+          "description": { "type": "string" },
+          "original": { "type": "string" },
+          "original_ref": { "type": "string" },
+          "contradicting": { "type": "string" },
+          "contradicting_ref": { "type": "string" },
+          "resolution": { "enum": ["pending", "resolved"] },
+          "resolution_notes": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "selected_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "reason"],
+        "properties": {
+          "path": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "excluded_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "reason"],
+        "properties": {
+          "path": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "handoff_summary": {
+      "type": "object",
+      "required": ["scope"],
+      "properties": {
+        "scope": { "type": "string", "minLength": 1 },
+        "confidence": { "enum": ["high", "medium", "low"] },
+        "gaps": { "type": "array", "items": { "type": "string" } },
+        "recommended_next_steps": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "suitable_for": {
+          "type": "array",
+          "items": { "enum": ["rca_agent", "patch_agent", "human_review"] }
+        }
+      }
+    }
+  }
+}

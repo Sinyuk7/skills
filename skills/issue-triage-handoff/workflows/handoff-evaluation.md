@@ -1,84 +1,112 @@
 # Handoff Evaluation Workflow
 
-Use this workflow when the user wants to assess whether a handoff is ready for downstream agents or human reviewers.
+Assess whether a handoff is ready for downstream agents or human reviewers.
 
 ## Prerequisites
 
-Load:
-- `knowledge/handoff-schema.md` - To check structural completeness
-- `knowledge/triage-principles.md` - To check principle adherence
+Read these files:
+- `knowledge/handoff-schema.md` - Structural requirements
+- `knowledge/triage-principles.md` - Principle adherence check
 
 Read the handoff to evaluate.
 
-## Step 1: Structural Completeness Check
+---
 
-Verify required fields are present and non-empty:
+## Step 1: Structural Completeness Check (Deterministic)
 
-| Field | Required | Check |
-|-------|----------|-------|
-| case_meta | Yes | Has title, created_at, sources |
-| context_summary | Yes | Has problem_statement, environment |
-| evidence_inventory | Yes | At least one evidence item |
-| timeline | No | If present, has at least one event |
-| code_mapping | No | If present, entries have evidence_refs |
-| findings.confirmed_facts | Yes | May be empty but must exist |
-| findings.bounded_inferences | Yes | May be empty but must exist |
-| findings.open_questions | Yes | Should have at least one item |
-| handoff_summary | Yes | Has scope, confidence, gaps |
+Validate against schema:
 
-## Step 2: Evidence Quality Check
+```
+Schema: ./schemas/handoff.schema.json
+```
 
-For each evidence item:
+Check required fields:
+
+| Field | Required | Validation |
+|-------|----------|------------|
+| case_meta.title | Yes | Non-empty string |
+| case_meta.created_at | Yes | ISO 8601 timestamp |
+| case_meta.sources | Yes | At least one item |
+| context_summary.problem_statement | Yes | Non-empty string |
+| evidence_inventory | Yes | At least one item |
+| findings.confirmed_facts | Yes | Array exists |
+| findings.bounded_inferences | Yes | Array exists |
+| findings.open_questions | Yes | Should have ≥1 item |
+| handoff_summary.scope | Yes | Non-empty string |
+
+Output: `structural_issues[]`
+
+---
+
+## Step 2: Evidence Quality Check (Deterministic)
+
+For each evidence item, verify:
 - [ ] Has unique `evidence_id`
-- [ ] Has valid `source_ref` pointing to actual material
+- [ ] Has valid `source_ref` (path or URL exists)
 - [ ] Has `content` or `excerpt` field
 - [ ] Timestamp is parseable (if present)
 
-Flag issues:
-- Orphan evidence (not referenced by any finding)
-- Missing evidence (referenced but not in inventory)
-- Duplicate evidence (same content, different IDs)
+Detect:
+- Orphan evidence: not referenced by any finding
+- Missing evidence: referenced but not in inventory
+- Duplicate evidence: same content, different IDs
 
-## Step 3: Traceability Check
+Output: `evidence_issues[]`
+
+---
+
+## Step 3: Traceability Check (Deterministic)
 
 For each finding in `confirmed_facts` and `bounded_inferences`:
 - [ ] Has at least one `evidence_ref`
 - [ ] Referenced evidence exists in inventory
-- [ ] Inference logic is stated (for bounded_inferences)
 
-Flag:
-- Unsupported claims (no evidence ref)
-- Weak support (evidence doesn't clearly support claim)
+For each code_mapping entry:
+- [ ] Has `evidence_refs`
+- [ ] All referenced evidence exists
 
-## Step 4: Code Mapping Quality Check
+Output: `traceability_issues[]`
+
+---
+
+## Step 4: Code Mapping Quality Check (Deterministic)
 
 For each code location:
-- [ ] File path is valid (exists in repo if repo is available)
-- [ ] Line range is reasonable (not 0-0 or spanning thousands of lines)
-- [ ] Confidence level matches match_type:
-  - `stacktrace` → should be `high`
-  - `symbol_search` with exact match → should be `medium` or `high`
-  - `keyword` → should be `low` or `medium`
+- [ ] File path format is valid
+- [ ] Line range is reasonable (not 0-0 or 10000+ span)
+- [ ] Confidence matches match_type:
+
+| match_type | Expected confidence |
+|------------|---------------------|
+| stacktrace | high |
+| symbol_search | medium or high |
+| route_mapping | medium |
+| keyword | low or medium |
+
 - [ ] Has evidence_ref
 
-Flag:
-- High confidence without stacktrace evidence
-- Code locations without any evidence backing
+Output: `code_mapping_issues[]`
 
-## Step 5: Boundary Adherence Check
+---
 
-Verify the handoff does NOT contain:
-- [ ] Root cause claims (should be in inferences at most)
-- [ ] Patch suggestions
-- [ ] Fix recommendations
-- [ ] Blame attribution
-- [ ] Performance recommendations
+## Step 5: Boundary Adherence Check (LLM)
+
+Verify handoff does NOT contain:
+- Root cause claims (beyond bounded inference)
+- Patch suggestions
+- Fix recommendations
+- Blame attribution
+- Performance recommendations
 
 If found, flag as scope violation.
 
-## Step 6: Downstream Readiness Assessment
+Output: `boundary_violations[]`
 
-Evaluate fitness for different downstream consumers:
+---
+
+## Step 6: Downstream Readiness Assessment (LLM)
+
+Evaluate fitness for consumers:
 
 ### For RCA Agent
 - Is timeline clear enough to trace causality?
@@ -87,56 +115,68 @@ Evaluate fitness for different downstream consumers:
 
 ### For Patch Agent
 - Are code locations specific enough?
-- Is the mapping confidence reasonable?
-- Are the relevant symbols identified?
+- Is mapping confidence reasonable?
+- Are relevant symbols identified?
 
 ### For Human Reviewer
-- Is the summary comprehensible?
+- Is summary comprehensible?
 - Are gaps and uncertainties clear?
-- Can evidence be followed back to sources?
+- Can evidence be traced to sources?
 
-## Step 7: Quality Score
+Output: `downstream_readiness` with status for each consumer
+
+---
+
+## Step 7: Quality Score (LLM)
 
 Rate on 5-point scale:
 
 | Dimension | 1 | 3 | 5 |
 |-----------|---|---|---|
-| Completeness | Major fields missing | Most fields present | All fields present with depth |
-| Traceability | Few evidence refs | Most claims have refs | Full ref coverage |
-| Precision | Vague locations | Some specific locations | Specific files/lines/symbols |
+| Completeness | Major fields missing | Most present | All present with depth |
+| Traceability | Few evidence refs | Most claims have refs | Full coverage |
+| Precision | Vague locations | Some specific | Specific files/lines |
 | Boundary | Contains fixes/RCA | Minor scope creep | Stays in triage lane |
 | Clarity | Hard to follow | Mostly clear | Clear and organized |
 
-Overall readiness:
-- Score < 2.5: Not ready, needs significant work
-- Score 2.5-3.5: Usable with caveats
-- Score > 3.5: Ready for downstream
+Verdicts:
+- Score < 2.5: **Not ready**, needs significant work
+- Score 2.5-3.5: **Usable with caveats**
+- Score > 3.5: **Ready** for downstream
 
-## Step 8: Improvement Recommendations
+Output: `scores{}` and `verdict`
 
-If score < 3.5, provide specific recommendations:
+---
+
+## Step 8: Recommendations (LLM)
+
+If score < 3.5, generate specific recommendations:
 
 ```
 Priority | Issue | Recommendation
 ---------|-------|---------------
-High     | 3 findings lack evidence refs | Add evidence_ref to items X, Y, Z
-Medium   | Timeline has 2-hour gap | Search logs for 14:00-16:00 window
-Low      | Code mapping confidence inconsistent | Review match_type assignments
+High     | 3 findings lack refs | Add evidence_ref to X, Y, Z
+Medium   | Timeline has 2hr gap | Search logs for 14:00-16:00
+Low      | Confidence inconsistent | Review match_type assignments
 ```
 
-## Output
+Output: `recommendations[]`
 
-Deliver evaluation as:
+---
+
+## Step 9: Output Generation (Deterministic)
+
+Generate evaluation JSON:
+
+```
+Schema: ./schemas/evaluation.schema.json
+```
 
 ```json
 {
   "evaluation_timestamp": "ISO timestamp",
-  "handoff_version": "version being evaluated",
-  "structural_completeness": {
-    "missing_required": [],
-    "missing_optional": [],
-    "empty_required": []
-  },
+  "handoff_version": "version evaluated",
+  "structural_issues": [],
   "evidence_issues": [],
   "traceability_issues": [],
   "code_mapping_issues": [],
@@ -159,8 +199,27 @@ Deliver evaluation as:
 }
 ```
 
+---
+
+## Data Flow Summary
+
+```
+Handoff to Evaluate ─────────────────────────────────────┐
+                                                         │
+Step 1 (D): structural_issues[] ─────────────────────────┤
+Step 2 (D): evidence_issues[] ───────────────────────────┤
+Step 3 (D): traceability_issues[] ───────────────────────┤
+Step 4 (D): code_mapping_issues[] ───────────────────────┤
+Step 5 (L): boundary_violations[] ───────────────────────┤
+Step 6 (L): downstream_readiness{} ──────────────────────┤
+Step 7 (L): scores{}, verdict ───────────────────────────┤
+Step 8 (L): recommendations[] ───────────────────────────┤
+Step 9 (D): evaluation.json ◄────────────────────────────┘
+```
+
+---
+
 ## Next Move
 
-If evaluation reveals gaps, offer to load `workflows/handoff-refinement.md` to address them.
-
-If starting fresh would be easier, offer to load `workflows/new-triage-handoff.md`.
+If evaluation reveals gaps: load `workflows/handoff-refinement.md`
+If starting fresh is easier: load `workflows/new-triage-handoff.md`

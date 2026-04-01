@@ -1,73 +1,108 @@
 # Handoff Refinement Workflow
 
-Use this workflow when a handoff already exists and the user wants to update it with new evidence.
+Update an existing handoff with new evidence.
 
 ## Prerequisites
 
-Load:
+Read these files:
 - `knowledge/handoff-schema.md` - Output structure
 - `knowledge/evidence-protocol.md` - Evidence referencing
 
 Read the existing handoff to understand current state.
 
-## Step 1: Identify New Materials
+---
 
-Determine what the user is adding:
+## Step 1: Identify New Materials (Deterministic)
+
+Record what user is adding:
 - New log files or archives
 - New comments or discussion
 - Additional trace/request IDs
 - Corrected version/environment info
 - New hypothesis from team member
 
-Record each addition with timestamp of when it was added to the investigation.
+Add timestamp for when each addition joined the investigation.
 
-## Step 2: Validate Against Existing Handoff
+Output: List of new materials with addition timestamps
 
-Check for:
+---
 
-### 2.1 Confirmations
-New evidence that confirms existing inferences:
-- Promote `bounded_inferences` to `confirmed_facts` if now supported
+## Step 2: Evidence Integration (Deterministic)
+
+For new log files, run collection script:
+
+```
+Script: ./scripts/collect-log-evidence.sh
+Input: new log paths, existing key identifiers, time window
+Output: new evidence entries
+```
+
+Assign new evidence IDs continuing from existing sequence.
+- If existing: E001-E015
+- New: E016, E017, ...
+
+Output: `evidence_inventory[]` extended with new entries
+
+---
+
+## Step 3: Conflict Analysis (LLM)
+
+Compare new evidence against existing handoff:
+
+### 3.1 Confirmations
+New evidence confirms existing inferences:
+- Promote `bounded_inferences` → `confirmed_facts` if now supported
 - Update evidence refs
 
-### 2.2 Contradictions
-New evidence that contradicts existing conclusions:
-- Flag the conflict explicitly
+### 3.2 Contradictions
+New evidence contradicts existing conclusions:
+- Flag conflict explicitly
 - Keep both pieces of evidence
-- Move affected item to `open_questions` if resolution is unclear
-- Do NOT silently overwrite
+- Move affected item to `open_questions` if unresolved
+- **Do not** silently overwrite
 
-### 2.3 Extensions
-New evidence that adds to the picture:
+### 3.3 Extensions
+New evidence adds to the picture:
 - New error types
 - Earlier/later timeline events
 - Additional affected components
 
-## Step 3: Merge Protocol
+Output: Classification of each new evidence item
+
+---
+
+## Step 4: Merge Execution (Deterministic)
+
+Apply merge rules:
 
 ### Timeline Merge
-Insert new events into existing timeline, maintaining chronological order.
+Insert new events chronologically.
 
 ### Evidence Merge
-Add new evidence entries with:
-- Unique `evidence_id`
+Add new entries with:
+- Unique `evidence_id` (continuing sequence)
 - Source marked as "supplemental material [date]"
-- Cross-reference to original handoff evidence if related
+- Cross-reference to related original evidence
 
 ### Code Mapping Merge
-If new evidence points to new code locations:
-- Add to code_mapping with new evidence refs
-- If new evidence strengthens existing mapping, update confidence level
-- If new evidence contradicts existing mapping, flag conflict
+| Scenario | Action |
+|----------|--------|
+| New evidence → new code location | Add to `code_mapping[]` |
+| New evidence strengthens existing | Update confidence level |
+| New evidence contradicts existing | Flag conflict |
 
 ### Findings Merge
-- Review each finding category
-- Apply confirmation/contradiction/extension logic
-- Update `open_questions` to remove answered ones, add new ones
+- Apply confirmation/contradiction/extension logic from Step 3
+- Remove answered items from `open_questions`
+- Add new open questions
 
-## Step 4: Conflict Documentation
+Output: Updated handoff sections
 
-If any contradictions were found, add a `conflicts` section:
+---
+
+## Step 5: Conflict Documentation (Deterministic)
+
+If contradictions found, add `conflicts` section:
 
 ```json
 {
@@ -75,32 +110,63 @@ If any contradictions were found, add a `conflicts` section:
     {
       "description": "Timestamp of first error",
       "original": "10:15:03 based on log A",
-      "new_evidence": "10:14:58 based on log B",
-      "resolution": "pending" | "resolved to X because Y"
+      "original_ref": "E003",
+      "contradicting": "10:14:58 based on log B",
+      "contradicting_ref": "E018",
+      "resolution": "pending"
     }
   ]
 }
 ```
 
-## Step 5: Version Tracking
+Output: `conflicts[]` populated (if any)
+
+---
+
+## Step 6: Version Update (Deterministic)
 
 Update handoff metadata:
-- Increment version number
-- Add revision note explaining what changed
-- Preserve original creation timestamp
-- Update last_modified timestamp
+- Increment `version` number
+- Add revision note explaining changes
+- Preserve original `created_at`
+- Update `last_modified` to now
 
-## Step 6: Self-Check
+Output: `case_meta` updated
 
-Before delivering:
-- [ ] New evidence integrated with proper refs
+---
+
+## Step 7: Self-Check (Deterministic)
+
+Verify:
+- [ ] New evidence has unique IDs (no collisions)
+- [ ] All new evidence integrated with proper refs
 - [ ] Conflicts explicitly documented
 - [ ] Promoted/demoted findings are justified
-- [ ] Timeline remains coherent
+- [ ] Timeline remains chronologically coherent
 - [ ] Version metadata updated
+- [ ] Output passes schema validation
+
+---
+
+## Data Flow Summary
+
+```
+Existing Handoff ─────────────────────────────┐
+                                              │
+Step 1 (D): new_materials[] ──────────────────┤
+Step 2 (D): new_evidence[] ───────────────────┤
+Step 3 (L): conflict_analysis ────────────────┤
+Step 4 (D): merged_sections ◄─────────────────┤
+Step 5 (D): conflicts[] ◄─────────────────────┤
+Step 6 (D): updated_metadata ◄────────────────┤
+Step 7 (D): validation_result                 │
+                                              ▼
+                                    Updated Handoff
+```
+
+---
 
 ## Next Move
 
-If user wants to evaluate the refined handoff, load `workflows/handoff-evaluation.md`.
-
-If user has more materials to add, stay in this workflow.
+If user wants to evaluate the refined handoff: load `workflows/handoff-evaluation.md`
+If user has more materials to add: stay in this workflow
