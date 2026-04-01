@@ -12,6 +12,35 @@ Read these files before starting:
 
 ---
 
+## Step 0.5: Evidence Inventory (Deterministic)
+
+**Purpose**: Scan ALL input files and record processing status. Prevents silent file skipping.
+
+Run evidence inventory script:
+
+```bash
+./scripts/build-evidence-inventory.sh <input_directory> evidence-inventory.json
+```
+
+**Output**: JSON array with:
+- `file_path`: Full path to each file
+- `type`: text | image | video | document | unknown
+- `size_bytes`: File size
+- `mtime`: Modification timestamp
+- `status`: parsed | skipped | failed
+- `reason`: Why not parsed (empty string if parsed)
+- `evidence_refs`: Links to extracted evidence (populated in later steps)
+
+**Validation**:
+- Total file count == inventory array length (no silent skips)
+- All `status: "skipped"` entries MUST have non-empty `reason`
+
+**Integration**:
+- Feeds into Step 2 (text evidence) and Step 2.5 (multimodal evidence)
+- Provides traceability: every input file accounted for
+
+---
+
 ## Step 1: Material Intake (Deterministic)
 
 Record what user provides in the handoff's `sources` field.
@@ -51,6 +80,44 @@ The script handles:
 - Fail-fast if no target files are selected
 
 Record selection reasons and excluded files.
+
+---
+
+## Step 2.5: Multimodal Evidence Collection (Deterministic)
+
+**Purpose**: Extract evidence from images and videos.
+
+Run multimodal evidence collection script:
+
+```bash
+./scripts/collect-multimodal-evidence.sh <input_directory> multimodal-evidence.json
+```
+
+**Output**: JSON array with multimodal evidence:
+- `evidence_id`: E001, E002, ...
+- `type`: image | video
+- `visual_signals`: Detected visual indicators (error_dialog, error_text, etc.)
+- `ocr_text`: Text extracted from image via OCR
+- `relevance`: direct | context | weak
+- `metadata`:
+  - Images: dimensions, format, file_size_bytes
+  - Videos: dimensions, duration_seconds, format, file_size_bytes
+
+**Dependencies** (optional but recommended):
+- `exiftool`: Image/video metadata extraction
+- `tesseract`: OCR for images
+- `ffprobe`: Video metadata extraction
+
+**Evidence Weight** (see evidence-protocol.md):
+1. Stacktrace/exception with timestamp (highest)
+2. **Image with OCR + timestamp + visual_signals** (high)
+3. Structured logs with trace IDs
+4. **Screenshot with visual_signals only** (medium)
+5. Unstructured logs
+6. Human comments
+7. **Video without error signals** (low — requires interpretation)
+
+**Top-K Filtering**: Include only Top-K multimodal evidence (default K=3) in summary.
 
 ---
 
@@ -134,6 +201,46 @@ Output: `code_mapping[]` populated
 
 ---
 
+## Step 6.5: Project Context Loading (LLM)
+
+**Purpose**: Load project-specific context to prevent incorrect responsibility attribution.
+
+**Check for context file**: `./triage/project-context.md` or `./knowledge/project-context.md`
+
+If file exists:
+1. Parse YAML sections:
+   - `team_role`: provider | consumer | integration | platform
+   - `ownership.our_code`: List of components we own
+   - `forbidden_assumptions`: Phrases to avoid in synthesis
+
+2. Apply context-aware filtering:
+
+   **If `team_role: provider`**:
+   - Remove recommendations suggesting to "investigate external server"
+   - Focus on internal code paths, configuration, deployment
+   - `suitable_for`: Include `rca_agent`, `patch_agent` (we can fix our code)
+
+   **If `team_role: consumer`**:
+   - Focus on integration points with external services
+   - Emphasize API behavior, credentials, network issues
+   - `suitable_for`: Typically `human_review` (can't patch external code)
+
+   **If `team_role: integration`**:
+   - Balance upstream and downstream investigation
+   - Focus on connection points, data transformation
+   - `suitable_for`: `rca_agent` for our integration logic
+
+3. Validate context:
+   - File timestamp <90 days (warn if stale)
+   - `team_role` is valid enum value
+   - `ownership.our_code` is non-empty
+
+**If file does not exist**: Skip this step, proceed with generic synthesis.
+
+**Output**: Context object passed to Step 7 synthesis.
+
+---
+
 ## Step 7: Timeline & Findings Synthesis (LLM)
 
 ### Timeline
@@ -162,13 +269,13 @@ Output: `timeline[]`, `findings.*` populated
 
 ## Step 8: Output Generation (Deterministic)
 
-Generate dual-layer output (schema v2.0):
+Generate dual-layer output:
 
 ### 8.1 Summary Generation
 
 ```
 Template: ./templates/handoff-summary.json
-Schema: ./schemas/handoff.schema.json (v2.0)
+Schema: ./schemas/handoff.schema.json
 Target: ≤120 lines
 ```
 
@@ -182,7 +289,7 @@ Target: ≤120 lines
 
 ```
 Template: ./templates/handoff-evidence.json
-Schema: ./schemas/evidence.schema.json (v2.0)
+Schema: ./schemas/evidence.schema.json
 ```
 
 **Generate evidence attachment WHEN**:
@@ -236,11 +343,11 @@ Step 8.2 (D): handoff.evidence.json (optional) ◄──────────
 Step 9 (D): validation_result
 ```
 
-**V2.0 Changes**:
-- Step 0 injects `triage_decision` into summary
-- Step 8 splits into summary (≤120 lines) + evidence (optional)
-- Evidence content in summary: optional/truncated
-- Evidence content in attachment: required/full
+**Key Features**:
+- Step 0 decision gate prevents unnecessary full pipeline
+- Step 8 dual-layer output: summary (≤120 lines) + optional evidence attachment
+- Evidence content in summary: optional/truncated for token efficiency
+- Evidence content in attachment: required/full for forensic analysis
 
 ---
 

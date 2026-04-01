@@ -123,7 +123,40 @@ Evaluate fitness for consumers:
 - Are gaps and uncertainties clear?
 - Can evidence be traced to sources?
 
-Output: `downstream_readiness` with status for each consumer
+### Context-Aware Checks
+
+**If project-context.md exists**, verify:
+
+1. **Team Role Alignment**:
+   - If `team_role: provider` → Check that recommendations focus on internal code/config
+   - If `team_role: consumer` → Check that recommendations focus on integration/external behavior
+   - If `team_role: integration` → Check that recommendations balance upstream/downstream
+
+2. **Ownership Boundary Validation**:
+   - All code_mapping entries should reference files in `ownership.our_code` OR be marked as external
+   - Recommended next steps should NOT suggest investigating code outside `ownership.our_code`
+
+3. **Forbidden Assumptions Check**:
+   - Scan `recommended_next_steps` and `handoff_summary.scope` for phrases in `forbidden_assumptions`
+   - If found, flag as **attribution error**
+
+**Example**:
+```yaml
+# If context says:
+team_role: provider
+ownership:
+  our_code: ["openapi.music.163.com API server"]
+forbidden_assumptions:
+  - "Assume openapi.music.163.com is external"
+
+# Then handoff should NOT say:
+"Check if external server openapi.music.163.com is down"
+
+# Instead should say:
+"Investigate our API server openapi.music.163.com timeout configuration"
+```
+
+Output: `downstream_readiness` with status for each consumer + `context_validation_issues[]`
 
 ---
 

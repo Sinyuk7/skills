@@ -162,3 +162,92 @@ These actions are always out of scope:
 
 When asked to do these, redirect:
 > "That's outside triage scope. The handoff is ready for a downstream agent that can [RCA/patch/etc]."
+
+---
+
+## Extended Principles — Workflow Efficiency
+
+### Principle 11: Pre-Workflow Decision Gate
+
+**Not all cases need full handoff pipeline.**
+
+Before entering 9-step workflow, assess case complexity:
+
+| Decision | Criteria | Output |
+|----------|----------|--------|
+| `resolved` | ≥3 confirmed facts, clear error signature, complete timeline, ≤2 open questions | Triage summary (80-114 lines) |
+| `needs_handoff` | Complex case, contradictions, fragmented timeline, >5 files | Full handoff (114-120 lines summary + evidence) |
+| `needs_more_evidence` | No logs in incident window, trace IDs not found | Evidence gap report |
+| `blocked` | Missing access, ambiguous source | Blocker report |
+
+**Why**: Prevents forcing simple cases through expensive pipeline. Case with clear stacktrace + error code doesn't need full handoff.
+
+### Principle 12: Reference-Based Compression
+
+**Separate user-facing summary from forensic evidence.**
+
+Output structure:
+- **Summary** (≤120 lines): References only, optional/truncated content
+- **Evidence attachment** (optional): Full content, generated only when needed
+
+**When to generate evidence attachment**:
+- Total content >5KB
+- Single evidence >500 bytes
+- User explicitly requests
+
+**Why**: Human reviewers don't need raw log content. RCA agents can load evidence attachment only if needed. Reduces token cost significantly.
+
+### Principle 13: Mandatory Evidence Inventory
+
+**Every input file MUST appear in inventory.**
+
+No silent file skipping. Each file has:
+- `status`: parsed | skipped | failed
+- `reason`: Why not parsed (mandatory if skipped)
+
+**Why**: Prevents assumption that "all files were processed". User uploaded image → must see "skipped: requires multimodal processing" instead of silence.
+
+### Principle 14: Multimodal Evidence Weight
+
+**Visual evidence has hierarchy.**
+
+| Evidence Type | Weight | Example |
+|---------------|--------|---------|
+| Tier 1 | Highest | Stacktrace with timestamp |
+| Tier 2 | High | **Image with OCR + timestamp + visual_signals** |
+| Tier 3 | Medium | **Screenshot with visual_signals** |
+| Tier 4 | Lower | **Video without error signals** |
+| Tier 5 | Lowest | Hearsay |
+
+**Top-K filtering**: Include only Top-3 multimodal evidence in summary (ranked by relevance, signals, OCR length).
+
+**Why**: Not all screenshots are equally useful. Error dialog screenshot > generic UI screenshot.
+
+### Principle 15: Context-Aware Attribution
+
+**Team role determines recommendation focus.**
+
+Load `project-context.md` before synthesis:
+
+| Team Role | Focus | Don't Recommend |
+|-----------|-------|-----------------|
+| `provider` | Internal code/config | "Check external server" |
+| `consumer` | Integration points | "Fix SDK code" (we don't own it) |
+| `integration` | Upstream/downstream | Single-sided investigation |
+
+**Forbidden assumptions**: Check that synthesis doesn't contain phrases like "Assume we don't own the backend" (when we DO own it).
+
+**Why**: Prevents wrong responsibility attribution. SDK team shouldn't receive handoff saying "contact server team" when they ARE the server team.
+
+---
+
+## Validation Checklist
+
+Before finalizing handoff, verify:
+
+- [ ] Triage decision present and justified
+- [ ] Summary ≤120 lines, evidence attachment only if needed
+- [ ] All input files in inventory with status
+- [ ] Multimodal evidence has visual_signals/ocr_text (when applicable)
+- [ ] Recommendations respect team_role and ownership (when project-context.md exists)
+- [ ] All 15 core principles upheld

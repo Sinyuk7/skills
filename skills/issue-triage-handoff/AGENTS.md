@@ -8,27 +8,38 @@
 
 LLM skill that compresses raw troubleshooting materials (logs, chat, comments) into structured handoff packages. Markdown workflows + Bash scripts + JSON schemas. Deterministic-first architecture.
 
+**Core Features**: Triage decision gate, dual-layer output (summary + evidence), multimodal evidence (images/videos), context-aware attribution
+
 ## STRUCTURE
 
 ```
 issue-triage-handoff/
 ├── SKILL.md                    # Entry point: intent dispatch, execution flow
 ├── workflows/                  # Workflow orchestrators (new, refine, evaluate)
-│   ├── new-triage-handoff.md
+│   ├── triage-decision.md           # Pre-workflow decision gate
+│   ├── new-triage-handoff.md        # Main workflow with evidence inventory, multimodal, context loading
 │   ├── handoff-refinement.md
-│   └── handoff-evaluation.md
+│   └── handoff-evaluation.md        # Evaluation with context-aware checks
 ├── knowledge/                  # Core principles, schemas, protocols
-│   ├── triage-principles.md
+│   ├── triage-principles.md         # Core principles including decision gate, multimodal weight
 │   ├── handoff-schema.md
-│   └── evidence-protocol.md
+│   ├── evidence-protocol.md         # Evidence weight hierarchy including multimodal types
+│   └── project-context.md           # Team role and ownership context template
 ├── scripts/                    # Deterministic tools (log collection, code search)
+│   ├── build-evidence-inventory.sh      # Full file inventory with status tracking
 │   ├── collect-log-evidence.sh
+│   ├── collect-multimodal-evidence.sh   # Image/video evidence extraction
 │   └── search-code-symbols.sh
 ├── schemas/                    # JSON Schema validation
-│   ├── handoff.schema.json
+│   ├── handoff.schema.json    # Schema validation with triage_decision, multimodal fields
+│   ├── evidence.schema.json   # Evidence attachment validation
 │   └── evaluation.schema.json
 ├── templates/                  # Output templates
-│   └── handoff-template.json
+│   ├── handoff-summary.json         # Main output (≤120 lines)
+│   ├── handoff-evidence.json        # Evidence attachment (optional)
+│   ├── triage-summary.json          # Resolved status output
+│   ├── evidence-gap-report.json     # Missing evidence report
+│   └── blocker-report.json          # Blocker status report
 ├── __test__/                   # Integration test cases (conversation logs)
 └── evals/                      # Test specifications (evals.json)
 ```

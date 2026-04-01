@@ -65,15 +65,16 @@ Minimize LLM context switches. Batch deterministic operations.
 
 ## Quick Reference
 
-- **Triage decision workflow**: `workflows/triage-decision.md` (NEW - runs first)
+- **Triage decision workflow**: `workflows/triage-decision.md`
 - **Output schema**: `knowledge/handoff-schema.md`
 - **Evidence rules**: `knowledge/evidence-protocol.md`
 - **Core principles**: `knowledge/triage-principles.md`
 - **Output templates**:
-    - Full handoff: `templates/handoff-template.json`
-    - Resolved summary: `templates/triage-summary.json` (NEW)
-    - Evidence gaps: `templates/evidence-gap-report.json` (NEW)
-    - Blockers: `templates/blocker-report.json` (NEW)
+    - Main summary: `templates/handoff-summary.json`
+    - Evidence attachment: `templates/handoff-evidence.json`
+    - Resolved summary: `templates/triage-summary.json`
+    - Evidence gaps: `templates/evidence-gap-report.json`
+    - Blockers: `templates/blocker-report.json`
 - **Log collection**: `scripts/collect-log-evidence.sh`
     - Example: `./scripts/collect-log-evidence.sh <log_dir> --event "YYYY-MM-DDTHH:MM:SS" --window-seconds 300 --identifiers "id1,id2"`
     - Cleanup: `./scripts/collect-log-evidence.sh <log_dir> --cleanup`
@@ -100,7 +101,7 @@ If user intent unclear, ask:
 issue-triage-handoff/
 ├── SKILL.md
 ├── workflows/
-│   ├── triage-decision.md      # NEW - Pre-workflow decision gate
+│   ├── triage-decision.md
 │   ├── new-triage-handoff.md
 │   ├── handoff-refinement.md
 │   └── handoff-evaluation.md
@@ -109,10 +110,11 @@ issue-triage-handoff/
 │   ├── evidence-protocol.md
 │   └── triage-principles.md
 ├── templates/
-│   ├── handoff-template.json
-│   ├── triage-summary.json          # NEW - Resolved cases
-│   ├── evidence-gap-report.json     # NEW - Missing evidence
-│   └── blocker-report.json          # NEW - Blockers
+│   ├── handoff-summary.json
+│   ├── handoff-evidence.json
+│   ├── triage-summary.json
+│   ├── evidence-gap-report.json
+│   └── blocker-report.json
 ├── references/
 ├── scripts/
 ├── assets/

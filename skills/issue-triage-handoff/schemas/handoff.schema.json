@@ -54,10 +54,22 @@
     },
     "triage_decision": {
       "type": "object",
-      "required": ["status", "confidence", "reasoning", "evidence_refs", "criteria_results", "decision_timestamp"],
+      "required": [
+        "status",
+        "confidence",
+        "reasoning",
+        "evidence_refs",
+        "criteria_results",
+        "decision_timestamp"
+      ],
       "properties": {
         "status": {
-          "enum": ["resolved", "needs_handoff", "needs_more_evidence", "blocked"]
+          "enum": [
+            "resolved",
+            "needs_handoff",
+            "needs_more_evidence",
+            "blocked"
+          ]
         },
         "confidence": {
           "enum": ["high", "medium", "low"]
@@ -205,7 +217,10 @@
               "chat_message",
               "config",
               "metric",
-              "screenshot"
+              "screenshot",
+              "image",
+              "video",
+              "document"
             ]
           },
           "source_ref": {
@@ -219,11 +234,42 @@
             }
           },
           "timestamp": { "type": ["string", "null"], "format": "date-time" },
-          "content": { 
+          "content": {
             "type": "string",
             "description": "Optional in summary mode (v2.0). Full content in evidence attachment."
           },
-          "tags": { "type": "array", "items": { "type": "string" } }
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "status": {
+            "enum": ["parsed", "skipped", "failed"],
+            "description": "P0.3: Processing status of source file"
+          },
+          "reason": {
+            "type": "string",
+            "description": "P0.3: Why file was not parsed (empty if parsed)"
+          },
+          "visual_signals": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "P0.4: Visual indicators in image/video (error_dialog, red_button, etc.)"
+          },
+          "ocr_text": {
+            "type": "string",
+            "description": "P0.4: Extracted text from image/video via OCR"
+          },
+          "relevance": {
+            "enum": ["direct", "context", "weak"],
+            "description": "P0.4: Evidence relevance level"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "P0.4: File-specific metadata (dimensions, duration, etc.)",
+            "properties": {
+              "dimensions": { "type": "string" },
+              "duration_seconds": { "type": "number" },
+              "file_size_bytes": { "type": "integer" },
+              "format": { "type": "string" }
+            }
+          }
         }
       }
     },

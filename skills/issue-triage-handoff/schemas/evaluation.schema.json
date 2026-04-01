@@ -87,6 +87,20 @@
         }
       }
     },
+    "context_validation_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["issue", "description"],
+        "properties": {
+          "field": { "type": "string" },
+          "issue": { "type": "string" },
+          "description": { "type": "string" },
+          "severity": { "enum": ["error", "warning"] },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
     "downstream_readiness": {
       "type": "object",
       "required": ["rca_agent", "patch_agent", "human_reviewer"],

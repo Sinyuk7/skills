@@ -60,6 +60,9 @@ Every evidence item must have a `source_ref`:
 | `config` | Configuration file excerpt |
 | `metric` | Numeric measurement or threshold |
 | `screenshot` | Visual evidence (reference path) |
+| `image` | Screenshot, error dialog capture (P0.4) |
+| `video` | Screen recording, reproduction video (P0.4) |
+| `document` | PDF reports, documentation excerpts (P0.4) |
 
 ## Content Guidelines
 
@@ -117,13 +120,52 @@ Code locations must trace back to evidence:
 
 ## Evidence Weight Hierarchy
 
-When evidence conflicts, weight by type:
+When evidence conflicts, weight by type and quality:
 
-1. **Highest**: Stacktraces, exception logs with timestamps
-2. **High**: Structured logs with request/trace IDs
-3. **Medium**: Unstructured logs with timestamps
-4. **Lower**: Human comments, chat messages
-5. **Lowest**: Hearsay ("someone said...")
+### Tier 1 — Highest Confidence
+- Stacktraces with timestamps and line numbers
+- Exception logs with full context (trace IDs, request IDs)
+
+### Tier 2 — High Confidence
+- **Image with OCR text + timestamp + visual_signals** (P0.4)
+  - Example: Screenshot showing "Error: Connection timeout" dialog with timestamp in corner
+- Structured logs with trace/request IDs
+- Metric data with timestamp
+
+### Tier 3 — Medium Confidence
+- **Screenshot with visual_signals only** (P0.4)
+  - Example: Error dialog visible but no text extracted
+- Unstructured logs with timestamps
+- Configuration files with version info
+
+### Tier 4 — Lower Confidence
+- Human comments with technical details
+- Chat messages referencing specific errors
+- **Video without error signals** (P0.4)
+  - Requires manual interpretation, timestamps unreliable
+
+### Tier 5 — Lowest Confidence
+- Hearsay ("someone said...")
+- Unverified hypotheses
+- Evidence outside incident window
+
+### Multimodal Evidence Guidelines
+
+**Image Evidence**:
+- **Best**: OCR text + visual_signals + EXIF timestamp
+- **Good**: Visual_signals + filename timestamp hint
+- **Weak**: Generic screenshot without error indicators
+
+**Video Evidence**:
+- **Best**: Short clip (<30s) showing error reproduction with audio narration
+- **Good**: Screen recording with clear error state at specific timestamp
+- **Weak**: Long video (>2min) requiring manual review
+
+**Top-K Filtering**: In summary output, include only Top-K multimodal evidence (default K=3) ranked by:
+1. Relevance (direct > context > weak)
+2. Visual signals count (more signals = higher priority)
+3. OCR text length (more context = higher priority)
+4. File size (smaller = easier to process)
 
 ## Verification Protocol
 
