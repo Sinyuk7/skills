@@ -35,15 +35,19 @@ Run log evidence collection script.
 
 ```
 Script: ./scripts/collect-log-evidence.sh
-Input: log directory path, key identifiers, time window
-Output: list of relevant log files with line ranges
+Input: log directory path, key identifiers, event time + fixed window
+Example:
+  ./scripts/collect-log-evidence.sh <log_dir> --event "YYYY-MM-DDTHH:MM:SS" --window-seconds 60 --identifiers "id1,id2"
+Output: JSON with selected target files (after match + mtime window filters)
 ```
 
 The script handles:
 - Directory structure survey
+- Targeted archive expansion (only archives whose *filename timestamp* falls within `EVENT_TIME±WINDOW_SECONDS`)
 - Error pattern search (`error`, `exception`, `failed`, `timeout`, `panic`)
 - Identifier matching
-- Time window filtering
+- Second-stage mtime window filter to reduce noise
+- Fail-fast if no target files are selected
 
 Record selection reasons and excluded files.
 

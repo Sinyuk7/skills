@@ -40,6 +40,16 @@ D: Write handoff (deterministic)
 
 Minimize LLM context switches. Batch deterministic operations.
 
+### Deterministic batching note (time-targeted)
+
+- Use a single **event time** as the anchor: `--event "YYYY-MM-DDTHH:MM:SS"`
+- Use a fixed window (default 60s): `--window-seconds 60`
+- Deterministic pipeline:
+  1. Select archives by **filename timestamp** within `EVENT_TIME±WINDOW_SECONDS` and expand only those
+  2. Search error patterns / identifiers to get candidates
+  3. Apply a second-stage **mtime window filter** to reduce noise
+  4. Fail fast if no target files remain after filtering
+
 ## Quick Reference
 
 - **Output schema**: `knowledge/handoff-schema.md`
@@ -47,6 +57,7 @@ Minimize LLM context switches. Batch deterministic operations.
 - **Core principles**: `knowledge/triage-principles.md`
 - **Output template**: `templates/handoff-template.json`
 - **Log collection**: `scripts/collect-log-evidence.sh`
++   - Example: `./scripts/collect-log-evidence.sh <log_dir> --event "YYYY-MM-DDTHH:MM:SS" --window-seconds 60 --identifiers "id1,id2"`
 - **Code search**: `scripts/search-code-symbols.sh`
 - **Schema validation**: `schemas/handoff.schema.json`
 
