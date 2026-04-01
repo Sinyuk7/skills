@@ -162,14 +162,47 @@ Output: `timeline[]`, `findings.*` populated
 
 ## Step 8: Output Generation (Deterministic)
 
-Generate handoff JSON following template.
+Generate dual-layer output (schema v2.0):
+
+### 8.1 Summary Generation
 
 ```
-Template: ./templates/handoff-template.json
-Schema: ./schemas/handoff.schema.json
+Template: ./templates/handoff-summary.json
+Schema: ./schemas/handoff.schema.json (v2.0)
+Target: ≤120 lines
 ```
 
-Validate against schema.
+**Summary Mode Rules**:
+- Include `triage_decision` object (from Step 0)
+- `evidence_inventory[*].content`: OPTIONAL (omit or truncate to ≤50 chars)
+- All other sections: references only (evidence_refs, not full content)
+- Add `_meta.evidence_attachment_available: true` if evidence file generated
+
+### 8.2 Evidence Attachment Generation (Optional)
+
+```
+Template: ./templates/handoff-evidence.json
+Schema: ./schemas/evidence.schema.json (v2.0)
+```
+
+**Generate evidence attachment WHEN**:
+- Total evidence content >5KB, OR
+- Any single evidence item >500 bytes, OR
+- User explicitly requests full evidence
+
+**Evidence Mode Rules**:
+- `evidence_inventory[*].content`: REQUIRED (full original content)
+- Include `extraction_metadata` for each item
+- Populate `statistics` section
+
+### 8.3 Validation
+
+Validate both files against respective schemas:
+```bash
+# If using JSON Schema validator
+jsonschema -i handoff.summary.json schemas/handoff.schema.json
+jsonschema -i handoff.evidence.json schemas/evidence.schema.json
+```
 
 ---
 
@@ -190,16 +223,24 @@ Verify checklist:
 ## Data Flow Summary
 
 ```
-Step 1 (D): sources[] ─────────────────────────────────────┐
-Step 2 (D): log_files[] ──────────────────────────────────┐│
-Step 3 (D): code_search_results[] ────────────────────────┐││
-Step 4 (L): context_summary ───────────────────────────┐  │││
-Step 5 (L): evidence_inventory[] ──────────────────────┤  │││
-Step 6 (L): code_mapping[] ◄───────────────────────────┴──┘││
-Step 7 (L): timeline[], findings.* ◄───────────────────────┘│
-Step 8 (D): handoff.json ◄─────────────────────────────────┘
+Step 0 (D): triage_decision ──────────────────────────────────┐
+Step 1 (D): sources[] ─────────────────────────────────────┐  │
+Step 2 (D): log_files[] ──────────────────────────────────┐│  │
+Step 3 (D): code_search_results[] ────────────────────────┐││  │
+Step 4 (L): context_summary ───────────────────────────┐  │││  │
+Step 5 (L): evidence_inventory[] ──────────────────────┤  │││  │
+Step 6 (L): code_mapping[] ◄───────────────────────────┴──┘││  │
+Step 7 (L): timeline[], findings.* ◄───────────────────────┘│  │
+Step 8.1 (D): handoff.summary.json ◄────────────────────────┴──┘
+Step 8.2 (D): handoff.evidence.json (optional) ◄───────────────┘
 Step 9 (D): validation_result
 ```
+
+**V2.0 Changes**:
+- Step 0 injects `triage_decision` into summary
+- Step 8 splits into summary (≤120 lines) + evidence (optional)
+- Evidence content in summary: optional/truncated
+- Evidence content in attachment: required/full
 
 ---
 

@@ -1,0 +1,79 @@
+{
+  "schema_version": "2.0",
+  "case_meta": {
+    "title": "",
+    "handoff_id": "",
+    "created_at": "",
+    "version": 1,
+    "sources": [
+      {
+        "type": "issue",
+        "identifier": "",
+        "added_at": ""
+      }
+    ]
+  },
+  "triage_decision": {
+    "status": "needs_handoff",
+    "confidence": "high",
+    "reasoning": "",
+    "evidence_refs": [],
+    "criteria_results": {
+      "confirmed_facts_sufficient": false,
+      "root_cause_clear": false,
+      "timeline_complete": false,
+      "code_location_precise": false,
+      "open_questions_limited": false
+    },
+    "decision_timestamp": ""
+  },
+  "context_summary": {
+    "problem_statement": "",
+    "expected_behavior": "",
+    "actual_behavior": "",
+    "environment": {},
+    "key_identifiers": {},
+    "incident_window": {
+      "first_observed": null,
+      "last_observed": null,
+      "timezone": "UTC"
+    }
+  },
+  "evidence_inventory": [
+    {
+      "evidence_id": "E001",
+      "type": "log_entry",
+      "source_ref": {
+        "source_type": "file",
+        "path": "",
+        "line_start": null,
+        "line_end": null
+      },
+      "timestamp": null,
+      "tags": []
+    }
+  ],
+  "key_signals": [],
+  "timeline": [],
+  "code_mapping": [],
+  "findings": {
+    "confirmed_facts": [],
+    "bounded_inferences": [],
+    "open_questions": []
+  },
+  "conflicts": [],
+  "handoff_summary": {
+    "scope": "",
+    "confidence": "medium",
+    "gaps": [],
+    "recommended_next_steps": [],
+    "suitable_for": []
+  },
+  "_meta": {
+    "output_mode": "summary",
+    "evidence_attachment_available": false,
+    "evidence_attachment_path": null,
+    "line_count_target": 120,
+    "compression_notes": "Evidence content references only. Full content in attachment if available."
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": "2.0",
+  
+  "triage_decision": {
+    "status": "resolved",
+    "confidence": "high",
+    "reasoning": "",
+    "evidence_refs": [],
+    "criteria_results": {
+      "confirmed_facts_sufficient": true,
+      "root_cause_clear": true,
+      "timeline_complete": true,
+      "code_location_precise": true,
+      "open_questions_limited": true
+    },
+    "decision_timestamp": ""
+  },
+  
+  "case_meta": {
+    "title": "",
+    "handoff_id": "",
+    "created_at": "",
+    "version": 1,
+    "sources": []
+  },
+
+  "context_summary": {
+    "problem_statement": "",
+    "incident_window": {
+      "first_observed": null,
+      "last_observed": null,
+      "timezone": "UTC"
+    }
+  },
+
+  "top_evidence": [],
+
+  "findings": {
+    "confirmed_facts": [],
+    "open_questions": []
+  },
+
+  "handoff_summary": {
+    "scope": "",
+    "confidence": "high",
+    "gaps": []
+  }
+}

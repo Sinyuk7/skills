@@ -6,6 +6,7 @@
   "required": [
     "schema_version",
     "case_meta",
+    "triage_decision",
     "context_summary",
     "evidence_inventory",
     "findings",
@@ -14,7 +15,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "1.0"
+      "const": "2.0"
     },
     "case_meta": {
       "type": "object",
@@ -49,6 +50,78 @@
           }
         },
         "revision_notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "triage_decision": {
+      "type": "object",
+      "required": ["status", "confidence", "reasoning", "evidence_refs", "criteria_results", "decision_timestamp"],
+      "properties": {
+        "status": {
+          "enum": ["resolved", "needs_handoff", "needs_more_evidence", "blocked"]
+        },
+        "confidence": {
+          "enum": ["high", "medium", "low"]
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Explanation of why this decision was made"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Evidence IDs supporting this decision"
+        },
+        "criteria_results": {
+          "type": "object",
+          "required": [
+            "confirmed_facts_sufficient",
+            "root_cause_clear",
+            "timeline_complete",
+            "code_location_precise",
+            "open_questions_limited"
+          ],
+          "properties": {
+            "confirmed_facts_sufficient": {
+              "type": "boolean",
+              "description": ">=3 confirmed_facts present"
+            },
+            "root_cause_clear": {
+              "type": "boolean",
+              "description": "Clear error signature present"
+            },
+            "timeline_complete": {
+              "type": "boolean",
+              "description": "Complete incident timeline established"
+            },
+            "code_location_precise": {
+              "type": "boolean",
+              "description": "Stacktrace-backed code location identified"
+            },
+            "open_questions_limited": {
+              "type": "boolean",
+              "description": "<=2 open_questions remaining"
+            }
+          }
+        },
+        "decision_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "blocker_details": {
+          "type": "object",
+          "description": "Required only when status=blocked",
+          "properties": {
+            "blocker_type": {
+              "enum": ["missing_access", "tool_unavailable", "ambiguous_source"]
+            },
+            "description": { "type": "string" },
+            "required_resources": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
       }
     },
     "context_summary": {
@@ -146,7 +219,10 @@
             }
           },
           "timestamp": { "type": ["string", "null"], "format": "date-time" },
-          "content": { "type": "string" },
+          "content": { 
+            "type": "string",
+            "description": "Optional in summary mode (v2.0). Full content in evidence attachment."
+          },
           "tags": { "type": "array", "items": { "type": "string" } }
         }
       }
@@ -248,7 +324,7 @@
         },
         "open_questions": {
           "type": "array",
-          "minItems": 1,
+          "description": "Can be empty when triage_decision.status=resolved",
           "items": {
             "type": "object",
             "required": ["question"],

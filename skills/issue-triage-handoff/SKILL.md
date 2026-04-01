@@ -17,7 +17,19 @@ This skill DOES: compress noise, filter evidence, map code, produce traceable ha
 
 ## Intent Dispatch
 
-Identify user intent, then load the corresponding workflow:
+**ALL requests first go through triage decision gate (D-1)**:
+
+```
+User Request
+    ↓
+D-1: triage_decision (Load: workflows/triage-decision.md)
+    ├─ resolved → triage-summary.json + STOP
+    ├─ needs_handoff → Continue below
+    ├─ needs_more_evidence → evidence-gap-report.json + STOP
+    └─ blocked → blocker-report.json + STOP
+```
+
+**If needs_handoff**, identify user intent and load workflow:
 
 | Intent | Action |
 |--------|--------|
@@ -53,10 +65,15 @@ Minimize LLM context switches. Batch deterministic operations.
 
 ## Quick Reference
 
+- **Triage decision workflow**: `workflows/triage-decision.md` (NEW - runs first)
 - **Output schema**: `knowledge/handoff-schema.md`
 - **Evidence rules**: `knowledge/evidence-protocol.md`
 - **Core principles**: `knowledge/triage-principles.md`
-- **Output template**: `templates/handoff-template.json`
+- **Output templates**:
+    - Full handoff: `templates/handoff-template.json`
+    - Resolved summary: `templates/triage-summary.json` (NEW)
+    - Evidence gaps: `templates/evidence-gap-report.json` (NEW)
+    - Blockers: `templates/blocker-report.json` (NEW)
 - **Log collection**: `scripts/collect-log-evidence.sh`
     - Example: `./scripts/collect-log-evidence.sh <log_dir> --event "YYYY-MM-DDTHH:MM:SS" --window-seconds 300 --identifiers "id1,id2"`
     - Cleanup: `./scripts/collect-log-evidence.sh <log_dir> --cleanup`
@@ -83,6 +100,7 @@ If user intent unclear, ask:
 issue-triage-handoff/
 ├── SKILL.md
 ├── workflows/
+│   ├── triage-decision.md      # NEW - Pre-workflow decision gate
 │   ├── new-triage-handoff.md
 │   ├── handoff-refinement.md
 │   └── handoff-evaluation.md
@@ -91,7 +109,10 @@ issue-triage-handoff/
 │   ├── evidence-protocol.md
 │   └── triage-principles.md
 ├── templates/
-│   └── handoff-template.json
+│   ├── handoff-template.json
+│   ├── triage-summary.json          # NEW - Resolved cases
+│   ├── evidence-gap-report.json     # NEW - Missing evidence
+│   └── blocker-report.json          # NEW - Blockers
 ├── references/
 ├── scripts/
 ├── assets/

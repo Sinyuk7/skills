@@ -1,0 +1,37 @@
+{
+  "schema_version": "2.0",
+  
+  "triage_decision": {
+    "status": "needs_more_evidence",
+    "confidence": "medium",
+    "reasoning": "",
+    "decision_timestamp": ""
+  },
+  
+  "case_meta": {
+    "title": "",
+    "created_at": "",
+    "sources": []
+  },
+
+  "missing_evidence": [
+    {
+      "gap_type": "no_logs_in_window",
+      "description": "",
+      "severity": "critical"
+    }
+  ],
+
+  "suggested_actions": [
+    {
+      "action": "",
+      "rationale": "",
+      "priority": "high"
+    }
+  ],
+
+  "partial_findings": {
+    "what_we_know": [],
+    "what_we_dont_know": []
+  }
+}
