@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  
+  "case_meta": {
+    "title": "",
+    "handoff_id": "",
+    "created_at": "",
+    "last_modified": "",
+    "version": 1,
+    "sources": [],
+    "revision_notes": []
+  },
+
+  "context_summary": {
+    "problem_statement": "",
+    "expected_behavior": "",
+    "actual_behavior": "",
+    "environment": {
+      "os": "",
+      "version": "",
+      "branch": "",
+      "commit": "",
+      "additional": {}
+    },
+    "key_identifiers": {
+      "trace_ids": [],
+      "request_ids": [],
+      "user_ids": [],
+      "session_ids": [],
+      "additional": {}
+    },
+    "incident_window": {
+      "first_observed": null,
+      "last_observed": null,
+      "timezone": "UTC"
+    },
+    "actions_attempted": [],
+    "people_hypotheses": []
+  },
+
+  "evidence_inventory": [],
+
+  "key_signals": [],
+
+  "timeline": [],
+
+  "code_mapping": [],
+
+  "findings": {
+    "confirmed_facts": [],
+    "bounded_inferences": [],
+    "open_questions": []
+  },
+
+  "conflicts": [],
+
+  "selected_files": [],
+
+  "excluded_files": [],
+
+  "handoff_summary": {
+    "scope": "",
+    "confidence": "low",
+    "gaps": [],
+    "recommended_next_steps": [],
+    "suitable_for": []
+  }
+}

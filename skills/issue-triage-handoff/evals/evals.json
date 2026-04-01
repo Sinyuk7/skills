@@ -1,0 +1,46 @@
+{
+  "skill_name": "issue-triage-handoff",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have a bug report from our team: the payment service is returning 500 errors intermittently. Here's the issue description, some Slack messages from the team, and a zip of the last hour's logs. Can you create a handoff package for our RCA agent?",
+      "expected_output": "A structured handoff package with: case_meta populated from the issue, context_summary extracting problem details, evidence_inventory with relevant log entries, timeline of error occurrences, and open_questions about what needs further investigation. Should NOT contain root cause conclusions or fix suggestions.",
+      "files": [],
+      "expectations": [
+        "Output follows the handoff schema with all required fields",
+        "Evidence items have unique evidence_ids and source_refs",
+        "Human hypotheses from Slack are in people_hypotheses, not confirmed_facts",
+        "Code mapping (if present) includes confidence levels",
+        "open_questions section is non-empty",
+        "No patch or fix recommendations in the output"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We already have a triage handoff from yesterday. Today we got new logs that show the error started earlier than we thought, and a team member found a potentially related config change. Update the handoff with this new information.",
+      "expected_output": "Updated handoff with: version incremented, new evidence added to inventory, timeline extended with earlier events, any contradictions documented in conflicts section, and revision_notes explaining what changed.",
+      "files": [],
+      "expectations": [
+        "Version number is incremented from original",
+        "New evidence has unique IDs that don't conflict with existing",
+        "Timeline includes the earlier error occurrence",
+        "If new evidence contradicts old, conflict is documented",
+        "revision_notes explains what was updated"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Can you evaluate this handoff package and tell me if it's ready to pass to our RCA agent? I want to know what's missing or weak.",
+      "expected_output": "An evaluation report with: structural completeness check, evidence quality assessment, traceability verification, boundary adherence check, scores on multiple dimensions, and specific recommendations for improvement.",
+      "files": [],
+      "expectations": [
+        "Checks all required schema fields for presence",
+        "Identifies evidence items lacking source_refs",
+        "Flags findings without evidence backing",
+        "Checks code mapping confidence consistency",
+        "Provides numeric scores and overall verdict",
+        "Recommendations are specific and actionable"
+      ]
+    }
+  ]
+}
