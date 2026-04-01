@@ -43,12 +43,13 @@ Minimize LLM context switches. Batch deterministic operations.
 ### Deterministic batching note (time-targeted)
 
 - Use a single **event time** as the anchor: `--event "YYYY-MM-DDTHH:MM:SS"`
-- Use a fixed window (default 60s): `--window-seconds 60`
+- Use a fixed window (default 300s): `--window-seconds 300`
 - Deterministic pipeline:
   1. Select archives by **filename timestamp** within `EVENT_TIME±WINDOW_SECONDS` and expand only those
   2. Search error patterns / identifiers to get candidates
   3. Apply a second-stage **mtime window filter** to reduce noise
   4. Fail fast if no target files remain after filtering
+- Cleanup: After processing, run `./scripts/collect-log-evidence.sh <log_dir> --cleanup` to remove extracted archives from `.triage_work/`
 
 ## Quick Reference
 
@@ -57,7 +58,8 @@ Minimize LLM context switches. Batch deterministic operations.
 - **Core principles**: `knowledge/triage-principles.md`
 - **Output template**: `templates/handoff-template.json`
 - **Log collection**: `scripts/collect-log-evidence.sh`
-+   - Example: `./scripts/collect-log-evidence.sh <log_dir> --event "YYYY-MM-DDTHH:MM:SS" --window-seconds 60 --identifiers "id1,id2"`
+    - Example: `./scripts/collect-log-evidence.sh <log_dir> --event "YYYY-MM-DDTHH:MM:SS" --window-seconds 300 --identifiers "id1,id2"`
+    - Cleanup: `./scripts/collect-log-evidence.sh <log_dir> --cleanup`
 - **Code search**: `scripts/search-code-symbols.sh`
 - **Schema validation**: `schemas/handoff.schema.json`
 

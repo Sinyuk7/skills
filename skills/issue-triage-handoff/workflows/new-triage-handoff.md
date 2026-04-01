@@ -37,8 +37,9 @@ Run log evidence collection script.
 Script: ./scripts/collect-log-evidence.sh
 Input: log directory path, key identifiers, event time + fixed window
 Example:
-  ./scripts/collect-log-evidence.sh <log_dir> --event "YYYY-MM-DDTHH:MM:SS" --window-seconds 60 --identifiers "id1,id2"
+  ./scripts/collect-log-evidence.sh <log_dir> --event "YYYY-MM-DDTHH:MM:SS" --window-seconds 300 --identifiers "id1,id2"
 Output: JSON with selected target files (after match + mtime window filters)
+Cleanup: ./scripts/collect-log-evidence.sh <log_dir> --cleanup
 ```
 
 The script handles:

@@ -4,6 +4,7 @@
 #
 # Usage:
 #   ./collect-log-evidence.sh <log_dir> --event "YYYY-MM-DDTHH:MM:SS" [--window-seconds 300] [--identifiers "id1,id2"]
+#   ./collect-log-evidence.sh <log_dir> --cleanup  # Remove extraction workspace
 #
 # Notes:
 # - Targeted archive expansion: only archives whose *filename timestamp* falls within EVENT_TIME±WINDOW_SECONDS are expanded.
@@ -22,6 +23,7 @@ IDENTIFIERS=""
 START_TIME=""
 END_TIME=""
 OUTPUT_FORMAT="json"
+CLEANUP_ONLY=false
 
 # Time targeting controls
 # - We only expand archives whose filename timestamp falls within [event_time - window, event_time + window]
@@ -42,10 +44,12 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --start)
+      echo "WARNING: --start is deprecated and ignored. Use --event + --window-seconds instead." >&2
       START_TIME="$2"
       shift 2
       ;;
     --end)
+      echo "WARNING: --end is deprecated and ignored. Use --event + --window-seconds instead." >&2
       END_TIME="$2"
       shift 2
       ;;
@@ -61,11 +65,26 @@ while [[ $# -gt 0 ]]; do
       WINDOW_SECONDS="$2"
       shift 2
       ;;
+    --cleanup)
+      CLEANUP_ONLY=true
+      shift
+      ;;
     *)
       shift
       ;;
   esac
 done
+
+if [[ "$CLEANUP_ONLY" == "true" ]]; then
+  if [[ -d "$WORK_DIR" ]]; then
+    rm -rf "$WORK_DIR"
+    echo "Cleaned up extraction workspace: $WORK_DIR" >&2
+    exit 0
+  else
+    echo "No extraction workspace found at: $WORK_DIR" >&2
+    exit 0
+  fi
+fi
 
 # Error patterns to search
 ERROR_PATTERNS="error|exception|failed|timeout|panic|fatal|critical"
@@ -88,7 +107,7 @@ import os, re, sys
 from datetime import datetime, timedelta
 
 event = os.environ.get('EVENT_TIME','').strip()
-window_s = int(os.environ.get('WINDOW_SECONDS','60') or '60')
+window_s = int(os.environ.get('WINDOW_SECONDS','300') or '300')
 
 # Accept ISO-like: 2026-02-03T16:00:00 or 2026-02-03 16:00:00
 # Also accept minute precision.
@@ -217,19 +236,25 @@ if command -v rg &> /dev/null; then
       jq -c 'select(.type == "match") | {path: .data.path.text, line: .data.line_number, content: .data.lines.text}' 2>/dev/null || true
   done | sed 's/$/,/' | sed '$ s/,$//'
 else
+  mkdir -p "$WORK_DIR"
+  : > "$WORK_DIR/error_matches.json"
   for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
     grep -r -i -n -E "$ERROR_PATTERNS" "$d" 2>/dev/null | \
       head -200 | \
       while IFS=: read -r file line content; do
-        echo "    {\"path\": \"$file\", \"line\": $line, \"content\": \"$(echo \"$content\" | sed 's/\"/\\\"/g' | head -c 500)\"},"
+        content_escaped=$(printf '%s' "$content" | head -c 500 | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r/\\r/g; s/\n/\\n/g')
+        printf '    {"path": "%s", "line": %s, "content": "%s"}\n' "$file" "$line" "$content_escaped"
       done
-  done | sed '$ s/,$//'
+  done >> "$WORK_DIR/error_matches.json"
+  cat "$WORK_DIR/error_matches.json" | sed 's/$/,/' | sed '$ s/,$//'
 fi
 echo "  ],"
 
 # Step 3: Search for identifiers
 echo '  "identifier_matches": ['
 if [[ -n "$IDENTIFIERS" ]]; then
+  mkdir -p "$WORK_DIR"
+  : > "$WORK_DIR/identifier_matches.json"
   IFS=',' read -ra ID_ARRAY <<< "$IDENTIFIERS"
   for id in "${ID_ARRAY[@]}"; do
     if command -v rg &> /dev/null; then
@@ -237,17 +262,19 @@ if [[ -n "$IDENTIFIERS" ]]; then
         rg -n --json "$id" "$d" 2>/dev/null | \
           head -50 | \
           jq -c 'select(.type == "match") | {identifier: "'"$id"'", path: .data.path.text, line: .data.line_number}' 2>/dev/null || true
-      done
+      done >> "$WORK_DIR/identifier_matches.json"
     else
       for d in "${LOG_DIRS_TO_SEARCH[@]}"; do
         grep -r -n "$id" "$d" 2>/dev/null | \
           head -50 | \
           while IFS=: read -r file line content; do
-            echo "    {\"identifier\": \"$id\", \"path\": \"$file\", \"line\": $line},"
+            printf '    {"identifier": "%s", "path": "%s", "line": %s}\n' "$id" "$file" "$line"
           done || true
-      done
+      done >> "$WORK_DIR/identifier_matches.json"
     fi
-  done | sed '$ s/,$//'
+  done
+  # Emit valid JSON with proper comma handling
+  cat "$WORK_DIR/identifier_matches.json" | sed 's/$/,/' | sed '$ s/,$//'
 fi
 echo "  ],"
 
