@@ -1,0 +1,35 @@
+{
+  "skill_name": "skill-evidence-transformer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Analyze the skill-creator SKILL and tell me if it needs evidence-chaining",
+      "expected_output": "Should generate an evaluation report analyzing skill-creator's document dependencies, existing anti-hallucination mechanisms, and provide transformation recommendations",
+      "files": ["skills/skill-creator/SKILL.md"]
+    },
+    {
+      "id": 2,
+      "prompt": "Transform a simple SKILL that reads a single knowledge file into evidence-chain mode",
+      "expected_output": "Should add anti-hallucination header to SKILL.md, apply content isolation to references, and add evidence protocol to workflow files that read documents",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I have a SKILL with workflows that read multiple documents. Add evidence chain support to it.",
+      "expected_output": "Should add multi-document evidence chain protocol with <evidence_chain> tags containing multiple <evidence> entries, one per document",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Check if the ts-code-compress skill needs evidence-chain transformation",
+      "expected_output": "Should analyze the SKILL, check for document dependencies, and determine if evidence-chaining is applicable (may not be needed if SKILL doesn't read external docs)",
+      "files": ["skills/ts-code-compress/SKILL.md"]
+    },
+    {
+      "id": 5,
+      "prompt": "Apply evidence-chain transformation to a router-style SKILL that dispatches to multiple workflows",
+      "expected_output": "Should add document isolation notice to router SKILL.md, and add evidence protocols to each sub-workflow that reads documents",
+      "files": []
+    }
+  ]
+}

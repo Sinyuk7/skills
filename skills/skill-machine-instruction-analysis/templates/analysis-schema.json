@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "SKILL step classification result. Classification only, no conversion.",
+  "type": "object",
+  "properties": {
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Step number"
+          },
+          "classification": {
+            "type": "string",
+            "enum": ["deterministic", "llm", "hybrid"],
+            "description": "Step type classification"
+          },
+          "description": {
+            "type": "string",
+            "description": "Original step description"
+          }
+        },
+        "required": ["id", "classification", "description"]
+      }
+    }
+  },
+  "required": ["steps"]
+}
