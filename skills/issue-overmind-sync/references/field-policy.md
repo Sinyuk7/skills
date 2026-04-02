@@ -63,7 +63,7 @@ If a value would be a guess, skip it.
 
 Safe defaults are allowed only when they are genuinely low-risk:
 
-- `问题单解决时间`: current sync time when the case is already resolved and no better timestamp exists
+- `问题单解决时间`: current sync date when the case is already resolved and no better timestamp exists. Write date only (`YYYY-MM-DD`), never a time component.
 - `经办人`: current assignee when the user explicitly confirms the owner or the issue already shows that owner
 
 Everything else should prefer evidence over defaults.
@@ -106,6 +106,12 @@ Everything else should prefer evidence over defaults.
 
 - Prefer the root cause summary from handoff or resolve
 - Keep it short and causal, not a full debugging diary
+
+### `问题单解决时间`
+
+- Normalize to the date portion only before writing
+- Use the explicit resolution date when available; otherwise use the current sync date
+- Do not probe alternate formats after a successful write
 
 ### `备注说明`
 

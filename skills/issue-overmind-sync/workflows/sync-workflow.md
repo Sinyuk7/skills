@@ -80,7 +80,7 @@ Common field sources:
 
 - `解决方案`: resolution summary and concrete code/config change
 - `问题原因`: root cause summary from handoff or resolution
-- `问题单解决时间`: sync time or explicit resolution timestamp
+- `问题单解决时间`: use the resolved date only (`YYYY-MM-DD`), derived from an explicit resolution timestamp or the current sync date
 - `测试方法`: inferred from verification evidence such as self-test, QA, or unavailable
 - `测试环境`: inferred only when the environment is clearly stated
 - `问题类型`: only when the issue can be mapped confidently to a known option
@@ -93,6 +93,7 @@ Do not include `所属迭代` in the update payload. Treat it as read-only conte
 
 - Call `EFFICIENCY_issue_update` with the chosen field map.
 - A same-value update is acceptable as a safe smoke test when you need to verify the write path without changing business meaning.
+- Do not retry `问题单解决时间` with an alternate format. Always write the normalized date-only value once.
 - If `failedFields` is non-empty, treat the run as partial or failed based on what actually landed.
 
 ### 7. Verify

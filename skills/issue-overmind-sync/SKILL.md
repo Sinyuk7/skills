@@ -39,6 +39,7 @@ Read the resolve artifacts and fill the remaining Overmind bug fields through MC
 - For enum-like fields, fetch field config first. In practice, `EFFICIENCY_issue_get_issue_field_config` needs `issueType` for bug custom fields like `问题类型`; calling it with only `name` may fail.
 - Verify every write by rereading the issue or using returned `failedFields`. Do not trust a success message alone.
 - Never attempt to update `状态` or `所属迭代` through MCP. If the user asks to close the bug, report that `状态` is manual-only in the UI and stop there.
+- Write `问题单解决时间` as a normalized date only (`YYYY-MM-DD`); do not retry with a different timestamp format.
 - If no direct comment or reply tool exists, skip the external reply when there is no writable landing field.
 - Only write external reply content when the current issue type already exposes a writable `备注说明` field.
 - If Overmind MCP is unavailable in the current environment, say so plainly and stop immediately.
