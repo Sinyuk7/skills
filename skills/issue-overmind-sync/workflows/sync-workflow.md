@@ -1,21 +1,21 @@
 # Overmind Sync Workflow
 
-Use this workflow to directly update an Overmind bug through MCP as a plugin-style post-resolve action.
+Use this workflow after `issue-resolve` finishes. It reads resolve artifacts and fills the remaining Overmind fields through MCP.
 
 ## Purpose
 
-Translate case artifacts into direct Overmind MCP operations while keeping the case workspace as the local source of truth.
+Translate `resolve/resolution.xml` and `resolve/verification.md` into direct Overmind MCP operations.
 
 ## Inputs
 
-- A case workspace under `.issue-flow/cases/<case-id>/`
-- An explicit `issueKey` or a case whose id already matches the Overmind issue
-- Preferably `resolve/resolution.xml` and `resolve/verification.md`
+- `resolve/resolution.xml`
+- `resolve/verification.md`
+- An explicit `issueKey`
 - Optional user-specified field overrides such as assignee, test method, or issue type
 
 ## Outputs
 
-- A concise user-facing execution summary with updated fields, skipped fields, failed fields, and any manual follow-up
+- A concise execution summary with updated fields, skipped fields, failed fields, and any manual follow-up
 
 ## Procedure
 
@@ -28,8 +28,8 @@ Translate case artifacts into direct Overmind MCP operations while keeping the c
   - If the current repository does not contain that case, stop and ask for the project path or explicit case path.
   - Never fall back to `$HOME/.issue-flow/cases/<case-id>/`.
   - Never assume that `issueKey` alone implies a filesystem path.
-- Read `status.yaml` first. Prefer syncing after `resolved_verified`, `resolved_unverified`, or `closed`.
-- If the case is earlier than resolve, only continue when the user explicitly wants a partial external update.
+- Prefer syncing after resolve artifacts are complete.
+- If the case is earlier than resolve artifacts are complete, only continue when the user explicitly wants a partial external update.
 - Confirm that Overmind MCP is actually available in the current environment before doing any planning.
 - Prefer verifying by actually calling a real read tool such as `EFFICIENCY_issue_get_issue_detail` instead of only looking for server metadata.
 - If the tools are unavailable or unauthorized, stop immediately and report that limitation.
@@ -37,7 +37,6 @@ Translate case artifacts into direct Overmind MCP operations while keeping the c
 ### 2. Read The Case
 
 - Read these files only from the resolved case path inside the current project:
-  - `status.yaml`
   - `resolve/resolution.xml`
   - `resolve/verification.md`
   - `analysis/handoff.xml` when needed
@@ -122,14 +121,12 @@ Default behavior: do not write local plugin artifacts.
 Report the execution summary directly to the user:
 
 - target issue id and URL
-- source case lifecycle at sync time
+- source resolve artifacts used
 - core fields grouped into `filled`, `skipped`, `already_set`, and `not_editable`
 - fields requested, applied, skipped, and failed
 - external reply handling result
 - manual follow-up needed
 - case path used for this run
-
-Do not mirror Overmind status back into `status.yaml`. The local case lifecycle remains authoritative.
 
 ## Success Criteria
 

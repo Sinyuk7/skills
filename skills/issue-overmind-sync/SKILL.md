@@ -1,19 +1,19 @@
 ---
 name: issue-overmind-sync
-description: Use Overmind MCP to directly inspect and update an Overmind bug from issue-flow case artifacts. Use when a case already has `resolve/resolution.xml`, `resolve/verification.md`, or the user asks to "同步到 overmind", "回填问题原因/解决方案", or retry a failed Overmind update.
+description: Thin post-resolve plugin. Use after `issue-resolve` to turn `resolve/resolution.xml` and `resolve/verification.md` into Overmind field updates or an issue-thread reply through MCP.
 ---
 
 # Issue Overmind Sync
 
-Plugin-style follow-up skill for issue-flow cases.
+Thin post-resolve plugin for issue-flow cases.
 
-This is not a main `issue-flow-core` stage. It reads the shared case workspace, then directly operates on Overmind through MCP.
+This is not a main `issue-flow-core` stage. It reads resolve artifacts, then fills the remaining Overmind gaps through MCP.
 
 ## When To Use
 
-- A case is already `resolved_verified`, `resolved_unverified`, or `closed` and the user wants the result submitted to Overmind.
-- The user asks to retry a failed Overmind update or backfill bug fields after `issue-resolve`.
-- The user has an `issueKey` and wants a best-effort sync from case artifacts into Overmind without reopening the resolve stage.
+- A case already has resolve artifacts and the user wants the remaining Overmind fields filled.
+- The user asks to retry a failed Overmind update after `issue-resolve`.
+- The user wants an issue-thread reply written to `备注说明` when that field is available.
 
 ## Load These Files First
 
@@ -23,11 +23,10 @@ This is not a main `issue-flow-core` stage. It reads the shared case workspace, 
 
 ## Mission
 
-Read a resolved case and directly update the target issue in Overmind through MCP.
+Read the resolve artifacts and fill the remaining Overmind bug fields through MCP.
 
 ## Non-Negotiables
 
-- Treat `.issue-flow/cases/<case-id>/status.yaml` as the authoritative lifecycle source.
 - Do not rewrite `resolve/resolution.xml` or `resolve/verification.md` to fit Overmind.
 - Require an explicit case target or `issueKey` before writing to Overmind.
 - Resolve the case only from the current project workspace unless the user explicitly gives an absolute case path.

@@ -19,9 +19,8 @@ This note extracts the reusable workflow pattern from the manual Overmind submis
 This skill must be grounded in the real Overmind MCP tool chain:
 
 1. `EFFICIENCY_issue_get_issue_detail`
-2. `EFFICIENCY_issue_get_issue_editable_fields`
-3. `EFFICIENCY_issue_get_issue_field_config`
-4. `EFFICIENCY_issue_update`
+2. `EFFICIENCY_issue_get_issue_field_config`
+3. `EFFICIENCY_issue_update`
 
 Tested behaviors:
 
@@ -31,6 +30,7 @@ Tested behaviors:
 - `EFFICIENCY_issue_get_issue_field_config` for custom bug fields like `问题类型` works when `issueType` is provided.
 - Calling `EFFICIENCY_issue_get_issue_field_config` with only `name` can fail for those same fields.
 - A bad local-path fallback can break the skill before any MCP call happens. In testing, falling back to `/Users/<user>/.issue-flow/...` was wrong when the actual case lived under the current repository.
+- If the case workspace is missing, the skill must stop instead of continuing with Overmind-only updates.
 
 ## Design implications
 
@@ -69,3 +69,4 @@ Tested behaviors:
 - Do not claim "同步完成" if you never actually called Overmind MCP.
 - Do not fall back to creating local config files when direct MCP execution is unavailable.
 - Do not search for case files under `$HOME/.issue-flow` unless the user explicitly gave that path.
+- Do not keep going when the case workspace is missing.

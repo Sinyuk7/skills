@@ -33,7 +33,7 @@
       "files": [],
       "expectations": [
         "The skill is explicitly described as outside the main issue-flow-core stages.",
-        "The design keeps status.yaml authoritative for case lifecycle.",
+        "The design keeps resolve artifacts authoritative for the sync inputs.",
         "The design does not create local sync artifacts by default.",
         "The design stops plainly if Overmind MCP is unavailable.",
         "The design names the real Overmind update tools."
