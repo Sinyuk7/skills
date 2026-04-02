@@ -4,3 +4,4 @@ __pycache__/
 .vscode/
 
 skills/issue-triage-handoff/.triage_work
+skills/issue-flow-core/__test__
