@@ -28,8 +28,9 @@ This note extracts the reusable workflow pattern from the manual Overmind submis
 ## Recommended plugin shape
 
 - Keep this skill outside `issue-flow-core` so Overmind stays optional.
-- Read from the shared case workspace, but write plugin-owned records under `integrations/overmind/`.
+- Read from the shared case workspace, then directly call Overmind MCP.
 - Allow the skill to run after `issue-resolve`, after a manual fix, or as a retry pass after a failed external sync.
+- Do not generate local `sync.yaml` files or `integrations/` directories unless the user explicitly asks for an audit artifact.
 
 ## Candidate field derivations
 
@@ -48,3 +49,5 @@ This note extracts the reusable workflow pattern from the manual Overmind submis
 - Do not change case lifecycle just because Overmind closed or failed to close.
 - Do not rewrite resolve artifacts to make the external payload look cleaner.
 - Do not keep retrying the same close mutation when the system already proved the field path is invalid.
+- Do not claim "同步完成" if you never actually called Overmind MCP.
+- Do not fall back to creating local config files when direct MCP execution is unavailable.

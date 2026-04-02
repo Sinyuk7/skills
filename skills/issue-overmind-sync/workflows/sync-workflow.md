@@ -1,10 +1,10 @@
 # Overmind Sync Workflow
 
-Use this workflow to submit a resolved issue-flow case into Overmind as a plugin-style post-resolve action.
+Use this workflow to directly update an Overmind bug through MCP as a plugin-style post-resolve action.
 
 ## Purpose
 
-Translate case artifacts into an Overmind update while keeping the case workspace as the local source of truth.
+Translate case artifacts into direct Overmind MCP operations while keeping the case workspace as the local source of truth.
 
 ## Inputs
 
@@ -15,9 +15,7 @@ Translate case artifacts into an Overmind update while keeping the case workspac
 
 ## Outputs
 
-- `integrations/overmind/sync.yaml`
-- Optional `integrations/overmind/history/<timestamp>.md` for long retries or field-debugging notes
-- A concise user-facing sync summary with updated fields, skipped fields, and any manual follow-up
+- A concise user-facing execution summary with updated fields, skipped fields, failed fields, and any manual follow-up
 
 ## Procedure
 
@@ -26,6 +24,7 @@ Translate case artifacts into an Overmind update while keeping the case workspac
 - Resolve the case path and issue key before making changes.
 - Read `status.yaml` first. Prefer syncing after `resolved_verified`, `resolved_unverified`, or `closed`.
 - If the case is earlier than resolve, only continue when the user explicitly wants a partial external update.
+- Confirm that Overmind MCP is actually available in the current environment before doing any planning. If it is not available, stop immediately and report that limitation.
 
 ### 2. Read the case, not just the user prompt
 
@@ -40,6 +39,7 @@ Translate case artifacts into an Overmind update while keeping the case workspac
 - Discover the editable field list for that issue type before trying to write.
 - For every enum-like field you plan to update, fetch the option metadata and map labels to option ids.
 - Treat close/complete actions as separate from ordinary field updates. A visible status does not mean the field is writable.
+- Prefer the domain-specific Overmind MCP issue methods. Do not rely on generic MCP resource browsing if the server does not expose it.
 - Build a "core field gap list" by intersecting:
   - fields visible on the current issue
   - fields editable through the API
@@ -59,7 +59,7 @@ Use this priority order for writes:
 
 - First pass: core missing fields only
 - Second pass: secondary helpful fields such as description notes
-- Third pass: close or complete action
+- Third pass: close or complete action when the user explicitly asks for it
 
 Common field sources:
 
@@ -78,7 +78,7 @@ Phase A: update core missing fields that are clearly writable and safely derivab
 
 Phase B: update secondary or rich-text summary fields such as description or solution notes when supported and useful.
 
-Phase C: attempt close or complete only after the case details are already synced and the API path is known to work.
+Phase C: attempt close or complete only after the case details are already synced, the API path is known to work, and the user asked for a status change.
 
 After each phase, inspect returned failures and reread the issue when needed.
 
@@ -89,9 +89,11 @@ After each phase, inspect returned failures and reread the issue when needed.
 - If a tool claims success but a follow-up read disagrees, treat the write as unverified and report it honestly.
 - Retrying is allowed, but do not repeat the same failing mutation without new evidence about editability or required values.
 
-### 7. Write plugin-owned traceability
+### 7. Report The Actual Execution
 
-Write `integrations/overmind/sync.yaml` with:
+Default behavior: do not write local plugin artifacts.
+
+Report the execution summary directly to the user:
 
 - target issue id and URL
 - source case lifecycle at sync time
@@ -99,7 +101,6 @@ Write `integrations/overmind/sync.yaml` with:
 - fields requested, applied, skipped, and failed
 - close attempt result
 - manual follow-up needed
-- last verification timestamp
 
 Do not mirror Overmind status back into `status.yaml`. The local case lifecycle remains authoritative.
 
@@ -108,4 +109,4 @@ Do not mirror Overmind status back into `status.yaml`. The local case lifecycle 
 - Overmind changes are based on case artifacts, not ad hoc freehand edits.
 - Partial success is explicit.
 - Field discovery happens before enum updates.
-- The sync can be retried later from plugin-owned records without reopening resolve.
+- The sync directly uses Overmind MCP instead of generating local placeholder files.

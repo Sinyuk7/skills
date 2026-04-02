@@ -2,6 +2,12 @@
 
 Keep the policy simple: discover the current bug form first, then fill only the core missing fields we can justify.
 
+This skill is execution-oriented:
+
+- Default behavior is to update Overmind directly through MCP.
+- If MCP is unavailable, stop and report that fact.
+- Do not create local sync plans or sidecar files unless the user explicitly asks for them.
+
 ## Assumption
 
 Different Overmind bug types may expose different fields, defaults, and writable paths.

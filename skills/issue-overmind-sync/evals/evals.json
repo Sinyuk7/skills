@@ -4,12 +4,13 @@
     {
       "id": 1,
       "prompt": "帮我把 `.issue-flow/cases/OMMUSIC-3397323/` 这个 case 的处理结果同步到 overmind。能关就关，关不了至少把问题原因、解决方案、测试方法这些字段补齐。",
-      "expected_output": "The skill reads the resolved case artifacts, discovers editable Overmind fields before writing, performs a best-effort sync, and records the outcome under integrations/overmind/sync.yaml.",
+      "expected_output": "The skill reads the resolved case artifacts, discovers editable Overmind fields before writing, performs a best-effort sync through Overmind MCP, and reports the actual execution result without creating local sync files.",
       "files": [],
       "expectations": [
         "The workflow treats the case workspace as the source of truth.",
         "The workflow separates field updates from close attempts.",
-        "The result explicitly reports partial success or manual follow-up when some fields cannot be updated."
+        "The result explicitly reports partial success or manual follow-up when some fields cannot be updated.",
+        "The workflow does not create integrations/overmind/sync.yaml by default."
       ]
     },
     {
@@ -25,13 +26,14 @@
     },
     {
       "id": 3,
-      "prompt": "不要把这个流程塞进 issue-resolve。请设计一个插件型 skill，从 resolution.xml 和 verification.md 推导 overmind 更新内容，并留下可重试的同步记录。",
-      "expected_output": "The skill is positioned as a plugin-style post-resolve integration, writes plugin-owned sidecar artifacts, and does not require changes to issue-flow-core lifecycle semantics.",
+      "prompt": "不要把这个流程塞进 issue-resolve。请设计一个插件型 skill，从 resolution.xml 和 verification.md 推导 overmind 更新内容，并直接调用 overmind mcp 执行。",
+      "expected_output": "The skill is positioned as a plugin-style post-resolve integration, directly uses Overmind MCP for execution, and does not require changes to issue-flow-core lifecycle semantics.",
       "files": [],
       "expectations": [
         "The skill is explicitly described as outside the main issue-flow-core stages.",
-        "The design writes plugin-owned artifacts under integrations/overmind/.",
-        "The design keeps status.yaml authoritative for case lifecycle."
+        "The design keeps status.yaml authoritative for case lifecycle.",
+        "The design does not create local sync artifacts by default.",
+        "The design stops plainly if Overmind MCP is unavailable."
       ]
     }
   ]
