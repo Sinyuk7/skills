@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<investigation case-id="{{case_id}}" timestamp="{{timestamp}}">
+  <evidence_refs>
+    <!-- Pointers to curated materials in curated/ -->
+    <issue_material id="{{source_id}}" path="curated/{{path}}" type="{{type}}" />
+    <issue_material id="{{source_id}}" path="curated/{{path}}" type="{{type}}" />
+    
+    <!-- Repository evidence as direct references -->
+    <repository_ref type="file" path="{{file_path}}" />
+    <repository_ref type="symbol" path="{{file_path}}" symbol="{{symbol_name}}" line="{{line}}" />
+    <repository_ref type="line_range" path="{{file_path}}" start="{{start}}" end="{{end}}" />
+  </evidence_refs>
+
+  <confirmed>
+    <!-- Facts verified from evidence -->
+    <fact ref="{{evidence_id}}">{{confirmed_fact}}</fact>
+    <fact ref="{{evidence_id}}">{{confirmed_fact}}</fact>
+  </confirmed>
+
+  <inferred>
+    <!-- Conclusions drawn from evidence -->
+    <inference basis="{{evidence_ids}}">{{inference}}</inference>
+    <inference basis="{{evidence_ids}}">{{inference}}</inference>
+  </inferred>
+
+  <open_questions>
+    <!-- Unresolved questions from investigation -->
+    <question>{{question}}</question>
+    <question>{{question}}</question>
+  </open_questions>
+
+  <details>
+    <!-- Expanded analysis and narrative context -->
+    <section title="{{title}}">
+      {{analysis}}
+    </section>
+    
+    <section title="{{title}}">
+      {{analysis}}
+    </section>
+  </details>
+</investigation>

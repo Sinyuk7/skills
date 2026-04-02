@@ -1,0 +1,8 @@
+case_id: "{{case_id}}"
+items:
+  - id: SRC-001
+    source: "{{source_path}}"
+    status: curated
+    curated_path: "curated/{{bucket}}/{{name}}"
+    relevance: direct
+    note: "{{note}}"

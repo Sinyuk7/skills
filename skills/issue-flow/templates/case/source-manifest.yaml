@@ -1,0 +1,6 @@
+case_id: "{{case_id}}"
+sources:
+  - kind: path
+    value: "{{source_path}}"
+    note: "{{note}}"
+captured_at: "{{timestamp}}"

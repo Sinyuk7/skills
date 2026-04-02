@@ -1,0 +1,10 @@
+case_id: "{{case_id}}"
+lifecycle: new
+stage: collect
+updated_at: "{{timestamp}}"
+readiness:
+  collect_ready: false
+  handoff_ready: false
+  resolve_ready: false
+  close_ready: false
+notes: ""
