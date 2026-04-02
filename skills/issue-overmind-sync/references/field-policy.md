@@ -8,6 +8,7 @@ This skill is execution-oriented:
 - If MCP is unavailable, stop and report that fact.
 - Do not create local sync plans or sidecar files unless the user explicitly asks for them.
 - Base writable decisions on live responses from `EFFICIENCY_issue_get_issue_editable_fields`, not on assumptions from old cases.
+- Base case-file reads on the current project repository. Do not derive a case path from `issueKey` alone or fall back to `$HOME/.issue-flow`.
 
 ## Assumption
 

@@ -30,6 +30,8 @@ Read a resolved case and directly update the target issue in Overmind through MC
 - Treat `.issue-flow/cases/<case-id>/status.yaml` as the authoritative lifecycle source.
 - Do not rewrite `resolve/resolution.xml` or `resolve/verification.md` to fit Overmind.
 - Require an explicit case target or `issueKey` before writing to Overmind.
+- Resolve the case only from the current project workspace unless the user explicitly gives an absolute case path.
+- Never default to `$HOME/.issue-flow/...` or infer a case path from `issueKey` alone.
 - Before doing any planning, confirm the Overmind MCP tools are actually callable in the current environment.
 - Use the real Overmind tools, not generic placeholders:
   - `EFFICIENCY_issue_get_issue_detail`

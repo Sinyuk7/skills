@@ -38,6 +38,17 @@
         "The design stops plainly if Overmind MCP is unavailable.",
         "The design names the real Overmind update tools."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "同步到 overmind。case 是当前仓库里的 `.issue-flow/cases/OMMUSIC-3395961/`，不要去 `~/.issue-flow` 下面找。",
+      "expected_output": "The skill resolves the case from the current project repository, refuses to guess a home-directory case path, and stops with a precise path error if the current repository does not contain the case.",
+      "files": [],
+      "expectations": [
+        "The workflow does not default to `$HOME/.issue-flow`.",
+        "The workflow treats issueKey and case path as different things.",
+        "The workflow reports the case path used for the run."
+      ]
     }
   ]
 }

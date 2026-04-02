@@ -32,6 +32,7 @@ Tested behaviors:
 - `EFFICIENCY_issue_get_issue_field_config` for custom bug fields like `问题类型` works when `issueType` is provided.
 - Calling `EFFICIENCY_issue_get_issue_field_config` with only `name` can fail for those same fields.
 - `EFFICIENCY_issue_get_issue_editable_fields` may return a narrower set than the full issue detail field list, so writable status must come from the live response, not assumptions.
+- A bad local-path fallback can break the skill before any MCP call happens. In testing, falling back to `/Users/<user>/.issue-flow/...` was wrong when the actual case lived under the current repository.
 
 ## Design implications
 
@@ -69,3 +70,4 @@ Tested behaviors:
 - Do not keep retrying the same close mutation when the system already proved the field path is invalid.
 - Do not claim "同步完成" if you never actually called Overmind MCP.
 - Do not fall back to creating local config files when direct MCP execution is unavailable.
+- Do not search for case files under `$HOME/.issue-flow` unless the user explicitly gave that path.

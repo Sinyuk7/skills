@@ -22,6 +22,12 @@ Translate case artifacts into direct Overmind MCP operations while keeping the c
 ### 1. Confirm MCP Works First
 
 - Resolve the case path and issue key before making changes.
+- Case path resolution rules:
+  - If the user gave an absolute case path, use it directly.
+  - Otherwise, start from the current working directory and walk upward to find the current repository root that contains `.issue-flow/cases/<case-id>/`.
+  - If the current repository does not contain that case, stop and ask for the project path or explicit case path.
+  - Never fall back to `$HOME/.issue-flow/cases/<case-id>/`.
+  - Never assume that `issueKey` alone implies a filesystem path.
 - Read `status.yaml` first. Prefer syncing after `resolved_verified`, `resolved_unverified`, or `closed`.
 - If the case is earlier than resolve, only continue when the user explicitly wants a partial external update.
 - Confirm that Overmind MCP is actually available in the current environment before doing any planning.
@@ -30,6 +36,11 @@ Translate case artifacts into direct Overmind MCP operations while keeping the c
 
 ### 2. Read The Case
 
+- Read these files only from the resolved case path inside the current project:
+  - `status.yaml`
+  - `resolve/resolution.xml`
+  - `resolve/verification.md`
+  - `analysis/handoff.xml` when needed
 - Read `resolve/resolution.xml` for outcome type, summary, changed files, and delivery notes.
 - Read `resolve/verification.md` for verification method, environment, and confidence.
 - Read `analysis/handoff.xml` only when resolve artifacts are missing key context.
@@ -119,6 +130,7 @@ Report the execution summary directly to the user:
 - fields requested, applied, skipped, and failed
 - close attempt result
 - manual follow-up needed
+- case path used for this run
 
 Do not mirror Overmind status back into `status.yaml`. The local case lifecycle remains authoritative.
 
