@@ -104,6 +104,31 @@
    - ⚠️ 如果存在真实目录/文件，显示警告（`--force` 可覆盖）
 4. 输出详细的统计信息
 
+## ⚠️ Agent 缓存注意事项
+
+`init.sh` 的职责只是把 skill 同步到目标目录。它**不会**：
+
+- 热更新已经在 agent 会话里激活过的 skill 指令
+- 清理 agent 自己的 skill 缓存或索引
+- 改变 agent 运行时使用的工作目录（cwd）
+
+这点对 `CodeMaker` 尤其重要：
+
+- 已经激活过的 skill，通常会在激活时把 `SKILL.md` 内容快照进当前会话
+- 即使你随后重新执行 `./init.sh --codemaker`，当前会话也可能继续使用旧快照
+- 某次运行里的相对路径解析，仍然取决于 CodeMaker 当前打开的工程 / 会话 cwd，不取决于 `init.sh`
+
+推荐做法：
+
+```bash
+# 1. 同步磁盘上的 skill
+./init.sh --codemaker
+
+# 2. 然后新开一个聊天，必要时重启 CodeMaker
+```
+
+如果你刚修改了 `SKILL.md`、workflow 或 template，看到行为没变，优先怀疑是 agent 会话缓存，而不是 symlink 没更新。
+
 ## 📊 输出示例
 
 ```bash

@@ -191,6 +191,8 @@ NOTES:
     - Uses absolute symlink paths to avoid resolution issues
     - On Windows, requires Developer Mode or admin privileges for symlinks
     - Skips conflicts by default
+    - Sync updates files on disk only; it does NOT hot-reload already-activated skills
+    - Some agents may cache skill content per session/thread and require a new chat or restart
     - --force only overrides symlinks (safe)
     - --force-all WILL DELETE real directories (use with extreme caution!)
     - Default agents: .agents (canonical), .claude, .codex
@@ -384,6 +386,26 @@ create_symlink() {
     fi
 }
 
+print_post_sync_notes() {
+    local has_codemaker=0
+
+    for agent_name in "${SELECTED_AGENTS[@]}"; do
+        if [[ "$agent_name" == "codemaker" ]]; then
+            has_codemaker=1
+            break
+        fi
+    done
+
+    if [[ $has_codemaker -eq 1 ]]; then
+        echo ""
+        log_warning "CodeMaker caveat:"
+        echo "  - init.sh only syncs skill files on disk."
+        echo "  - Already-activated skills can keep the old instruction snapshot for the current session/thread."
+        echo "  - Start a new chat or restart CodeMaker after changing SKILL content."
+        echo "  - Runtime cwd still comes from CodeMaker's active workspace/session, not from init.sh."
+    fi
+}
+
 # ========================================
 # Main Logic
 # ========================================
@@ -549,6 +571,7 @@ main() {
         log_info "This was a dry-run. Run without --dry-run to apply changes."
     elif [[ $total_failed -eq 0 ]]; then
         log_success "Sync completed successfully!"
+        print_post_sync_notes
     else
         log_warning "Sync completed with some failures"
         exit 1
