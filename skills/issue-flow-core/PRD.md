@@ -54,6 +54,10 @@ That caused several design problems:
 - Sensitive-data redaction or privacy-preserving sharing layer in v1
 - Automatic import of legacy `issue-triage-handoff` artifacts
 
+Optional external sync skills may still exist in separate skill directories, but
+they are plugins on top of the case workspace rather than additional core
+stages.
+
 ## 5. Primary User Story
 
 As a teammate investigating a bug or issue, I want to create a stable case
