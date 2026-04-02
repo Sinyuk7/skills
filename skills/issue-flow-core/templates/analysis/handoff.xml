@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<handoff case-id="{{case_id}}" timestamp="{{timestamp}}">
+  <summary>
+    <!-- Concise downstream summary (2-4 paragraphs) -->
+    {{summary}}
+  </summary>
+
+  <code_context>
+    <!-- Relevant repository context as direct references -->
+    <affected_files>
+      <file path="{{file_path}}" reason="{{reason}}" />
+      <file path="{{file_path}}" reason="{{reason}}" />
+    </affected_files>
+    
+    <key_symbols>
+      <symbol path="{{file_path}}" name="{{symbol}}" line="{{line}}" />
+      <symbol path="{{file_path}}" name="{{symbol}}" line="{{line}}" />
+    </key_symbols>
+    
+    <critical_sections>
+      <section path="{{file_path}}" start="{{start}}" end="{{end}}" note="{{note}}" />
+    </critical_sections>
+  </code_context>
+
+  <known>
+    <!-- What is definitively known -->
+    <item>{{known_item}}</item>
+    <item>{{known_item}}</item>
+  </known>
+
+  <investigation_ref>
+    <!-- Pointer to full investigation record -->
+    analysis/investigation.xml
+  </investigation_ref>
+  
+  <issue_context_ref>
+    <!-- Pointer to project-level context if used -->
+    ISSUE_CONTEXT.md
+  </issue_context_ref>
+</handoff>

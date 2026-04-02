@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resolution case-id="{{case_id}}" timestamp="{{timestamp}}">
+  <summary>
+    <!-- Brief description of the resolution -->
+    {{summary}}
+  </summary>
+
+  <outcome type="{{type}}">
+    <!-- type: code_fix, config_change, non_code_conclusion, external -->
+    {{outcome_description}}
+  </outcome>
+
+  <delivery>
+    <!-- Delivery metadata when resolution produces code changes -->
+    <changes>
+      <file path="{{file_path}}" action="{{action}}" />
+      <file path="{{file_path}}" action="{{action}}" />
+    </changes>
+    
+    <commit sha="{{sha}}" branch="{{branch}}" />
+    <pr number="{{pr_number}}" url="{{pr_url}}" />
+  </delivery>
+
+  <verification status="{{status}}">
+    <!-- status: verified, partial, unavailable -->
+    <!-- Detailed verification steps in resolve/verification.md -->
+    <summary>{{verification_summary}}</summary>
+    <verification_ref>resolve/verification.md</verification_ref>
+  </verification>
+
+  <handoff_ref>
+    <!-- Pointer to the handoff this resolution addresses -->
+    analysis/handoff.xml
+  </handoff_ref>
+</resolution>

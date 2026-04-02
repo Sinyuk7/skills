@@ -1,0 +1,18 @@
+case_id: "{{case_id}}"
+timestamp: "{{timestamp}}"
+
+recommended_action: "{{action}}"  # resolve, collect, external, none, blocked
+
+confidence: "{{confidence}}"  # high, medium, low
+
+verification_status: "{{verification_status}}"  # optional until close; use verified, partial, unavailable when closing
+
+reasoning: |
+  {{reasoning}}
+
+prerequisites:
+  - "{{prerequisite}}"
+  - "{{prerequisite}}"
+
+notes: |
+  {{additional_notes}}
