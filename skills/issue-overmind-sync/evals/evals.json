@@ -4,26 +4,26 @@
     {
       "id": 1,
       "prompt": "帮我把 `.issue-flow/cases/OMMUSIC-3397323/` 这个 case 的处理结果同步到 overmind。能关就关，关不了至少把问题原因、解决方案、测试方法这些字段补齐。",
-      "expected_output": "The skill reads the resolved case artifacts, uses `EFFICIENCY_issue_get_issue_detail` / `EFFICIENCY_issue_get_issue_editable_fields` / `EFFICIENCY_issue_get_issue_field_config` / `EFFICIENCY_issue_update`, performs a best-effort sync through Overmind MCP, and reports the actual execution result without creating local sync files.",
+      "expected_output": "The skill reads the resolved case artifacts, uses `EFFICIENCY_issue_get_issue_detail` / `EFFICIENCY_issue_get_issue_field_config` / `EFFICIENCY_issue_update`, performs a template-driven sync through Overmind MCP, and reports the actual execution result without creating local sync files.",
       "files": [],
       "expectations": [
         "The workflow treats the case workspace as the source of truth.",
         "The workflow uses the real EFFICIENCY_issue_* tools rather than generic Overmind placeholders.",
-        "The workflow separates field updates from close attempts.",
+        "The workflow treats status as read-only context and does not write it.",
         "The result explicitly reports partial success or manual follow-up when some fields cannot be updated.",
         "The workflow does not create integrations/overmind/sync.yaml by default."
       ]
     },
     {
       "id": 2,
-      "prompt": "重新提交一下这个 BUG 的处理状态，刚才 overmind 说状态字段失败了。先看看哪些字段可编辑，再补齐能补齐的字段。",
-      "expected_output": "The skill reacts to the prior failure by checking editability first, avoids assuming status is writable, and retries only the supported updates.",
+      "prompt": "重新提交一下这个 BUG 的处理结果，先按模板把能补齐的字段补齐。",
+      "expected_output": "The skill retries the supported fields without treating status as an MCP write target, and reports any skipped or failed fields explicitly.",
       "files": [],
       "expectations": [
-        "The workflow requires editable-field discovery before enum or status writes.",
         "The workflow fetches field config for enum-like fields before writing them.",
         "The workflow records failed and skipped fields rather than hiding them.",
-        "The workflow avoids repeating the same failing close mutation without new evidence."
+        "The workflow avoids repeating the same failing close mutation without new evidence.",
+        "The workflow skips external reply when there is no writable landing field."
       ]
     },
     {

@@ -7,7 +7,6 @@ This skill is execution-oriented:
 - Default behavior is to update Overmind directly through MCP.
 - If MCP is unavailable, stop and report that fact.
 - Do not create local sync plans or sidecar files unless the user explicitly asks for them.
-- Base writable decisions on live responses from `EFFICIENCY_issue_get_issue_editable_fields`, not on assumptions from old cases.
 - Base case-file reads on the current project repository. Do not derive a case path from `issueKey` alone or fall back to `$HOME/.issue-flow`.
 
 ## Assumption
@@ -22,15 +21,11 @@ Prefer this outcome order:
 
 1. Fill the core business fields that are still missing or still show placeholder values such as `请选择`
 2. Fill secondary explanatory fields when the source is strong
-3. Attempt close or status transition only after the core fields are in a good state
+3. Skip status transition through MCP
 
 ## How To Detect "Needs Fill"
 
-Treat a field as needing attention when all of these are true:
-
-- the field is visible on the current issue
-- the field is editable through the available API path
-- the current value is empty, null, blank, or a placeholder such as `请选择`
+Treat a field as needing attention when the current value is empty, null, blank, or a placeholder such as `请选择`.
 
 Do not treat already-populated fields as mandatory rewrites unless the user explicitly asks to override them.
 
@@ -45,11 +40,13 @@ For car-bug style issues like the example in `提交 BUG.md`, prioritize this bu
 - `测试环境`
 - `测试方法`
 - `问题发生阶段`
-- `所属迭代`
 - `解决方案`
 - `问题原因`
 
 `问题发生时间` is usually source context rather than a sync-time derived field. Read it for context, but do not overwrite it unless the user explicitly requests correction.
+
+`备注说明` is a possible landing field for the issue reply only when the current issue type exposes it as writable. If it is not writable, skip the reply entirely.
+`所属迭代` is read-only context for this skill and must not be written back.
 
 ## Source Priority
 
@@ -100,11 +97,6 @@ Everything else should prefer evidence over defaults.
 - Usually requires product context
 - Fill only when the issue context clearly indicates a stage such as `应用适配中`
 
-### `所属迭代`
-
-- High-risk field because it often expects an internal object id rather than plain text
-- Default behavior: detect that it is missing, report it, and skip auto-fill unless a trustworthy id or mapping source is available
-
 ### `解决方案`
 
 - Prefer the concrete patch summary from `resolve/resolution.xml`
@@ -115,19 +107,23 @@ Everything else should prefer evidence over defaults.
 - Prefer the root cause summary from handoff or resolve
 - Keep it short and causal, not a full debugging diary
 
+### `备注说明`
+
+- Use only for the issue reply content when the field is writable
+- Keep the content to two surface-level parts: `原因` and `处理方式`
+- Skip entirely when the current issue type does not expose it
+
 ## Recommended Execution Order
 
 1. Call `EFFICIENCY_issue_get_issue_detail`
-2. Call `EFFICIENCY_issue_get_issue_editable_fields`
-3. For enum-like fields, call `EFFICIENCY_issue_get_issue_field_config`
-4. Intersect with the core field bucket
-5. Split into:
+2. For enum-like fields, call `EFFICIENCY_issue_get_issue_field_config`
+3. Intersect with the core field bucket
+4. Split into:
    - missing and fillable
    - missing but not safely derivable
    - already filled
-   - visible but not editable
-6. Call `EFFICIENCY_issue_update`
-7. Reread the issue and report the other groups explicitly
+5. Call `EFFICIENCY_issue_update`
+6. Reread the issue and report the other groups explicitly
 
 ## Expected Behavior On Your Example Bug
 
@@ -135,5 +131,5 @@ For a bug like `OMMUSIC-3397323`, the skill should likely:
 
 - inspect the listed car-bug fields
 - fill fields like `问题单解决时间`, `问题类型`, `测试环境`, `测试方法`, `问题发生阶段`, `解决方案`, and `问题原因` only when the values are supported
-- leave `所属迭代` as skipped if there is no trustworthy id or mapping
-- attempt status/close separately after the field backfill pass
+- never write `所属迭代`
+- skip status/close through MCP

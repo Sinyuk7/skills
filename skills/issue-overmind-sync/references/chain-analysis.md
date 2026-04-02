@@ -9,11 +9,10 @@ This note extracts the reusable workflow pattern from the manual Overmind submis
 3. The agent tried a direct close action early and reported success.
 4. The user reported that the close did not actually stick.
 5. A later retry exposed `failedFields: ["状态"]`, showing the first success signal was not enough.
-6. The agent then queried editable fields and learned that the visible status field was not writable through the same path.
-7. The agent fell back to updating description and solution-style fields that were writable.
-8. The user asked for a broader set of business fields such as `问题类型`, `问题单解决时间`, `测试环境`, and `问题原因`.
-9. The agent fetched field metadata and option lists one field at a time, then mapped human labels to option ids.
-10. The agent updated the fields that had known mappings and left `所属迭代` unresolved because no safe value was available.
+6. The agent continued with ordinary field updates instead of treating status as the only signal.
+7. The user asked for a broader set of business fields such as `问题类型`, `问题单解决时间`, `测试环境`, and `问题原因`.
+8. The agent fetched field metadata and option lists one field at a time, then mapped human labels to option ids.
+9. The agent updated the fields that had known mappings and treated `所属迭代` as read-only context.
 
 ## Tested MCP Chain
 
@@ -31,18 +30,16 @@ Tested behaviors:
 - A same-value update such as `{\"测试方法\":\"开发自测\"}` is a safe smoke test for the write path.
 - `EFFICIENCY_issue_get_issue_field_config` for custom bug fields like `问题类型` works when `issueType` is provided.
 - Calling `EFFICIENCY_issue_get_issue_field_config` with only `name` can fail for those same fields.
-- `EFFICIENCY_issue_get_issue_editable_fields` may return a narrower set than the full issue detail field list, so writable status must come from the live response, not assumptions.
 - A bad local-path fallback can break the skill before any MCP call happens. In testing, falling back to `/Users/<user>/.issue-flow/...` was wrong when the actual case lived under the current repository.
 
 ## Design implications
 
 - Separate field updates from close actions. They fail differently and need different fallback paths.
 - Always verify writes after the API reports success. A success banner alone is not evidence.
-- Discover editability before mutating. A field may be visible in issue details but still not writable.
 - Enum fields require label-to-id lookup, not raw label writes.
 - Partial success is normal and should be modeled explicitly.
 - User-specified values outrank inferred defaults.
-- Missing values such as `所属迭代` should become follow-up items, not guessed writes.
+- Missing values such as `所属迭代` should remain read-only context, not guessed writes.
 
 ## Recommended plugin shape
 
@@ -61,7 +58,8 @@ Tested behaviors:
 | `测试方法` | `resolve/verification.md` |
 | `测试环境` | `resolve/verification.md` when clearly stated |
 | `问题类型` | explicit user choice, otherwise cautious inference |
-| `状态/关闭` | dedicated action or verified writable field path only |
+| `备注说明` | external reply text when writable |
+| `所属迭代` | read-only context only |
 
 ## What not to do
 
