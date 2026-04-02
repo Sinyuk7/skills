@@ -1,5 +1,0 @@
-case_id: "{{case_id}}"
-commits:
-  - sha: "{{sha}}"
-    branch: "{{branch}}"
-    note: "{{note}}"

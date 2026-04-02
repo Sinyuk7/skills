@@ -1,8 +1,0 @@
-case_id: "{{case_id}}"
-locations:
-  - file: "{{relative_path}}"
-    symbols:
-      - "{{symbol}}"
-    evidence_refs:
-      - "{{evidence_id}}"
-    note: "{{why_it_matters}}"
