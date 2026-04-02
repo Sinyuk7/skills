@@ -15,6 +15,24 @@ This note extracts the reusable workflow pattern from the manual Overmind submis
 9. The agent fetched field metadata and option lists one field at a time, then mapped human labels to option ids.
 10. The agent updated the fields that had known mappings and left `所属迭代` unresolved because no safe value was available.
 
+## Tested MCP Chain
+
+This skill must be grounded in the real Overmind MCP tool chain:
+
+1. `EFFICIENCY_issue_get_issue_detail`
+2. `EFFICIENCY_issue_get_issue_editable_fields`
+3. `EFFICIENCY_issue_get_issue_field_config`
+4. `EFFICIENCY_issue_update`
+
+Tested behaviors:
+
+- `EFFICIENCY_issue_get_issue_detail` works with `issueKey`.
+- `EFFICIENCY_issue_update` works for direct field writes and returns `failedFields`.
+- A same-value update such as `{\"测试方法\":\"开发自测\"}` is a safe smoke test for the write path.
+- `EFFICIENCY_issue_get_issue_field_config` for custom bug fields like `问题类型` works when `issueType` is provided.
+- Calling `EFFICIENCY_issue_get_issue_field_config` with only `name` can fail for those same fields.
+- `EFFICIENCY_issue_get_issue_editable_fields` may return a narrower set than the full issue detail field list, so writable status must come from the live response, not assumptions.
+
 ## Design implications
 
 - Separate field updates from close actions. They fail differently and need different fallback paths.

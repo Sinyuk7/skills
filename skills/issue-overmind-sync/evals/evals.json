@@ -4,10 +4,11 @@
     {
       "id": 1,
       "prompt": "帮我把 `.issue-flow/cases/OMMUSIC-3397323/` 这个 case 的处理结果同步到 overmind。能关就关，关不了至少把问题原因、解决方案、测试方法这些字段补齐。",
-      "expected_output": "The skill reads the resolved case artifacts, discovers editable Overmind fields before writing, performs a best-effort sync through Overmind MCP, and reports the actual execution result without creating local sync files.",
+      "expected_output": "The skill reads the resolved case artifacts, uses `EFFICIENCY_issue_get_issue_detail` / `EFFICIENCY_issue_get_issue_editable_fields` / `EFFICIENCY_issue_get_issue_field_config` / `EFFICIENCY_issue_update`, performs a best-effort sync through Overmind MCP, and reports the actual execution result without creating local sync files.",
       "files": [],
       "expectations": [
         "The workflow treats the case workspace as the source of truth.",
+        "The workflow uses the real EFFICIENCY_issue_* tools rather than generic Overmind placeholders.",
         "The workflow separates field updates from close attempts.",
         "The result explicitly reports partial success or manual follow-up when some fields cannot be updated.",
         "The workflow does not create integrations/overmind/sync.yaml by default."
@@ -20,6 +21,7 @@
       "files": [],
       "expectations": [
         "The workflow requires editable-field discovery before enum or status writes.",
+        "The workflow fetches field config for enum-like fields before writing them.",
         "The workflow records failed and skipped fields rather than hiding them.",
         "The workflow avoids repeating the same failing close mutation without new evidence."
       ]
@@ -33,7 +35,8 @@
         "The skill is explicitly described as outside the main issue-flow-core stages.",
         "The design keeps status.yaml authoritative for case lifecycle.",
         "The design does not create local sync artifacts by default.",
-        "The design stops plainly if Overmind MCP is unavailable."
+        "The design stops plainly if Overmind MCP is unavailable.",
+        "The design names the real Overmind update tools."
       ]
     }
   ]

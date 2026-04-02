@@ -30,10 +30,17 @@ Read a resolved case and directly update the target issue in Overmind through MC
 - Treat `.issue-flow/cases/<case-id>/status.yaml` as the authoritative lifecycle source.
 - Do not rewrite `resolve/resolution.xml` or `resolve/verification.md` to fit Overmind.
 - Require an explicit case target or `issueKey` before writing to Overmind.
+- Before doing any planning, confirm the Overmind MCP tools are actually callable in the current environment.
+- Use the real Overmind tools, not generic placeholders:
+  - `EFFICIENCY_issue_get_issue_detail`
+  - `EFFICIENCY_issue_get_issue_editable_fields`
+  - `EFFICIENCY_issue_get_issue_field_config`
+  - `EFFICIENCY_issue_update`
 - Discover editable fields before building the update payload.
+- For enum-like fields, fetch field config first. In practice, `EFFICIENCY_issue_get_issue_field_config` needs `issueType` for bug custom fields like `问题类型`; calling it with only `name` may fail.
 - Verify every write by rereading the issue or using returned `failedFields`. Do not trust a success message alone.
 - If Overmind MCP is unavailable in the current environment, say so plainly and stop immediately.
-- Do not create `sync.yaml`, `integrations/overmind/`, or any other local placeholder artifacts unless the user explicitly asks for a local audit record.
+- Do not create `sync.yaml`, `integrations/overmind/`, or any other local placeholder artifacts.
 
 ## Exit
 

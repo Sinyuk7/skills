@@ -7,6 +7,7 @@ This skill is execution-oriented:
 - Default behavior is to update Overmind directly through MCP.
 - If MCP is unavailable, stop and report that fact.
 - Do not create local sync plans or sidecar files unless the user explicitly asks for them.
+- Base writable decisions on live responses from `EFFICIENCY_issue_get_issue_editable_fields`, not on assumptions from old cases.
 
 ## Assumption
 
@@ -75,6 +76,7 @@ Everything else should prefer evidence over defaults.
 
 - Usually enum-backed
 - Requires fetching the option list first
+- In testing, custom bug fields like this required `issueType` when calling `EFFICIENCY_issue_get_issue_field_config`
 - Fill only when there is a confident mapping, for example this case strongly suggests `进度错误`
 
 ### `是否是共性问题`
@@ -114,16 +116,17 @@ Everything else should prefer evidence over defaults.
 
 ## Recommended Execution Order
 
-1. Read current issue values
-2. Read editable fields
-3. Intersect with the core field bucket
-4. Split into:
+1. Call `EFFICIENCY_issue_get_issue_detail`
+2. Call `EFFICIENCY_issue_get_issue_editable_fields`
+3. For enum-like fields, call `EFFICIENCY_issue_get_issue_field_config`
+4. Intersect with the core field bucket
+5. Split into:
    - missing and fillable
    - missing but not safely derivable
    - already filled
    - visible but not editable
-5. Write only the first group
-6. Report the other groups explicitly
+6. Call `EFFICIENCY_issue_update`
+7. Reread the issue and report the other groups explicitly
 
 ## Expected Behavior On Your Example Bug
 
