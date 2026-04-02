@@ -16,6 +16,11 @@ The user-facing entry skills are:
 - `../issue-handoff`
 - `../issue-resolve`
 
+Optional plugin-style follow-up skills may also exist outside the core stages.
+Example:
+
+- `../issue-overmind-sync` for external Overmind submission after resolve
+
 Design principles:
 
 - The core object is a case workspace, not a one-shot handoff file.
@@ -32,3 +37,13 @@ All three skills operate on the same workspace in user projects:
     └── cases/
         └── <case-id>/
 ```
+
+Plugin skills may read the same case workspace, but they should keep their own
+traceability in plugin-owned sidecars such as:
+
+```text
+.issue-flow/cases/<case-id>/integrations/<plugin-name>/
+```
+
+They do not redefine the core lifecycle or become readiness requirements for
+the three main stages.

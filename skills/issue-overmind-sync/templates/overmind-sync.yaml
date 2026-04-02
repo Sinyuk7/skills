@@ -1,0 +1,40 @@
+integration: overmind
+issue_key: "<issue-key>"
+issue_url: "<issue-url>"
+case_id: "<case-id>"
+source_case_lifecycle: "<resolved_verified|resolved_unverified|closed|other>"
+sync_status: "<succeeded|partial|failed>"
+last_attempt_at: "<ISO-8601 timestamp>"
+artifacts:
+  resolution_xml: "resolve/resolution.xml"
+  verification_md: "resolve/verification.md"
+requested_actions:
+  - "<update_fields>"
+  - "<close_issue>"
+core_field_status:
+  filled:
+    - "<field name>"
+  skipped:
+    - name: "<field name>"
+      reason: "<why it was skipped>"
+  already_set:
+    - "<field name>"
+  not_editable:
+    - "<field name>"
+applied_fields:
+  - name: "<field name>"
+    value: "<written value summary>"
+skipped_fields:
+  - name: "<field name>"
+    reason: "<why it was skipped>"
+failed_fields:
+  - name: "<field name>"
+    reason: "<why it failed>"
+close_attempt:
+  attempted: false
+  result: "<not_attempted|succeeded|failed|unverified>"
+  reason: "<short explanation>"
+manual_follow_up:
+  - "<human action still needed>"
+notes: |
+  <short summary of what was synced and what remains open>

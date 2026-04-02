@@ -40,8 +40,10 @@ Record the result in:
 - Only resolve may modify the project repository.
 - Do not rewrite prior collect or handoff artifacts as a substitute for resolution output.
 - Record verification state explicitly for every outcome.
+- Do not make external tracker sync a prerequisite for finishing resolve. External submission belongs to optional follow-up skills.
 
 ## Exit
 
 - Move to `resolved_verified` or `resolved_unverified` when the outcome is explicit.
 - Close the case only when `close_ready` passes and the next action is explicit.
+- If the user wants to sync the resolved case into Overmind, hand off to the optional plugin skill `../issue-overmind-sync` after resolve artifacts are complete.
