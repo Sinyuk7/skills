@@ -1,0 +1,22 @@
+{
+  "skills": [
+    {
+      "name": "skill-name",
+      "primary_intents": [],
+      "secondary_intents": [],
+      "strong_positive_triggers": [],
+      "weak_cues": [],
+      "negative_triggers": [],
+      "prerequisites": [],
+      "mode": "exclusive"
+    }
+  ],
+  "intent_regions": [
+    {
+      "intent": "user request shape",
+      "classification": "exclusive",
+      "skills": ["skill-name"],
+      "notes": "why this region is classified this way"
+    }
+  ]
+}

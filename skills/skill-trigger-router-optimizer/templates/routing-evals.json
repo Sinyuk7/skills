@@ -1,0 +1,13 @@
+{
+  "cases": [
+    {
+      "id": "route-001",
+      "request": "Why does this skill keep triggering instead of the other one?",
+      "expected_skills": ["skill-trigger-router-optimizer"],
+      "expected_mode": "exclusive",
+      "ambiguity": "medium",
+      "reason": "Direct routing-quality debugging request",
+      "notes": "Should not delegate to execution-refactor skills"
+    }
+  ]
+}
