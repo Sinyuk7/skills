@@ -1,99 +1,62 @@
 ---
 name: issue-resolve
-description: Continue an issue-flow case from handoff into implementation, verification, or a final non-code disposition. Use when a case already has `handoff.xml` and the user wants to fix, verify, or close it. Do not use for evidence collection, building handoffs, or standalone tracker sync.
+description: Implement fix, verify, and document resolution. Use when investigation complete.
 ---
 
-# Issue Resolve
+# Resolve
 
-Thin entry skill for Stage 3 of the issue-flow system.
+Fix the issue and verify the fix works.
 
-Workflow docs, templates, and scripts are defined in this skills repo.
-At runtime inside the project, the only issue-flow working state lives under
-`.issue-flow/cases/<case-id>/`, plus optional project-level `ISSUE_CONTEXT.md`.
-Resolve the current git repository root first, then read workflow docs,
-templates, and scripts from the installed skill directory.
+## Input
 
-## Step 1: Load Project Context (Required)
+- `investigation.md` — Root cause and proposed fix
+- `case.yaml` — Current status
+- Repository code (read-write)
 
-Before resolve work, re-read and prove the project-level context:
+## Output
 
-<action tool="read_file">
-<repo-root>/ISSUE_CONTEXT.md
-</action>
+**resolution.md** containing:
 
-If present, prove you read the key sections relevant to resolution:
+1. **Fix Applied** — What changed
+2. **Fix Details** — Code diff or description
+3. **Verification Context** — Method, environment, and any useful tester notes
+4. **Verification** — Test cases with results
+5. **Verification Status** — VERIFIED | PARTIAL | UNVERIFIED
+6. **Delivery** — Commit SHA, branch, PR
 
-<proof file="ISSUE_CONTEXT.md" section="Common Issue Patterns" preview="### Recurring Problems..." />
-<proof file="ISSUE_CONTEXT.md" section="Critical Areas" preview="Areas that require extra..." />
-<proof file="ISSUE_CONTEXT.md" section="Architecture Notes" preview="### Key Components..." />
-<proof file="ISSUE_CONTEXT.md" section="Environment Context" preview="### Development..." />
+## Rules
 
-If `ISSUE_CONTEXT.md` does not exist, note this explicitly before proceeding.
+- ASK USER BEFORE MODIFYING CODE
+- Follow investigation's proposed fix
+- Test before marking verified
+- Capture verification method and environment in `resolution.md` when they are known
+- If fix doesn't work, update `investigation.md` with new findings
+- Update `case.yaml` when done:
+  ```yaml
+  status: resolved
+  next_step:
+    action: close
+  ```
 
-## Step 2: Load Core Workflow Files
+## Verification Levels
 
-<action tool="read_file">
-../issue-flow-core/workflows/resolve/resolve-workflow.md
-</action>
+- **VERIFIED**: Tests pass, issue fixed
+- **PARTIAL**: Some verification, not complete
+- **UNVERIFIED**: Fix applied but not tested (document why)
 
-<proof file="resolve-workflow.md" lines="1-10" preview="# Resolve Workflow..." />
+## Non-Code Resolutions
 
-<action tool="read_file">
-../issue-flow-core/workflows/actions/lifecycle-management.md
-</action>
+If no code change needed:
+- **Already Fixed**: Issue fixed elsewhere
+- **Won't Fix**: Working as intended
+- **Cannot Reproduce**: Insufficient info
+- **Duplicate**: Same as another case
 
-<proof file="lifecycle-management.md" lines="1-10" preview="# Lifecycle and State..." />
+Still create `resolution.md` documenting why.
 
-<action tool="read_file">
-../issue-flow-core/knowledge/issue-flow-principles.md
-</action>
+## Done When
 
-<proof file="issue-flow-principles.md" lines="1-10" preview="# Issue-Flow Principles..." />
-
-<action tool="read_file">
-../issue-flow-core/knowledge/artifact-contracts.md
-</action>
-
-<proof file="artifact-contracts.md" lines="1-10" preview="# artifact contracts..." />
-
-## Step 3: Load Templates and Scripts (When Needed)
-
-- `../issue-flow-core/templates/resolve/`
-- `../issue-flow-core/scripts/check_readiness.py`
-
-## Prerequisites
-
-- Existing case with `analysis/handoff.xml` (handoff must be completed first)
-- Explicit user approval required before any repository modification
-
-## Mission
-
-Optionally continue from `analysis/handoff.xml` into:
-
-- a code or config change
-- a verified non-code conclusion
-- an external disposition
-
-Record the result in:
-
-- `resolve/resolution.xml`
-- `resolve/verification.md`
-
-## Non-Negotiables
-
-- **Prove context loading**: You must provide `<proof>` tags showing you read `ISSUE_CONTEXT.md` and core workflow files before resolve work begins.
-- Require an existing handoff before resolve work starts.
-- Do not create or depend on a separate repo-local `.issue-flow-core/` directory.
-- Read workflow docs, templates, and scripts from the installed skills directory.
-- Re-read the repo-level `ISSUE_CONTEXT.md` when present before implementation.
-- Present the proposed solution and obtain explicit user approval before any repository change.
-- Only resolve may modify the project repository.
-- Do not rewrite prior collect or handoff artifacts as a substitute for resolution output.
-- Record verification state explicitly for every outcome.
-- Do not make external tracker sync a prerequisite for finishing resolve. External submission belongs to optional follow-up skills.
-
-## Exit
-
-- Move to `resolved_verified` or `resolved_unverified` when the outcome is explicit.
-- Close the case only when `close_ready` passes and the next action is explicit.
-- If the user wants to sync the resolved case into Overmind, hand off to the optional plugin skill `../issue-overmind-sync` after resolve artifacts are complete.
+- Fix applied (if needed)
+- Verification attempted
+- `resolution.md` complete
+- `case.yaml` has `status: resolved`

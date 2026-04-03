@@ -5,7 +5,7 @@ description: Sync resolve artifacts to Overmind bug fields via MCP. Use after is
 
 # Issue Overmind Sync
 
-Post-resolve plugin that reads `resolve/resolution.xml` and `resolve/verification.md`, then fills Overmind bug fields through MCP.
+Post-resolve plugin that reads `resolve/resolution.md` and `investigation.md`, then fills Overmind bug fields through MCP. For older cases, fall back to `resolve/resolution.xml` and `resolve/verification.md` if those are the only artifacts available.
 
 ## When To Use
 
@@ -24,9 +24,10 @@ Post-resolve plugin that reads `resolve/resolution.xml` and `resolve/verificatio
 ### 2. Read Artifacts
 
 From the resolved case path:
-- `resolve/resolution.xml` — outcome, summary, changes
-- `resolve/verification.md` — test method, environment
-- `analysis/handoff.xml` — only when resolve artifacts lack context
+- `resolve/resolution.md` — outcome, summary, changes, verification context
+- `investigation.md` — root cause and affected code
+- `resolve/resolution.xml` / `resolve/verification.md` — fallback for older cases only
+- `analysis/handoff.xml` — legacy fallback only when the case predates the markdown migration
 
 ### 3. Fetch Current Issue
 
@@ -47,11 +48,11 @@ For enum fields, call `EFFICIENCY_issue_get_issue_field_config` with both `name`
 
 | Field | Source |
 |-------|--------|
-| `解决方案` | resolution.xml summary + code changes |
-| `问题原因` | handoff/resolution root cause |
+| `解决方案` | resolution.md fix applied + fix details |
+| `问题原因` | investigation.md root cause |
 | `问题单解决时间` | Resolution date or sync date (`YYYY-MM-DD` only) |
-| `测试方法` | verification.md → `开发自测` / `QA测试` |
-| `测试环境` | verification.md when clearly stated |
+| `测试方法` | resolution.md verification context → `开发自测` / `QA测试` |
+| `测试环境` | resolution.md verification context when clearly stated |
 | `问题类型` | Only with confident mapping |
 | `备注说明` | Issue reply (if field is writable) |
 

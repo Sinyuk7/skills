@@ -28,7 +28,7 @@
     },
     {
       "id": 3,
-      "prompt": "不要把这个流程塞进 issue-resolve。请设计一个插件型 skill，从 resolution.xml 和 verification.md 推导 overmind 更新内容，并直接调用 overmind mcp 执行。",
+      "prompt": "不要把这个流程塞进 issue-resolve。请设计一个插件型 skill，从 resolution.md 和 investigation.md 推导 overmind 更新内容，并直接调用 overmind mcp 执行。",
       "expected_output": "The skill is positioned as a plugin-style post-resolve integration, directly uses Overmind MCP for execution, and does not require changes to issue-flow-core lifecycle semantics.",
       "files": [],
       "expectations": [

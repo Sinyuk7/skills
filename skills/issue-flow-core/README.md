@@ -1,60 +1,46 @@
 # issue-flow-core
 
-Design-time source for the issue-flow skill set.
+Minimal issue investigation framework.
 
-This directory is not a user-facing skill entrypoint and not the runtime case
-workspace. It is the source of truth for:
+## Architecture
 
-- workflow docs
-- knowledge docs
-- artifact templates
-- script contracts
-- the product requirements doc
+This directory contains **templates only**. At runtime, issue-flow operates inside the current repository:
 
-At runtime, issue-flow operates inside the current repository, while workflow
-definitions remain in the installed skills tree:
-
-```text
-<project-root>/
-├── ISSUE_CONTEXT.md
-└── .issue-flow/
-    └── cases/
-        └── <case-id>/
+```
+<repo>/.issue-flow/cases/<case-id>/
+├── case.yaml          # State
+├── evidence/          # Raw materials
+│   ├── logs/
+│   ├── media/
+│   └── notes/
+├── collect.md         # What was collected
+├── investigation.md   # Root cause analysis
+└── resolution.md      # Fix + verification (if resolved)
 ```
 
-The runtime model is intentionally small:
+## Stages
 
-- `ISSUE_CONTEXT.md` is the optional project-level context file
-- `.issue-flow/cases/<case-id>/` is the only issue-flow runtime workspace
+1. **Collect** (`issue-collect`) — Curate user-provided materials into evidence/
+2. **Investigate** (`issue-investigate`) — Analyze evidence, find root cause
+3. **Resolve** (`issue-resolve`) — Fix, verify, document
 
-Skills should resolve the current git repository root first, then read workflow
-docs, templates, and scripts from the installed skills tree while writing case
-artifacts only inside `.issue-flow/cases/<case-id>/`.
+## Templates
 
-The user-facing entry skills are:
+- `templates/case.yaml` — State structure
+- `templates/collect.md` — Collection documentation
+- `templates/investigation.md` — Investigation findings
+- `templates/resolution.md` — Resolution + verification
 
-- `../issue-collect`
-- `../issue-handoff`
-- `../issue-resolve`
+## Design Principles
 
-Optional plugin-style follow-up skills may also exist outside the core stages.
-Example:
+- **Minimal artifacts**: 4 files per case (1 state + 3 stage outputs)
+- **No ceremony**: Skills are self-contained, no mandatory file loads
+- **Markdown native**: No XML, no validation scripts
+- **State in one place**: `case.yaml` is the only state file
+- **Progressive**: Each stage adds one file
 
-- `../issue-overmind-sync` for external Overmind submission after resolve
+## User-Facing Skills
 
-Design principles:
-
-- The core object is a case workspace, not a one-shot handoff file.
-- Artifacts are progressive and resumable.
-- Dependencies indicate readiness, not rigid stage gates.
-- Markdown, YAML, and XML are preferred over JSON.
-
-Plugin skills may read the same case workspace, but they should keep their own
-traceability in plugin-owned sidecars such as:
-
-```text
-.issue-flow/cases/<case-id>/integrations/<plugin-name>/
-```
-
-They do not redefine the core lifecycle or become readiness requirements for
-the three main stages.
+- `../issue-collect` — Stage 1
+- `../issue-investigate` — Stage 2 
+- `../issue-resolve` — Stage 3

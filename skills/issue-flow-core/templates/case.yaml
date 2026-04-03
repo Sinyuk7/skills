@@ -1,0 +1,19 @@
+case_id: "issue-123"
+created: "2026-04-03T10:30:00Z"
+updated: "2026-04-03T11:45:00Z"
+
+status: collected | investigated | resolved | closed
+
+next_step: 
+  action: investigate | resolve | close | blocked
+  note: "Brief reason if blocked"
+
+evidence:
+  - logs/app.log
+  - logs/error.log
+  - media/screenshot.png
+  - notes/user-report.md
+
+blockers: []
+  # - "Missing reproduction steps"
+  # - "Cannot access staging environment"
