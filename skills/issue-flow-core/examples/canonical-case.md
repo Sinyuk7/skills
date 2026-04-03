@@ -118,8 +118,7 @@ mutations: []
 1. **Load curated evidence**: Review logs, screenshot, problem statement
 2. **Evidence-driven repo analysis**: Read `src/auth/login.ts` based on error log
 3. **Create investigation.xml**: Evidence refs, confirmed facts, inferred conclusions
-4. **Create handoff.xml**: Concise summary with code context
-5. **Create next-step.yaml**: Recommend resolve action
+4. **Create handoff.xml**: Concise summary with code context and next_step recommendation
 
 ### Result Structure
 
@@ -130,10 +129,9 @@ mutations: []
 ├── sources.yaml
 ├── curated/
 │   └── [same as before]
-└── analysis/
+ └── analysis/
     ├── investigation.xml
-    ├── handoff.xml
-    └── next-step.yaml
+    └── handoff.xml
 ```
 
 **investigation.xml**:
@@ -244,35 +242,31 @@ Fix requires calling normalizeUsername on user input before credential compariso
     <item>Approximately 15% of login attempts currently failing</item>
   </known>
 
+  <next_step>
+    <recommended_action>resolve</recommended_action>
+    <confidence>high</confidence>
+    <solution_approved>false</solution_approved>
+    <reasoning>
+      Root cause is clear and fix is straightforward. The normalizeUsername
+      helper already exists and just needs to be called before validation.
+      High confidence that adding the normalization call will resolve the issue.
+    </reasoning>
+    <prerequisites>
+      <item>Access to test environment for verification</item>
+      <item>Ability to verify with affected users before production deploy</item>
+    </prerequisites>
+    <notes>
+      Should also add comprehensive test coverage for username normalization
+      scenarios (mixed-case, all-uppercase, all-lowercase, special characters).
+      Consider auditing other authentication paths (OAuth, SAML) for similar issues.
+    </notes>
+  </next_step>
+
   <investigation_ref>analysis/investigation.xml</investigation_ref>
 </handoff>
 ```
 
-**next-step.yaml**:
-```yaml
-case_id: "login-case-sensitivity-bug"
-timestamp: "2026-04-02T13:30:00Z"
-
-recommended_action: resolve
-
-confidence: high
-
-solution_approved: false
-
-reasoning: |
-  Root cause is clear and fix is straightforward. The normalizeUsername
-  helper already exists and just needs to be called before validation.
-  High confidence that adding the normalization call will resolve the issue.
-
-prerequisites:
-  - Access to test environment for verification
-  - Ability to verify with affected users before production deploy
-
-notes: |
-  Should also add comprehensive test coverage for username normalization
-  scenarios (mixed-case, all-uppercase, all-lowercase, special characters).
-  Consider auditing other authentication paths (OAuth, SAML) for similar issues.
-```
+The `next_step` section lives inside `analysis/handoff.xml`; there is no standalone YAML file.
 
 **status.yaml** (updated):
 ```yaml
@@ -292,9 +286,9 @@ notes: ""
 
 ### Resolve Actions
 
-1. **Review handoff and project context**: Re-read `analysis/handoff.xml`, `analysis/next-step.yaml`, and `<project-root>/ISSUE_CONTEXT.md`
+1. **Review handoff and project context**: Re-read `analysis/handoff.xml` (especially `next_step`) and `<project-root>/ISSUE_CONTEXT.md`
 2. **Present proposal and get approval**: Summarize the fix, affected files, and verification plan; wait for explicit user approval
-3. **Record approval**: Update `analysis/next-step.yaml` with `solution_approved: true`
+3. **Record approval**: Update `analysis/handoff.xml` with `<solution_approved>true</solution_approved>`
 4. **Implement fix**: Add normalization call in validateCredentials
 5. **Add tests**: Create test coverage for mixed-case usernames
 6. **Verify fix**: Run automated tests and manual verification
@@ -510,7 +504,7 @@ notes: "Deployed to production on 2026-04-03. Monitoring for 7 days."
 **Event**: Handoff ready
 **Lifecycle**: handoff_in_progress → handoff_ready
 **Trigger**: All handoff artifacts complete and verified
-**Details**: Investigation.xml, handoff.xml, and next-step.yaml all created with full traceability
+**Details**: Investigation.xml, handoff.xml, and resolve outputs all created with full traceability
 
 ---
 

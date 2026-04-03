@@ -10,4 +10,7 @@ Readiness means:
 
 Typical flow:
 
-`sources.yaml` -> `curated/*` -> `investigation.xml` -> `findings.xml` -> `handoff.xml` -> `next-step.yaml`
+`sources.yaml` -> `curated/*` -> `investigation.xml` -> `handoff.xml` -> `resolution.xml` -> `verification.md`
+
+The `next_step` recommendation now lives inside `analysis/handoff.xml`, and verification
+state lives inside `resolve/resolution.xml`.

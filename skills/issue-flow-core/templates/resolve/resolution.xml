@@ -10,6 +10,7 @@
     {{outcome_description}}
   </outcome>
 
+  <!-- ENHANCED delivery section -->
   <delivery>
     <!-- Delivery metadata when resolution produces code changes -->
     <changes>
@@ -17,8 +18,20 @@
       <file path="{{file_path}}" action="{{action}}" />
     </changes>
     
-    <commit sha="{{sha}}" branch="{{branch}}" />
+    <!-- commits section -->
+    <commits>
+      <commit sha="{{sha}}" branch="{{branch}}" timestamp="{{timestamp}}">
+        {{commit_message}}
+      </commit>
+      <commit sha="{{sha}}" branch="{{branch}}" timestamp="{{timestamp}}">
+        {{commit_message}}
+      </commit>
+    </commits>
+    
     <pr number="{{pr_number}}" url="{{pr_url}}" />
+    
+    <!-- notes field for additional delivery context -->
+    <notes>{{delivery_notes}}</notes>
   </delivery>
 
   <verification status="{{status}}">

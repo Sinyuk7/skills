@@ -19,10 +19,7 @@ import yaml
 
 
 VALID_ACTIONS = {"resolve", "collect", "external", "none", "blocked"}
-LEGACY_ACTIONS = {
-    "external_handoff": "external",
-    "close_as_non_actionable": "none",
-}
+VALID_CONFIDENCE_LEVELS = {"high", "medium", "low"}
 VALID_VERIFICATION_STATUSES = {"verified", "partial", "unavailable"}
 BOUNDARY_TARGETS = {
     "collect_ready": "collected",
@@ -114,13 +111,12 @@ class ReadinessChecker:
             self.case_path / "analysis" / "handoff.xml",
             "analysis/handoff.xml",
             expected_root="handoff",
-            required_sections=["summary", "code_context", "known"],
+            required_sections=["summary", "code_context", "known", "next_step"],
         )
         if handoff_root is not None:
             self._check_case_id(handoff_root, "analysis/handoff.xml")
             self._check_handoff_refs(handoff_root)
-
-        self._load_next_step(required=True)
+            self._load_handoff_next_step(handoff_root, required=True)
 
     def _check_resolve_ready(self):
         """Validate resolve_ready boundary."""
@@ -128,62 +124,33 @@ class ReadinessChecker:
             self.case_path / "analysis" / "handoff.xml",
             "analysis/handoff.xml",
             expected_root="handoff",
-            required_sections=["summary", "code_context", "known"],
+            required_sections=["summary", "code_context", "known", "next_step"],
         )
         if handoff_root is not None:
             self._check_case_id(handoff_root, "analysis/handoff.xml")
-
-        next_step = self._load_next_step(required=True)
+        next_step = self._load_handoff_next_step(handoff_root, required=True) if handoff_root is not None else None
         if not next_step:
             return
 
-        action = next_step.get("_normalized_action")
+        action = next_step.get("recommended_action")
         if action != "resolve":
             self.errors.append(
-                "analysis/next-step.yaml must set recommended_action: resolve before entering resolve"
+                "analysis/handoff.xml next_step must set recommended_action: resolve before entering resolve"
             )
 
     def _check_close_ready(self):
         """Validate close_ready boundary."""
-        next_step = self._load_next_step(required=True)
-        if not next_step:
-            return
-
-        action = next_step.get("_normalized_action")
-        verification_status = next_step.get("verification_status")
-
-        if action not in {"none", "external"}:
-            self.errors.append(
-                "analysis/next-step.yaml must set recommended_action to none or external before closing"
-            )
-
-        if verification_status not in VALID_VERIFICATION_STATUSES:
-            self.errors.append(
-                "analysis/next-step.yaml must record verification_status as verified, partial, or unavailable before closing"
-            )
-
         resolution_root = self._parse_xml(
             self.case_path / "resolve" / "resolution.xml",
             "resolve/resolution.xml",
             expected_root="resolution",
-            required_sections=["summary", "outcome", "delivery", "verification"],
-            required=False,
+            required_sections=["summary", "outcome", "verification"],
+            required=True,
         )
 
         if resolution_root is not None:
             self._check_case_id(resolution_root, "resolve/resolution.xml")
             self._check_resolution_refs(resolution_root)
-            return
-
-        handoff_root = self._parse_xml(
-            self.case_path / "analysis" / "handoff.xml",
-            "analysis/handoff.xml",
-            expected_root="handoff",
-            required_sections=["summary", "code_context", "known"],
-            required=True,
-        )
-        if handoff_root is not None:
-            self._check_case_id(handoff_root, "analysis/handoff.xml")
 
     def _check_boundary_lifecycle(self, boundary: str):
         """Ensure the current lifecycle can legally reach the requested boundary."""
@@ -206,36 +173,80 @@ class ReadinessChecker:
                 for message in transition_errors
             )
 
-    def _load_next_step(self, required: bool) -> Optional[dict]:
-        """Load and validate next-step.yaml."""
-        next_step = self._load_yaml(
-            self.case_path / "analysis" / "next-step.yaml",
-            "analysis/next-step.yaml",
-            required=required,
-        )
-        if not next_step:
+    def _load_handoff_next_step(self, handoff_root: ET.Element, required: bool) -> Optional[dict]:
+        """Load and validate the next_step section from analysis/handoff.xml."""
+        next_step = handoff_root.find("next_step")
+        if next_step is None:
+            if required:
+                self.errors.append("analysis/handoff.xml is missing required section: next_step")
             return None
 
-        action = next_step.get("recommended_action")
-        if not action:
-            self.errors.append("analysis/next-step.yaml is missing recommended_action")
-            return next_step
+        parsed: dict = {}
 
-        normalized = LEGACY_ACTIONS.get(action, action)
-        if action in LEGACY_ACTIONS:
-            self.warnings.append(
-                f"analysis/next-step.yaml uses legacy action '{action}'; prefer '{normalized}'"
-            )
+        action = self._read_required_child_text(next_step, "recommended_action", "analysis/handoff.xml next_step")
+        if action is not None:
+            if action not in VALID_ACTIONS:
+                self.errors.append(
+                    "analysis/handoff.xml next_step has unsupported recommended_action: "
+                    f"{action} (expected one of {', '.join(sorted(VALID_ACTIONS))})"
+                )
+            else:
+                parsed["recommended_action"] = action
 
-        if normalized not in VALID_ACTIONS:
-            self.errors.append(
-                "analysis/next-step.yaml has unsupported recommended_action: "
-                f"{action} (expected one of {', '.join(sorted(VALID_ACTIONS))})"
-            )
-            return next_step
+        confidence = self._read_required_child_text(next_step, "confidence", "analysis/handoff.xml next_step")
+        if confidence is not None:
+            if confidence not in VALID_CONFIDENCE_LEVELS:
+                self.errors.append(
+                    "analysis/handoff.xml next_step has unsupported confidence: "
+                    f"{confidence} (expected one of {', '.join(sorted(VALID_CONFIDENCE_LEVELS))})"
+                )
+            else:
+                parsed["confidence"] = confidence
 
-        next_step["_normalized_action"] = normalized
-        return next_step
+        solution_approved = self._read_required_child_text(
+            next_step, "solution_approved", "analysis/handoff.xml next_step"
+        )
+        if solution_approved is not None:
+            normalized_solution = solution_approved.lower()
+            if normalized_solution not in {"true", "false"}:
+                self.errors.append(
+                    "analysis/handoff.xml next_step has unsupported solution_approved: "
+                    f"{solution_approved} (expected true or false)"
+                )
+            else:
+                parsed["solution_approved"] = normalized_solution == "true"
+
+        reasoning = self._read_required_child_text(next_step, "reasoning", "analysis/handoff.xml next_step")
+        if reasoning is not None:
+            parsed["reasoning"] = reasoning
+
+        prerequisites = next_step.find("prerequisites")
+        if prerequisites is not None:
+            parsed["prerequisites"] = [
+                (item.text or "").strip()
+                for item in prerequisites.findall("item")
+                if (item.text or "").strip()
+            ]
+
+        notes = next_step.findtext("notes")
+        if notes is not None:
+            parsed["notes"] = notes.strip()
+
+        return parsed
+
+    def _read_required_child_text(self, parent: ET.Element, child_name: str, label: str) -> Optional[str]:
+        """Read and normalize a required child text node."""
+        raw_value = parent.findtext(child_name)
+        if raw_value is None:
+            self.errors.append(f"{label} is missing {child_name}")
+            return None
+
+        value = raw_value.strip()
+        if not value:
+            self.errors.append(f"{label} has empty {child_name}")
+            return None
+
+        return value
 
     def _check_investigation_refs(self, root: ET.Element):
         """Check that investigation references resolve."""
@@ -657,7 +668,7 @@ class ReadinessChecker:
             "collecting": ["collected", "blocked"],
             "collected": ["handoff_in_progress", "blocked"],
             "handoff_in_progress": ["handoff_ready", "collecting", "blocked"],
-            "handoff_ready": ["resolve_in_progress", "closed", "collecting", "blocked"],
+            "handoff_ready": ["resolve_in_progress", "collecting", "blocked"],
             "resolve_in_progress": ["resolved_verified", "resolved_unverified", "blocked"],
             "resolved_verified": ["closed"],
             "resolved_unverified": ["closed"],

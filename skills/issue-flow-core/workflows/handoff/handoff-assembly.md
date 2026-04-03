@@ -8,7 +8,7 @@ Purpose:
 Expected outputs:
 
 - `analysis/handoff.xml`
-- `analysis/next-step.yaml`
+- `analysis/handoff.xml` includes the downstream `next_step` recommendation
 
 Rules:
 

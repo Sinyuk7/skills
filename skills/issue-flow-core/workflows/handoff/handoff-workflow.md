@@ -17,8 +17,7 @@ Synthesize curated evidence into a pure investigation record and a traceable dow
 ## Outputs
 
 - `analysis/investigation.xml` - pure investigation record with evidence refs
-- `analysis/handoff.xml` - concise downstream handoff with code context
-- `analysis/next-step.yaml` - recommended next action
+- `analysis/handoff.xml` - concise downstream handoff with code context and next_step recommendation
 
 ## Workflow Steps
 
@@ -124,18 +123,19 @@ Create `analysis/handoff.xml` with:
 
 ### 6. Next Action Recommendation
 
-Create `analysis/next-step.yaml`:
+Populate the `<next_step>` section inside `analysis/handoff.xml`:
 
-```yaml
-recommended_action: resolve|collect|external|none|blocked
-confidence: high|medium|low
-verification_status: verified|partial|unavailable  # required when recommending direct close
-reasoning: |
-  Why this action is recommended
-prerequisites:
-  - Any prerequisites for the recommended action
-notes: |
-  Additional context
+```xml
+<next_step>
+  <recommended_action>resolve|collect|external|none|blocked</recommended_action>
+  <confidence>high|medium|low</confidence>
+  <solution_approved>true|false</solution_approved>
+  <reasoning>Why this action is recommended</reasoning>
+  <prerequisites>
+    <item>Any prerequisites for the recommended action</item>
+  </prerequisites>
+  <notes>Additional context</notes>
+</next_step>
 ```
 
 ### 7. Traceability Verification
@@ -206,8 +206,7 @@ If new evidence invalidates or materially contradicts `handoff_ready` case:
 ## Next Stage
 
 When handoff is ready:
-- If `next-step.yaml` recommends `resolve` → proceed to `issue-resolve`
-- If recommends `external` → case ready for external use
-- If recommends `none` → may close directly once verification state is explicit
+- If `next_step` recommends `resolve` → proceed to `issue-resolve`
 - If recommends `collect` → move back to evidence collection
+- If recommends `external` or `none` → record the final disposition during resolve, then close after verification is explicit
 - If `blocked` → document blocker and wait for resolution

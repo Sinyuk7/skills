@@ -12,5 +12,4 @@ Typical updates:
 
 - refresh `sources.yaml`
 - extend `investigation.xml`
-- revise `findings.xml`
 - regenerate `handoff.xml`

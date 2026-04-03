@@ -5,6 +5,7 @@
     {{summary}}
   </summary>
 
+  <!-- ENHANCED code_context with evidence traceability -->
   <code_context>
     <!-- Relevant repository context as direct references -->
     <affected_files>
@@ -12,9 +13,10 @@
       <file path="{{file_path}}" reason="{{reason}}" />
     </affected_files>
     
+    <!-- key_symbols now include evidence attribute for traceability -->
     <key_symbols>
-      <symbol path="{{file_path}}" name="{{symbol}}" line="{{line}}" />
-      <symbol path="{{file_path}}" name="{{symbol}}" line="{{line}}" />
+      <symbol path="{{file_path}}" name="{{symbol}}" line="{{line}}" evidence="{{evidence_ids}}" />
+      <symbol path="{{file_path}}" name="{{symbol}}" line="{{line}}" evidence="{{evidence_ids}}" />
     </key_symbols>
     
     <critical_sections>
@@ -22,11 +24,30 @@
     </critical_sections>
   </code_context>
 
+  <!-- MANDATORY traceability - every known item MUST reference investigation fact ID -->
   <known>
     <!-- What is definitively known -->
-    <item>{{known_item}}</item>
-    <item>{{known_item}}</item>
+    <!-- REQUIRED: fact_ref="F-001" must point to investigation.xml fact ID -->
+    <item fact_ref="F-{{n}}">{{known_item}}</item>
+    <item fact_ref="F-{{n}}">{{known_item}}</item>
   </known>
+
+  <!-- next_step section -->
+  <next_step>
+    <recommended_action>{{resolve|collect|external|none|blocked}}</recommended_action>
+    <confidence>{{high|medium|low}}</confidence>
+    <solution_approved>{{true|false}}</solution_approved>
+    <reasoning>
+      {{reasoning}}
+    </reasoning>
+    <prerequisites>
+      <item>{{prerequisite}}</item>
+      <item>{{prerequisite}}</item>
+    </prerequisites>
+    <notes>
+      {{additional_notes}}
+    </notes>
+  </next_step>
 
   <investigation_ref>
     <!-- Pointer to full investigation record -->

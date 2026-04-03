@@ -10,7 +10,7 @@ Optionally continue from handoff into a fix or final disposition, recording impl
 
 - Case with `handoff_ready` status
 - `analysis/handoff.xml` with issue summary and code context
-- `analysis/next-step.yaml` with recommended action
+- `analysis/handoff.xml` next_step with recommended action
 - Optional: `<repo-root>/ISSUE_CONTEXT.md` for project context
 - Repository with write access (when resolution requires code changes)
 
@@ -39,7 +39,7 @@ Read `analysis/handoff.xml` to understand:
 - Key symbols and critical sections
 - What is definitively known
 
-Read `analysis/next-step.yaml` for:
+Read the `<next_step>` section in `analysis/handoff.xml` for:
 - Recommended action
 - Confidence level
 - Prerequisites
@@ -55,7 +55,7 @@ Before any repository change:
 
 - Summarize the proposed resolution path, affected areas, and verification plan
 - Ask the user to explicitly approve the current solution
-- Record or update `solution_approved: true|false` in `analysis/next-step.yaml`
+- Record or update `<solution_approved>` in `analysis/handoff.xml`
   when the workflow is maintaining that field
 
 Without explicit user approval, resolve may analyze, summarize, and refine the
@@ -150,17 +150,16 @@ Update `status.yaml`:
 
 Log transition in `activity.md`.
 
-Update `analysis/next-step.yaml` in place so closure state is explicit:
-- Set `recommended_action: none` when no further action is needed
-- Set `recommended_action: external` when follow-up leaves the current scope
-- Set `verification_status` to `verified`, `partial`, or `unavailable`
+Keep the handoff `next_step` entry aligned with the approved path:
+- Set `solution_approved` to `true` once the user approves the resolution path
+- Leave the recommended action in `analysis/handoff.xml` as the upstream recommendation
 
 ### 8. Closure Decision
 
 **Ready to close** when:
-- Resolution is recorded
-- Verification state is explicit
-- Next action is `none` or `external`
+- Resolution is recorded in `resolve/resolution.xml`
+- Verification state is explicit in `resolve/resolution.xml`
+- `verification.md` documents the verification attempt
 
 Run closure check:
 

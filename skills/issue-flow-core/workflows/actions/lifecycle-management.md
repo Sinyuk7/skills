@@ -29,7 +29,7 @@ This document explains the issue-flow lifecycle model and state transitions.
 **handoff_ready**:
 - handoff.xml complete and ready for external use or resolve
 - Investigation traceable to evidence
-- Next action recommended
+- Next action recommendation recorded in `analysis/handoff.xml`
 
 **resolve_in_progress**:
 - Optional resolution work underway
@@ -105,7 +105,6 @@ closed
 | handoff_in_progress | collecting | Need more evidence (recollect) |
 | handoff_in_progress | blocked | Missing critical context |
 | handoff_ready | resolve_in_progress | Begin resolution work |
-| handoff_ready | closed | Non-actionable, no resolution needed |
 | handoff_ready | collecting | Material contradiction (recollect) |
 | handoff_ready | blocked | Cannot proceed |
 | resolve_in_progress | resolved_verified | Fix implemented and verified |
@@ -142,7 +141,7 @@ Required for `handoff_ready` state:
 
 - `investigation.xml` exists
 - `handoff.xml` exists
-- `next-step.yaml` exists
+- `<next_step>` exists in `analysis/handoff.xml`
 - Traceability intact across handoff artifacts
 - All references resolve
 
@@ -156,6 +155,7 @@ python scripts/check_readiness.py <case-path> handoff_ready
 Required for entering resolve:
 
 - `handoff.xml` exists
+- `<next_step>` in `analysis/handoff.xml` recommends `resolve`
 - Chosen resolution path is explicit
 
 Check command:
@@ -167,9 +167,9 @@ python scripts/check_readiness.py <case-path> resolve_ready
 
 Required for `closed` state:
 
-- Resolution is recorded OR non-resolution conclusion is recorded
-- Verification state is explicit
-- Next action is `none` or `external`
+- Resolution is recorded in `resolve/resolution.xml`
+- Verification state is explicit in `resolve/resolution.xml`
+- `verification.md` documents the verification attempt
 
 Check command:
 ```bash
@@ -193,17 +193,9 @@ readiness:
 notes: ""
 ```
 
-**next-step.yaml** records recommended action, not authoritative case state.
+`analysis/handoff.xml` records the downstream recommendation and approval state.
 
-Use canonical actions:
-- `resolve` - continue into issue-resolve
-- `collect` - revisit evidence collection
-- `external` - case leaves the current team or repository scope
-- `none` - no further action is needed inside the case
-- `blocked` - cannot continue without external input
-
-When a case is ready to close, `next-step.yaml` should also record an explicit
-`verification_status` (`verified`, `partial`, or `unavailable`).
+`resolve/resolution.xml` records the final outcome and verification status.
 
 ## Case Selection
 

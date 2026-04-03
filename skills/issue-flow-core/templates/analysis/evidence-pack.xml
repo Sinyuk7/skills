@@ -1,8 +1,0 @@
-<evidence-pack case-id="{{case_id}}">
-  <source id="SRC-001" type="log" curated-path="curated/logs/example.log">
-    <excerpt id="EV-001" relevance="direct">
-      <summary>{{summary}}</summary>
-      <provenance>{{provenance}}</provenance>
-    </excerpt>
-  </source>
-</evidence-pack>

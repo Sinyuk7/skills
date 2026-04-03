@@ -11,4 +11,4 @@ Use this action when:
 Typical outputs:
 
 - updates to `status.yaml`
-- readiness notes in `analysis/next-step.yaml`
+- readiness notes in `analysis/handoff.xml` (`next_step`)

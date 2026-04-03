@@ -23,23 +23,28 @@
     </log_excerpt>
   </evidence_excerpts>
 
+  <!-- FACT OF RECORD: All downstream facts MUST reference these -->
+  <!-- Every fact, inference, and question MUST have an ID for traceability -->
   <confirmed>
     <!-- Facts verified from evidence -->
+    <!-- MANDATORY: Every fact MUST have id="F-001", id="F-002", etc. -->
     <!-- When referencing log evidence, source_excerpt must point to an excerpt from that same log file -->
-    <fact ref="{{evidence_id}}" source_excerpt="{{excerpt_id}}">{{confirmed_fact}}</fact>
-    <fact ref="{{evidence_id}}">{{confirmed_fact}}</fact>
+    <fact id="F-{{n}}" ref="{{evidence_id}}" source_excerpt="{{excerpt_id}}">{{confirmed_fact}}</fact>
+    <fact id="F-{{n}}" ref="{{evidence_id}}">{{confirmed_fact}}</fact>
   </confirmed>
 
   <inferred>
     <!-- Conclusions drawn from evidence -->
-    <inference basis="{{evidence_ids}}">{{inference}}</inference>
-    <inference basis="{{evidence_ids}}">{{inference}}</inference>
+    <!-- MANDATORY: Every inference MUST have id="I-001", id="I-002", etc. -->
+    <inference id="I-{{n}}" basis="{{evidence_ids}}">{{inference}}</inference>
+    <inference id="I-{{n}}" basis="{{evidence_ids}}">{{inference}}</inference>
   </inferred>
 
   <open_questions>
     <!-- Unresolved questions from investigation -->
-    <question>{{question}}</question>
-    <question>{{question}}</question>
+    <!-- MANDATORY: Every question MUST have id="Q-001", id="Q-002", etc. -->
+    <question id="Q-{{n}}">{{question}}</question>
+    <question id="Q-{{n}}">{{question}}</question>
   </open_questions>
 
   <details>
