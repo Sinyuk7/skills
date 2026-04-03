@@ -11,9 +11,22 @@
     <repository_ref type="line_range" path="{{file_path}}" start="{{start}}" end="{{end}}" />
   </evidence_refs>
 
+  <!-- REQUIRED: Evidence excerpts proving logs were read -->
+  <evidence_excerpts>
+    <!-- For each log file referenced above, include 1-2 representative lines -->
+    <!-- This proves the log was actually read and analyzed, not just referenced -->
+    <!-- REQUIRED attributes: id, source, lines -->
+    <!-- OPTIONAL attribute: timestamp (helps human reviewers locate context) -->
+    <log_excerpt id="{{excerpt_id}}" source="curated/logs/{{log_name}}" lines="{{start}}-{{end}}" timestamp="{{timestamp_optional}}">
+      {{actual_log_content_line_1}}
+      {{actual_log_content_line_2}}
+    </log_excerpt>
+  </evidence_excerpts>
+
   <confirmed>
     <!-- Facts verified from evidence -->
-    <fact ref="{{evidence_id}}">{{confirmed_fact}}</fact>
+    <!-- When referencing log evidence, source_excerpt must point to an excerpt from that same log file -->
+    <fact ref="{{evidence_id}}" source_excerpt="{{excerpt_id}}">{{confirmed_fact}}</fact>
     <fact ref="{{evidence_id}}">{{confirmed_fact}}</fact>
   </confirmed>
 

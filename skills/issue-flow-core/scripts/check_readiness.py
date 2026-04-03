@@ -243,6 +243,8 @@ class ReadinessChecker:
         if evidence_refs is None:
             return
 
+        # Collect all log file references
+        log_refs = []
         for material in evidence_refs.findall("issue_material"):
             path = material.get("path")
             if not path:
@@ -256,6 +258,14 @@ class ReadinessChecker:
                 self.errors.append(
                     f"analysis/investigation.xml references missing curated material: {path}"
                 )
+            
+            # Track log files for excerpt validation
+            material_type = material.get("type")
+            if material_type == "log":
+                log_refs.append(path)
+
+        # CRITICAL: Validate log excerpts (evidence-chain enforcement)
+        self._check_log_excerpts(root, log_refs)
 
         for repository_ref in evidence_refs.findall("repository_ref"):
             ref_type = repository_ref.get("type")
@@ -281,6 +291,115 @@ class ReadinessChecker:
                     repository_ref.get("end"),
                     "analysis/investigation.xml repository_ref",
                 )
+
+    def _check_log_excerpts(self, root: ET.Element, log_refs: list):
+        """Enforce evidence-chain: logs must have excerpts proving they were read."""
+        if not log_refs:
+            return
+        
+        evidence_excerpts = root.find("evidence_excerpts")
+        if evidence_excerpts is None:
+            self.errors.append(
+                "analysis/investigation.xml must include <evidence_excerpts> section "
+                f"with log excerpts for {len(log_refs)} referenced log file(s)"
+            )
+            return
+        
+        log_excerpts = evidence_excerpts.findall("log_excerpt")
+        if len(log_excerpts) == 0:
+            self.errors.append(
+                f"analysis/investigation.xml references {len(log_refs)} log file(s) "
+                "but contains no <log_excerpt> elements. Each log must have 1-2 "
+                "representative lines extracted as proof it was read."
+            )
+            return
+        
+        excerpt_sources = set()
+        excerpt_ids = set()
+        excerpt_sources_by_id = {}
+        for excerpt in log_excerpts:
+            excerpt_id = excerpt.get("id")
+            if not excerpt_id:
+                self.errors.append(
+                    "analysis/investigation.xml log_excerpt is missing 'id' attribute"
+                )
+                continue
+            
+            excerpt_ids.add(excerpt_id)
+            
+            source = excerpt.get("source")
+            if not source:
+                self.errors.append(
+                    f"analysis/investigation.xml log_excerpt id='{excerpt_id}' is missing 'source' attribute"
+                )
+                continue
+            
+            excerpt_sources.add(source)
+            excerpt_sources_by_id[excerpt_id] = source
+            
+            content = excerpt.text or ""
+            if len(content.strip()) < 10:
+                self.errors.append(
+                    f"analysis/investigation.xml log_excerpt id='{excerpt_id}' from {source} is too short or empty. "
+                    "Must include at least 1-2 representative log lines with actual content."
+                )
+            
+            if not excerpt.get("lines"):
+                self.errors.append(
+                    f"analysis/investigation.xml log_excerpt id='{excerpt_id}' from {source} missing 'lines' attribute. "
+                    "Must specify line numbers (e.g., lines='N-M') showing where excerpt came from."
+                )
+        
+        missing_excerpts = set(log_refs) - excerpt_sources
+        if missing_excerpts:
+            self.errors.append(
+                f"Missing log excerpts for: {', '.join(sorted(missing_excerpts))}. "
+                "Each referenced log file must have at least one <log_excerpt> proving it was read."
+            )
+        
+        confirmed = root.find("confirmed")
+        if confirmed is not None:
+            log_material_ids = set()
+            log_material_ids_to_paths = {}
+            evidence_refs = root.find("evidence_refs")
+            if evidence_refs is not None:
+                for material in evidence_refs.findall("issue_material[@type='log']"):
+                    material_id = material.get("id")
+                    material_path = material.get("path")
+                    if material_id:
+                        log_material_ids.add(material_id)
+                    if material_id and material_path:
+                        log_material_ids_to_paths[material_id] = material_path
+            
+            facts_referencing_logs = []
+            for fact in confirmed.findall("fact"):
+                ref = fact.get("ref")
+                if ref in log_material_ids:
+                    facts_referencing_logs.append((fact, ref))
+            
+            for fact, ref in facts_referencing_logs:
+                source_excerpt = fact.get("source_excerpt")
+                if not source_excerpt:
+                    fact_text = (fact.text or "").strip()[:50]
+                    self.errors.append(
+                        f"analysis/investigation.xml <fact ref='{ref}'> ('{fact_text}...') references log evidence "
+                        "but is missing 'source_excerpt' attribute. Facts derived from log evidence MUST "
+                        "reference the specific log_excerpt id."
+                    )
+                elif source_excerpt not in excerpt_ids:
+                    self.errors.append(
+                        f"analysis/investigation.xml <fact ref='{ref}' source_excerpt='{source_excerpt}'> "
+                        f"references non-existent log_excerpt id. Available excerpt ids: {', '.join(sorted(excerpt_ids))}"
+                    )
+                else:
+                    expected_source = log_material_ids_to_paths.get(ref)
+                    actual_source = excerpt_sources_by_id.get(source_excerpt)
+                    if expected_source and actual_source and expected_source != actual_source:
+                        self.errors.append(
+                            f"analysis/investigation.xml <fact ref='{ref}' source_excerpt='{source_excerpt}'> "
+                            f"binds log evidence from {expected_source} to excerpt sourced from {actual_source}. "
+                            "Log-backed facts must reference a log_excerpt extracted from the same log file."
+                        )
 
     def _check_handoff_refs(self, root: ET.Element):
         """Check that handoff references resolve."""

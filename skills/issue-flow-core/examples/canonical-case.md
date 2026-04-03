@@ -151,13 +151,28 @@ mutations: []
     <repository_ref type="symbol" path="src/auth/login.ts" symbol="normalizeUsername" line="15" />
   </evidence_refs>
 
+  <evidence_excerpts>
+    <!-- REQUIRED: Actual log content proving logs were read -->
+    <log_excerpt id="error-log-excerpt-1" source="curated/logs/error.log" lines="147-149" timestamp="2026-04-01T10:23:45Z">
+[2026-04-01T10:23:45Z] [ERROR] validateCredentials: Authentication failed
+Username provided: JohnDoe
+Username stored: johndoe
+Comparison result: false (case-sensitive mismatch)
+    </log_excerpt>
+    
+    <log_excerpt id="error-log-excerpt-2" source="curated/logs/error.log" lines="203-204" timestamp="2026-04-01T10:31:12Z">
+[2026-04-01T10:31:12Z] [ERROR] validateCredentials: Authentication failed for user: SarahSmith
+[2026-04-01T10:31:12Z] [INFO] normalizeUsername function exists at line 15 but is not called in validation path
+    </log_excerpt>
+  </evidence_excerpts>
+
   <confirmed>
-    <fact ref="error-log">Authentication fails with 401 status for mixed-case usernames</fact>
+    <fact ref="error-log" source_excerpt="error-log-excerpt-1">Authentication fails with 401 status for mixed-case usernames</fact>
     <fact ref="screenshot">Error message displays "Invalid credentials"</fact>
     <fact ref="problem-statement">Issue started after v2.3.0 deployment</fact>
     <fact ref="problem-statement">All-lowercase usernames work fine</fact>
     <fact ref="repository_ref">validateCredentials does case-sensitive comparison</fact>
-    <fact ref="repository_ref">normalizeUsername helper exists but is not called</fact>
+    <fact ref="repository_ref" source_excerpt="error-log-excerpt-2">normalizeUsername helper exists but is not called</fact>
   </confirmed>
 
   <inferred>

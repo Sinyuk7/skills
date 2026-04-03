@@ -54,12 +54,14 @@ Work from the curated case workspace to produce:
 ## Non-Negotiables
 
 - **Prove workflow loading**: You must provide `<proof>` tags showing you read core workflow files before handoff work begins.
+- **Prove log reading** (CRITICAL): For each curated log file, investigation.xml MUST contain 1-2 representative lines extracted from that log as `<log_excerpt>` elements. Each `log_excerpt` must include `id`, `source`, and `lines`; `timestamp` is optional but recommended. This is mandatory evidence-chain proof that logs were actually read and analyzed, not just referenced.
+- **Bind facts to log evidence** (CRITICAL): Any fact derived from log evidence must include `source_excerpt`, and that excerpt must come from the same log file referenced by the fact's `ref`.
 - Start from the shared `.issue-flow/cases/<case-id>/` workspace.
 - Runtime assets live in `<repo-root>/.issue-flow-core/`, not in the installed skills directory.
 - If `.issue-flow-core/` is missing, bootstrap it before workflow execution.
 - Use curated evidence as the default working set. Reopen raw sources only when policy allows it.
 - Keep repository reads evidence-driven and record them as direct repository references.
-- Do not copy repository code into the case workspace in v1.
+- Use repository references rather than copying code into case workspace.
 - Handoff is read-only against both issue-material roots and the repository.
 
 ## Exit

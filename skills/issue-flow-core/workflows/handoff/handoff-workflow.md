@@ -47,9 +47,20 @@ Create `analysis/investigation.xml` with:
 - Point to repository evidence: file paths, symbols, line numbers
 - Each ref must resolve to actual artifact
 
+**Evidence Excerpts** (REQUIRED for log files):
+- For EACH log file referenced in evidence_refs, investigation.xml MUST include:
+  - At least 1-2 representative lines extracted from that log
+  - Line numbers (REQUIRED): `lines="N-M"` showing where the excerpt came from
+  - Timestamp (OPTIONAL but recommended): helps human reviewers locate context quickly
+  - Actual log content proving the log was read and analyzed
+- Format: `<log_excerpt id="..." source="curated/logs/X.log" lines="N-M" timestamp="..." (optional)>actual content</log_excerpt>`
+- This is MANDATORY evidence-chain proof that logs were actually read, not just referenced
+
 **Confirmed Facts**:
 - Facts verified from evidence
 - Each fact includes evidence reference
+- Facts derived from log evidence MUST reference the specific log_excerpt id via `source_excerpt` attribute
+- The `source_excerpt` must come from the same log file named by the fact's `ref`
 
 **Inferred Conclusions**:
 - Conclusions drawn from evidence
