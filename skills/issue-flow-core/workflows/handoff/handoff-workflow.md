@@ -68,7 +68,7 @@ Create `analysis/investigation.xml` with:
 **Evidence-Driven Repository Reads**:
 - Driven by case evidence: paths, symbols, signatures, module clues
 - Record as direct repository references (file paths, symbols, line numbers)
-- Do NOT copy code excerpts into case workspace in v1
+- Use repository references rather than copying code into case workspace
 - Do NOT do unrestricted whole-repo exploration
 
 **Code Context Structure**:
@@ -155,23 +155,18 @@ Log transition in `activity.md`.
 
 ## Boundaries
 
-### Must Do
+### Architectural Constraints
 
-- Work from curated case workspace
-- Synthesize investigation with evidence refs and expanded details
-- Assemble traceable handoff with concise summary and code context
-- Declare next recommended action
-- Read the project-level ISSUE_CONTEXT.md when present
-- Ensure traceability across all artifacts
-
-### Must Not Do
-
-- Force mandatory fixing (optional next stage)
-- Copy code excerpts into case workspace (use direct refs in v1)
-- Create or rely on a case-local copy of `ISSUE_CONTEXT.md`
-- Create multiple per-problem handoff structures (one case = one handoff in v1)
-- Modify source roots (read-only against both issue materials and repository)
-- Do unrestricted whole-repo exploration
+**Handoff Stage Boundaries:**
+- Input: Work from curated case workspace only
+- Output: Synthesize investigation with evidence refs and expanded details
+- Assembly: Create traceable handoff with concise summary and code context
+- Recommendation: Declare next recommended action
+- Context: Read project-level ISSUE_CONTEXT.md when present (never create case-local copy)
+- Traceability: Ensure all artifacts link to their evidence sources
+- Repository access: Read-only against both issue materials and repository
+- Exploration: Evidence-driven repository reads only (no unrestricted whole-repo scanning)
+- Structure: One case produces one handoff.xml (flat structure)
 
 ## Refinement and Evaluation
 

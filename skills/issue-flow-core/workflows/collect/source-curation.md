@@ -8,7 +8,7 @@ Purpose:
 
 Expected outputs:
 
-- `inventory.yaml`
+- `sources.yaml` (with curated/skipped status for each source)
 - `curated/logs/`
 - `curated/media/`
 - `curated/notes/`
@@ -17,6 +17,6 @@ Expected outputs:
 
 Rules:
 
-- every input should appear in `source-manifest.yaml`
-- every curated or skipped item should be represented in `inventory.yaml`
+- every input should be registered in `sources.yaml`
+- every curated or skipped item should be represented in `sources.yaml`
 - post-curation work should prefer case artifacts over raw directories

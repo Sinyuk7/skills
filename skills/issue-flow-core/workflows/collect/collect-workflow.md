@@ -138,15 +138,15 @@ If check fails, address blocking issues before advancing.
 - Record lifecycle transitions in `status.yaml` and `activity.md`
 - Operate only over two roots: issue materials and current repository
 
-### Must Not Do
+### Architectural Constraints
 
-- Try to produce final handoff
-- Create case-level `ISSUE_CONTEXT.md` or any project-context snapshot file
-- Create `case.md`, `case-status.json`, or case-top-level `logs/`
-- Repeatedly rescan raw directories after curation complete
-- Modify project repository (read-only for collect)
-- Start a case from repository alone without issue materials
-- Default to writing into unclear target case
+**Collect Stage Boundaries:**
+- Scope: Evidence curation only (handoff synthesis happens in handoff stage)
+- Context: Project-level `ISSUE_CONTEXT.md` remains at repo root (never copied to case)
+- Repository: Read-only (code modifications happen in resolve stage)
+- Input requirement: At least one issue material required (cannot start from repository alone)
+- Write target: Case ID must be determined before beginning curation
+- Scan policy: Do not repeatedly rescan raw directories after curation complete
 
 ## Recollect Policy
 

@@ -177,27 +177,25 @@ If ready and user confirms:
 ### Must Do
 
 - Require existing handoff.xml (stop without it)
-- Re-read the project-level `ISSUE_CONTEXT.md` when present
-- Present the proposed solution and obtain explicit user approval before
-  modifying the repository
-- Record implementation and verification
-- Support non-code conclusions
-- May modify project repository when resolution requires code changes
-- Explicitly document verification state (verified/partial/unavailable)
+### Architectural Constraints
 
-### Must Not Do
-
-- Rewrite prior evidence artifacts from collect/handoff
-- Rewrite prior issue-material roots as substitute for case artifacts
-- Force every case through resolution (optional stage)
-- Treat closure confirmation as a substitute for implementation approval
-- Silently skip verification without documenting why
+**Resolve Stage Boundaries:**
+- Input: Work from handoff artifacts (investigation.xml, handoff.xml)
+- Context: Re-read project-level ISSUE_CONTEXT.md when present
+- Approval: Present proposed solution and obtain explicit user approval before modifying repository
+- Output: Record implementation and verification in resolution.xml and verification.md
+- Flexibility: Support both code fixes and non-code conclusions
+- Repository: May modify project repository when resolution requires code changes
+- Verification: Explicitly document verification state (verified/partial/unavailable)
+- Traceability: Do not rewrite prior evidence artifacts from collect/handoff stages
+- Evidence: Case artifacts remain authoritative (do not rewrite issue-material roots)
+- Optional: Resolution is optional (not every case requires it)
 
 ## Non-Code Resolutions
 
 Valid non-code resolutions:
 
-- **Already Fixed**: Issue no longer reproduces, fixed elsewhere
+- **Already Fixed**: Issue verified as fixed elsewhere (no action needed in this case)
 - **Won't Fix**: Issue is intended behavior or out of scope
 - **External**: Resolution requires action outside current scope
 - **Duplicate**: Issue is duplicate of another case

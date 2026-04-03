@@ -16,7 +16,7 @@ sources:
     location: "{{location}}"
     note: "{{note}}"
 
-# Mutation log (v1 allows collect to modify issue-material roots)
+# Mutation log (collect may modify issue-material roots: extraction, renaming, etc.)
 mutations:
   - timestamp: "{{timestamp}}"
     action: "{{action}}"  # extracted, renamed, created, rewritten

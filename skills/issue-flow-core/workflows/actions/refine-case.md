@@ -10,7 +10,7 @@ Use this action when:
 
 Typical updates:
 
-- refresh `inventory.yaml`
-- extend `evidence-pack.xml`
+- refresh `sources.yaml`
+- extend `investigation.xml`
 - revise `findings.xml`
 - regenerate `handoff.xml`

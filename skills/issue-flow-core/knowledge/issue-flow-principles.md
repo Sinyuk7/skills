@@ -31,7 +31,7 @@ behavior, and use `<repo-root>/.issue-flow-core/` for runtime assets.
 
 ## Status Truth Lives Inside the Case
 
-`status.yaml` is the single source of truth for lifecycle state. No project-level indexes in v1.
+`status.yaml` is the single source of truth for lifecycle state. Each case maintains its own status; there are no project-level case indexes.
 
 ## Ambiguity Triggers User Choice
 
@@ -39,7 +39,7 @@ Ambiguous write targets, unclear scope, or missing critical context should trigg
 
 ## Trusted Local Workflow
 
-v1 assumes a trusted local environment. Sensitive-data exposure is not an in-scope design concern.
+The system operates in a trusted local environment. Sensitive-data exposure is not an in-scope design concern.
 
 ## Two Roots Only
 
@@ -51,14 +51,14 @@ Repository reads must stay evidence-driven, not open-ended. Anchor searches to i
 
 ## Stage-Specific Mutability
 
-- **Collect**: May modify user-provided issue-material roots (v1)
+- **Collect**: May modify user-provided issue-material roots (extraction, renaming)
 - **Handoff**: Read-only against both source roots
 - **Resolve**: May modify project repository when resolution requires code changes
 
 ## Case = Investigation Container
 
-A case is a user-managed investigation container. May represent one or more problems without nested sub-issue semantics in v1.
+A case is a user-managed investigation container. May represent one or more problems. Cases use flat structure without nested sub-issues.
 
 ## Simple Readable Handoffs
 
-Handoff artifacts stay simple and readable. v1 does not require nested per-problem structures inside a case. One case produces one `handoff.xml`.
+Handoff artifacts stay simple and readable. Cases use flat structure without nested per-problem subdirectories. One case produces one `handoff.xml`.

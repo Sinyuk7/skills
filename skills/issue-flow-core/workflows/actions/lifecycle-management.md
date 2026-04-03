@@ -217,7 +217,7 @@ When new evidence arrives without explicit target:
 
 ## Case Discovery
 
-v1 is filesystem-based:
+The system is filesystem-based:
 - Enumerate `.issue-flow/cases/` on demand
 - No project-level state files for discovery
 - No active-case selection registry

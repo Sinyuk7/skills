@@ -2,13 +2,12 @@
 
 Dependencies unlock artifact generation.
 
-They do not mean:
+Readiness means:
 
-- the next stage must run now
-- the previous stage is permanently closed
-- every case must produce every artifact
+- Downstream artifact generation is unlocked (not that it must execute immediately)
+- Previous stages remain open for recollection if needed (not permanently closed)
+- Optional artifacts remain optional (not every case produces every artifact)
 
 Typical flow:
 
-`source-manifest.yaml` -> `inventory.yaml` -> `evidence-pack.xml` ->
-`findings.xml` -> `handoff.xml` -> `next-step.yaml`
+`sources.yaml` -> `curated/*` -> `investigation.xml` -> `findings.xml` -> `handoff.xml` -> `next-step.yaml`
