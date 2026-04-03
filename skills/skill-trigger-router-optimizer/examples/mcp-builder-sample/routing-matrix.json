@@ -1,0 +1,111 @@
+{
+  "skills": [
+    {
+      "name": "mcp-builder",
+      "routing_role": "routable_skill",
+      "primary_intents": [
+        "build MCP server",
+        "design MCP tool surface",
+        "choose implementation stack"
+      ],
+      "secondary_intents": [
+        "review MCP server against best practices",
+        "generate MCP evaluations"
+      ],
+      "strong_positive_triggers": [
+        "build MCP server",
+        "Model Context Protocol",
+        "FastMCP",
+        "TypeScript MCP SDK",
+        "MCP tools"
+      ],
+      "weak_cues": [
+        "tool annotations",
+        "pagination design",
+        "readOnlyHint",
+        "generate evaluation questions"
+      ],
+      "negative_triggers": [
+        "generic API wrapper",
+        "non-MCP tool design",
+        "general coding evaluation"
+      ],
+      "prerequisites": [
+        "task is about MCP server design, implementation, review, or evaluation"
+      ],
+      "mode": "exclusive"
+    },
+    {
+      "name": "reference/*",
+      "routing_role": "non_routable_reference",
+      "primary_intents": [
+        "best practices reference",
+        "language implementation guide",
+        "evaluation guidance"
+      ],
+      "secondary_intents": [],
+      "strong_positive_triggers": [],
+      "weak_cues": [],
+      "negative_triggers": [
+        "select as user-facing skill"
+      ],
+      "prerequisites": [
+        "only after mcp-builder is selected"
+      ],
+      "mode": "exclusive"
+    },
+    {
+      "name": "scripts/*",
+      "routing_role": "non_routable_reference",
+      "primary_intents": [
+        "helper script",
+        "evaluation support"
+      ],
+      "secondary_intents": [],
+      "strong_positive_triggers": [],
+      "weak_cues": [],
+      "negative_triggers": [
+        "select as user-facing skill"
+      ],
+      "prerequisites": [
+        "only after mcp-builder is selected"
+      ],
+      "mode": "exclusive"
+    }
+  ],
+  "intent_regions": [
+    {
+      "intent": "create a new MCP server",
+      "classification": "exclusive",
+      "skills": [
+        "mcp-builder"
+      ],
+      "notes": "primary route"
+    },
+    {
+      "intent": "review MCP server against naming, pagination, annotation, and transport guidance",
+      "classification": "exclusive",
+      "skills": [
+        "mcp-builder"
+      ],
+      "notes": "secondary intent currently under-signaled in metadata"
+    },
+    {
+      "intent": "generate read-only evaluations for an existing MCP server",
+      "classification": "exclusive",
+      "skills": [
+        "mcp-builder"
+      ],
+      "notes": "supported in Phase 4 but should be surfaced earlier"
+    },
+    {
+      "intent": "open bundled documentation directly as a user-facing route",
+      "classification": "non-routable",
+      "skills": [
+        "reference/*",
+        "scripts/*"
+      ],
+      "notes": "implementation resources only"
+    }
+  ]
+}

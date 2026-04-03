@@ -1,0 +1,49 @@
+{
+  "cases": [
+    {
+      "id": "osex-route-001",
+      "request": "I want to think through this feature before we implement anything.",
+      "expected_skills": ["openspec-explore"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Direct exploration intent with explicit non-implementation cue",
+      "notes": "Core trigger case"
+    },
+    {
+      "id": "osex-route-002",
+      "request": "Help me clarify the requirements for this change and map the tradeoffs.",
+      "expected_skills": ["openspec-explore"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Requirement clarification is a primary intent",
+      "notes": "Should not require explicit OpenSpec jargon"
+    },
+    {
+      "id": "osex-route-003",
+      "request": "Investigate the codebase and help me reason about the architecture, but don't write code yet.",
+      "expected_skills": ["openspec-explore"],
+      "expected_mode": "exclusive",
+      "ambiguity": "medium",
+      "reason": "Investigation plus explicit no-implementation boundary",
+      "notes": "Good behavioral boundary test"
+    },
+    {
+      "id": "osex-route-004",
+      "request": "Implement this feature now.",
+      "expected_skills": [],
+      "expected_mode": "abstain",
+      "ambiguity": "low",
+      "reason": "Direct implementation request is out of scope",
+      "notes": "Negative trigger case"
+    },
+    {
+      "id": "osex-route-005",
+      "request": "Let's explore this first, then maybe update the design doc if it makes sense.",
+      "expected_skills": ["openspec-explore"],
+      "expected_mode": "chain",
+      "ambiguity": "medium",
+      "reason": "Exploration first, capture later only if requested",
+      "notes": "Tests optional artifact capture behavior"
+    }
+  ]
+}

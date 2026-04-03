@@ -12,6 +12,7 @@ Accept any of these inputs:
 - a directory containing multiple skills
 - a skill set plus known conflict cases
 - a skill set plus routing test samples
+- a mixed system containing entry skills, shared cores, plugins, or workflow packages
 
 Load only routing-relevant files first:
 
@@ -23,7 +24,29 @@ Do not start by reading every file in full.
 
 ---
 
-## Step 2: Inventory the Routing Surface
+## Step 2: Classify Routing Role
+
+Before overlap analysis, determine whether each target should be routed at all.
+
+Assign one role:
+
+- `routable_skill`
+- `plugin_skill`
+- `shared_core`
+- `non_routable_reference`
+
+Use these defaults:
+
+- user-facing `SKILL.md` entrypoints -> `routable_skill`
+- optional post-stage integrations -> `plugin_skill`
+- shared workflows, templates, runtime assets, or product docs -> `shared_core`
+- reference-only docs or maintenance artifacts with no trigger surface -> `non_routable_reference`
+
+If a target is `shared_core` or `non_routable_reference`, keep it in the audit but exclude it from user-facing routing recommendations.
+
+---
+
+## Step 3: Inventory the Routing Surface
 
 For each skill, extract:
 
@@ -36,12 +59,15 @@ For each skill, extract:
 - tool scope or permission constraints
 - workflow entrypoints
 - model or subagent constraints if present
+- whether the skill is workflow-driven or stance-driven
 
 Normalize into this structure:
 
 ```json
 {
   "skill": "name",
+  "routing_role": "routable_skill|plugin_skill|shared_core|non_routable_reference",
+  "interaction_type": "workflow|stance|hybrid",
   "primary_intents": [],
   "secondary_intents": [],
   "strong_positive_triggers": [],
@@ -55,10 +81,11 @@ Normalize into this structure:
 ```
 
 If metadata is missing, mark it as a routing risk instead of guessing.
+Do not treat a stance-driven skill as malformed just because it has no fixed workflow files.
 
 ---
 
-## Step 3: Extract Intent Surface
+## Step 4: Extract Intent Surface
 
 For each skill, answer:
 
@@ -67,12 +94,14 @@ For each skill, answer:
 3. What adjacent requests look similar but should not trigger it?
 4. What prerequisites must be true before the skill should run?
 5. Is the skill exclusive, chainable, or parallelizable?
+6. Does the skill support secondary intents that are only visible deep in the body or bundled resources?
+7. Is the skill primarily routing to a workflow, or switching the collaboration mode itself?
 
 Focus on user-language patterns, not abstract summaries.
 
 ---
 
-## Step 4: Build Overlap and Gap Map
+## Step 5: Build Overlap and Gap Map
 
 Construct a `skill x intent` matrix.
 
@@ -91,6 +120,7 @@ Use this decision rule:
 - `gap`: no skill safely covers the request
 - `chain`: one skill should run before another
 - `parallel`: request should be decomposed and routed to multiple skills
+- `non-routable`: target should never be selected as a user-facing route
 
 Load the matrix template:
 
@@ -100,7 +130,7 @@ templates/routing-matrix.json
 
 ---
 
-## Step 5: Choose Routing Pattern
+## Step 6: Choose Routing Pattern
 
 For every ambiguous region, recommend one routing mode:
 
@@ -128,7 +158,7 @@ Select using these defaults:
 
 ---
 
-## Step 6: Rewrite Metadata
+## Step 7: Rewrite Metadata
 
 Only after the boundary map is stable, propose metadata rewrites.
 
@@ -140,6 +170,9 @@ For each affected skill, produce:
 - negative triggers to reduce false positives
 - prerequisite phrases
 - `use proactively` recommendation if justified
+- explicit non-routable wording when the target should stay out of routing
+- top-level intent dispatch when supported secondary intents are currently buried
+- mode-switch wording when the skill is stance-driven and the behavior is the main boundary
 - split / merge recommendation if boundaries cannot be repaired by metadata alone
 
 Load the rewrite template:
@@ -152,7 +185,7 @@ Rewrite for routing discrimination, not style polish.
 
 ---
 
-## Step 7: Generate Routing Evals
+## Step 8: Generate Routing Evals
 
 Generate a minimal eval set with:
 
@@ -178,7 +211,7 @@ Each case should include:
 
 ---
 
-## Step 8: Draft Router Policy And Conflict Register
+## Step 9: Draft Router Policy And Conflict Register
 
 Promote the audit into explicit system behavior.
 
@@ -214,7 +247,7 @@ The conflict register should track:
 
 ---
 
-## Step 9: Add Observability Hooks
+## Step 10: Add Observability Hooks
 
 Recommend the minimum routing telemetry needed to improve the system.
 
@@ -238,7 +271,7 @@ Keep this lightweight unless the user asks for a production tracing spec.
 
 ---
 
-## Step 10: Deliver Outputs
+## Step 11: Deliver Outputs
 
 Return these artifacts:
 

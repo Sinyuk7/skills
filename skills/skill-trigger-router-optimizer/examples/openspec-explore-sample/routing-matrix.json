@@ -1,0 +1,62 @@
+{
+  "skills": [
+    {
+      "name": "openspec-explore",
+      "routing_role": "routable_skill",
+      "primary_intents": [
+        "explore ideas",
+        "investigate problems",
+        "clarify requirements"
+      ],
+      "secondary_intents": [
+        "compare options",
+        "visualize architecture",
+        "offer optional artifact capture"
+      ],
+      "strong_positive_triggers": [
+        "explore this",
+        "think this through",
+        "clarify requirements",
+        "before implementing"
+      ],
+      "weak_cues": [
+        "don't code yet",
+        "help me reason about this",
+        "mode switch"
+      ],
+      "negative_triggers": [
+        "implement this",
+        "write the code",
+        "apply the change now"
+      ],
+      "prerequisites": [
+        "user wants discussion or investigation rather than execution"
+      ],
+      "mode": "exclusive"
+    }
+  ],
+  "intent_regions": [
+    {
+      "intent": "pre-implementation exploration and problem framing",
+      "classification": "exclusive",
+      "skills": [
+        "openspec-explore"
+      ],
+      "notes": "primary route"
+    },
+    {
+      "intent": "discussion-driven codebase investigation with no code edits",
+      "classification": "exclusive",
+      "skills": [
+        "openspec-explore"
+      ],
+      "notes": "behavioral boundary is the key signal"
+    },
+    {
+      "intent": "implement the change directly",
+      "classification": "gap",
+      "skills": [],
+      "notes": "out of scope for this skill by design"
+    }
+  ]
+}

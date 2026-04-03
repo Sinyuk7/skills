@@ -1,0 +1,58 @@
+{
+  "cases": [
+    {
+      "id": "mcp-route-001",
+      "request": "Help me build an MCP server for this external API in TypeScript.",
+      "expected_skills": ["mcp-builder"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Direct build request with MCP and language cues",
+      "notes": "Should branch internally to the TypeScript guide"
+    },
+    {
+      "id": "mcp-route-002",
+      "request": "I already have an MCP server. Please review the tool naming, pagination, and annotations against best practices.",
+      "expected_skills": ["mcp-builder"],
+      "expected_mode": "exclusive",
+      "ambiguity": "medium",
+      "reason": "Review/audit intent is supported but weakly surfaced in current metadata",
+      "notes": "Good test for under-trigger risk"
+    },
+    {
+      "id": "mcp-route-003",
+      "request": "Generate 10 read-only evaluation questions for this MCP server.",
+      "expected_skills": ["mcp-builder"],
+      "expected_mode": "exclusive",
+      "ambiguity": "medium",
+      "reason": "Phase 4 evaluation intent belongs to the same skill",
+      "notes": "Should not miss just because the description is build-heavy"
+    },
+    {
+      "id": "mcp-route-004",
+      "request": "Which transport should I use for a remote multi-client MCP server?",
+      "expected_skills": ["mcp-builder"],
+      "expected_mode": "exclusive",
+      "ambiguity": "medium",
+      "reason": "Best-practices guidance lives inside bundled references of the same skill",
+      "notes": "Tests whether reference-backed advisory requests still route correctly"
+    },
+    {
+      "id": "mcp-route-005",
+      "request": "Build me a generic REST API wrapper in Python.",
+      "expected_skills": [],
+      "expected_mode": "abstain",
+      "ambiguity": "medium",
+      "reason": "No MCP context",
+      "notes": "Negative trigger case"
+    },
+    {
+      "id": "mcp-route-006",
+      "request": "Open the node implementation guide file directly.",
+      "expected_skills": [],
+      "expected_mode": "abstain",
+      "ambiguity": "low",
+      "reason": "Reference files are non-routable resources",
+      "notes": "Tests correct exclusion of bundled docs from route targets"
+    }
+  ]
+}

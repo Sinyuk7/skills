@@ -8,9 +8,9 @@
 
 ## Routing Surface Summary
 
-| Skill | Primary Intents | Boundary Risk | Suggested Mode |
-|-------|-----------------|---------------|----------------|
-|       |                 |               |                |
+| Skill | Routing Role | Primary Intents | Boundary Risk | Suggested Mode |
+|-------|--------------|-----------------|---------------|----------------|
+|       |              |                 |               |                |
 
 ## Overlap Findings
 

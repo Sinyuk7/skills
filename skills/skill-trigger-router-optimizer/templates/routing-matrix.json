@@ -2,6 +2,7 @@
   "skills": [
     {
       "name": "skill-name",
+      "routing_role": "routable_skill",
       "primary_intents": [],
       "secondary_intents": [],
       "strong_positive_triggers": [],

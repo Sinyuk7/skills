@@ -1,0 +1,78 @@
+{
+  "skill_name": "skill-trigger-router-optimizer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Analyze the issue-flow skill system and tell me which parts should actually participate in user-facing routing. Use `skills/issue-flow-core`, `skills/issue-collect`, `skills/issue-handoff`, `skills/issue-resolve`, and `skills/issue-overmind-sync` as the sample set.",
+      "expected_output": "Should classify `issue-flow-core` as a shared core or non-routable component, keep the thin stage skills as the routed surface, identify stage-boundary conflicts, and produce routing audit artifacts rather than treating the core package as a normal skill.",
+      "files": [
+        "skills/issue-flow-core/README.md",
+        "skills/issue-flow-core/PRD.md",
+        "skills/issue-collect/SKILL.md",
+        "skills/issue-handoff/SKILL.md",
+        "skills/issue-resolve/SKILL.md",
+        "skills/issue-overmind-sync/SKILL.md"
+      ],
+      "expectations": [
+        "The result explicitly classifies `issue-flow-core` as non-routable for user execution.",
+        "The result treats `issue-collect`, `issue-handoff`, and `issue-resolve` as stage entry skills with chain relationships.",
+        "The result identifies at least one thin-context ambiguity such as \"analyze this bug\" or \"continue this case\".",
+        "The result recommends prerequisites or negative triggers as routing fixes rather than execution-step rewrites."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Audit `skills/mcp-builder` as a routing sample. Focus on whether the current route surface exposes all the real intents this skill supports.",
+      "expected_output": "Should identify `mcp-builder` as a single routed skill whose primary build intent is clear, while also detecting that review and evaluation are real but under-signaled secondary intents. The result should keep bundled references non-routable and recommend stronger metadata or top-level intent dispatch.",
+      "files": [
+        "skills/mcp-builder/SKILL.md",
+        "skills/mcp-builder/reference/mcp_best_practices.md",
+        "skills/mcp-builder/reference/evaluation.md",
+        "skills/mcp-builder/reference/node_mcp_server.md",
+        "skills/mcp-builder/reference/python_mcp_server.md"
+      ],
+      "expectations": [
+        "The result classifies the package as one routed skill plus non-routable references.",
+        "The result identifies hidden secondary intents such as MCP review or MCP evaluation creation.",
+        "The result does not recommend splitting the skill immediately unless metadata fixes fail first.",
+        "The result proposes top-level trigger improvements for eval and review requests."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use `/Users/shenyeke01/.claude/skills/openspec-explore/SKILL.md` as a routing sample and evaluate how this skill should be understood by the router.",
+      "expected_output": "Should identify `openspec-explore` as a routed skill whose core product is a collaboration stance or mode-switch, not a fixed workflow. The result should emphasize behavioral boundaries like 'thinking, not implementing' and avoid penalizing the skill for lacking workflow files.",
+      "files": [
+        "/Users/shenyeke01/.claude/skills/openspec-explore/SKILL.md"
+      ],
+      "expectations": [
+        "The result treats `openspec-explore` as routable rather than malformed.",
+        "The result identifies it as stance-driven, mode-switching, or behavior-first.",
+        "The result emphasizes negative triggers around implementation requests.",
+        "The result recommends route-surface language like `enter explore mode` or equivalent mode-switch cues."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Analyze a mixed skill package that contains one `SKILL.md`, a `reference/` folder, a `scripts/` folder, and long-form bundled docs. Produce a routing audit that distinguishes route targets from implementation resources.",
+      "expected_output": "Should separate user-facing route targets from bundled references, scripts, or docs, and should not treat every file-bearing directory as a routable skill. The audit should preserve non-routable components in the report while excluding them from user-facing dispatch recommendations.",
+      "files": [],
+      "expectations": [
+        "The result introduces or uses routing-role classification such as routable skill vs non-routable reference.",
+        "The result keeps implementation resources visible in the audit instead of ignoring them entirely.",
+        "The result avoids recommending direct routing to helper files, scripts, or references."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Given a skill whose body supports multiple phases or optional outputs, check whether important trigger intents are buried too deep to influence routing, and propose fixes that improve routing without rewriting the execution logic.",
+      "expected_output": "Should detect hidden secondary intents, recommend bringing them into the route surface with stronger descriptions, examples, or top-level intent dispatch, and avoid jumping straight to code or workflow refactors.",
+      "files": [],
+      "expectations": [
+        "The result explicitly checks for supported intents that only appear deep in the skill body or bundled resources.",
+        "The result recommends metadata or route-surface fixes before structural splitting.",
+        "The result stays focused on routing quality rather than execution optimization."
+      ]
+    }
+  ]
+}

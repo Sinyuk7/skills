@@ -38,6 +38,25 @@ Weak metadata usually has one of these failures:
 - too abstract: cannot be mapped to user phrasing
 - missing negatives: frequent false positives
 - missing composition hints: chain or parallel opportunities get lost
+- hidden secondary intents: supported use cases are buried deep in the body and never reach the route surface
+- hidden mode switch: the skill is really a collaboration stance, but the route surface reads like a generic helper
+
+## Stance-Driven Skills
+
+Some skills are not primarily workflow routers. They switch how the assistant should collaborate.
+
+Typical signs:
+
+- no fixed procedure is required
+- collaboration style is part of the product surface
+- strongest boundary is behavioral, such as "explore, don't implement"
+- artifact creation is optional rather than mandatory
+
+For stance-driven skills:
+
+- route on user intent and behavioral cues first
+- emphasize negative triggers and mode-switch wording
+- do not penalize the skill for lacking templates, scripts, or workflows
 
 ## Escalation Rules
 
