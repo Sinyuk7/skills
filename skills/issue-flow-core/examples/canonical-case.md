@@ -47,7 +47,6 @@ Users with all-lowercase usernames like "admin" can log in fine.
 ```text
 <project-root>/
 ├── ISSUE_CONTEXT.md
-├── .issue-flow-core/
 └── .issue-flow/
     └── cases/
         └── login-case-sensitivity-bug/

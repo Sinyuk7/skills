@@ -27,7 +27,8 @@ Artifacts should work for both humans and LLMs. Markdown, YAML, and XML over JSO
 Workflow logic is shared across skills, but runtime state lives in the current
 repository. Entry skills (`issue-collect`, `issue-handoff`, `issue-resolve`)
 stay small. Use the design-time source in `skills/issue-flow-core/` to define
-behavior, and use `<repo-root>/.issue-flow-core/` for runtime assets.
+behavior, and keep runtime state inside `.issue-flow/cases/<case-id>/` plus
+optional project-level `ISSUE_CONTEXT.md`.
 
 ## Status Truth Lives Inside the Case
 

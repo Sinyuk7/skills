@@ -12,14 +12,16 @@ Transform raw user-provided issue materials into a curated evidence workspace.
 - Optional: existing case to append to
 - Optional: ISSUE_CONTEXT.md for project-level conventions
 
-## Runtime Core
+## Runtime Model
 
 Before collect work begins:
 
 - Resolve the current git repository root
-- Use `<repo-root>/.issue-flow-core/` as the runtime core directory
-- Bootstrap `.issue-flow-core/` when missing
-- Stop with a clear initialization error if required runtime assets are still missing
+- Use `<repo-root>/.issue-flow/cases/` as the runtime workspace root
+- Use `<repo-root>/ISSUE_CONTEXT.md` as the optional project-level context file
+- Read workflow docs, templates, and scripts from the installed skills tree
+- Do not create or depend on a separate repo-local `.issue-flow-core/` directory
+- Stop with a clear error only when required case artifacts or project context assumptions are missing
 
 ## Outputs
 

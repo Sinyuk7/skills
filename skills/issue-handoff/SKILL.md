@@ -7,10 +7,11 @@ description: Build a traceable investigation and downstream handoff from an exis
 
 Thin entry skill for Stage 2 of the issue-flow system.
 
-The design-time source for the shared workflow lives in this skills repo, but
-the runtime workflow lives inside the current project. Resolve the current git
-repository root first, then use or bootstrap `<repo-root>/.issue-flow-core/`
-before proceeding.
+Workflow docs, templates, and scripts are defined in this skills repo.
+At runtime inside the project, the only issue-flow working state lives under
+`.issue-flow/cases/<case-id>/`, plus optional project-level `ISSUE_CONTEXT.md`.
+Resolve the current git repository root first, then read workflow docs,
+templates, and scripts from the installed skill directory.
 
 ## Step 1: Load Core Workflow Files
 
@@ -57,8 +58,8 @@ Work from the curated case workspace to produce:
 - **Prove log reading** (CRITICAL): For each curated log file, investigation.xml MUST contain 1-2 representative lines extracted from that log as `<log_excerpt>` elements. Each `log_excerpt` must include `id`, `source`, and `lines`; `timestamp` is optional but recommended. This is mandatory evidence-chain proof that logs were actually read and analyzed, not just referenced.
 - **Bind facts to log evidence** (CRITICAL): Any fact derived from log evidence must include `source_excerpt`, and that excerpt must come from the same log file referenced by the fact's `ref`.
 - Start from the shared `.issue-flow/cases/<case-id>/` workspace.
-- Runtime assets live in `<repo-root>/.issue-flow-core/`, not in the installed skills directory.
-- If `.issue-flow-core/` is missing, bootstrap it before workflow execution.
+- Do not create or depend on a separate repo-local `.issue-flow-core/` directory.
+- Read workflow docs, templates, and scripts from the installed skills directory.
 - Use curated evidence as the default working set. Reopen raw sources only when policy allows it.
 - Keep repository reads evidence-driven and record them as direct repository references.
 - Use repository references rather than copying code into case workspace.

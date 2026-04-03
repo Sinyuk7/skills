@@ -7,10 +7,11 @@ description: Create or update an issue-flow case by curating raw issue materials
 
 Thin entry skill for Stage 1 of the issue-flow system.
 
-The design-time source for the shared workflow lives in this skills repo, but
-the runtime workflow lives inside the current project. Resolve the current git
-repository root first, then use or bootstrap `<repo-root>/.issue-flow-core/`
-before proceeding.
+Workflow docs, templates, and scripts are defined in this skills repo.
+At runtime inside the project, the only issue-flow working state lives under
+`.issue-flow/cases/<case-id>/`, plus optional project-level `ISSUE_CONTEXT.md`.
+Resolve the current git repository root first, then read workflow docs,
+templates, and scripts from the installed skill directory.
 
 ## Step 1: Load Project Context (Required)
 
@@ -79,8 +80,8 @@ Curate raw user-provided issue materials into a stable case workspace under:
 - **Prove context loading**: You must provide `<proof>` tags showing you read `ISSUE_CONTEXT.md` and core workflow files before case work begins.
 - Require at least one non-repository issue input before creating a case.
 - Use the shared `.issue-flow/cases/<case-id>/` workspace. Do not invent stage-specific workspaces.
-- Runtime assets live in `<repo-root>/.issue-flow-core/`, not in the installed skills directory.
-- If `.issue-flow-core/` is missing, bootstrap it before workflow execution.
+- Do not create or depend on a separate repo-local `.issue-flow-core/` directory.
+- Read workflow docs, templates, and scripts from the installed skills directory.
 - `ISSUE_CONTEXT.md` is a repo-level file and must not be copied into the case.
 - If the write target is ambiguous, stop and ask the user which case should own the write.
 - Keep repository exploration evidence-driven.

@@ -4,7 +4,7 @@
       "name": "issue-flow-core",
       "primary_intents": [
         "shared issue-flow architecture",
-        "runtime asset bootstrap",
+        "case workspace architecture",
         "workflow maintenance"
       ],
       "secondary_intents": [
@@ -14,10 +14,10 @@
       "strong_positive_triggers": [
         "issue-flow architecture",
         "shared core",
-        "runtime core"
+        "case workspace model"
       ],
       "weak_cues": [
-        "bootstrap .issue-flow-core",
+        "case-only runtime model",
         "readiness policy"
       ],
       "negative_triggers": [

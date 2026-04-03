@@ -14,15 +14,15 @@
 
 ```yaml
 description: |
-  Shared runtime and design-time core for the issue-flow skill set.
+  Shared design-time source for the issue-flow skill set.
   Not a user-facing skill and not a routing target.
   Read only when implementing, auditing, or maintaining issue-flow stage skills.
 ```
 
 ### Trigger Additions
 
-- Strong positive triggers: `shared core`, `runtime assets`, `issue-flow architecture`
-- Weak cues: `bootstrap .issue-flow-core`, `readiness model`
+- Strong positive triggers: `shared core`, `case workspace model`, `issue-flow architecture`
+- Weak cues: `case-only runtime model`, `readiness model`
 - Negative triggers: `start investigating`, `build handoff`, `fix issue`, `sync Overmind`
 - Prerequisites: maintenance or architecture work on the issue-flow system
 - Use proactively: no

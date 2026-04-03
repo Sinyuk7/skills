@@ -11,21 +11,25 @@ workspace. It is the source of truth for:
 - script contracts
 - the product requirements doc
 
-At runtime, issue-flow operates inside the current repository, not inside the
-installed skills tree:
+At runtime, issue-flow operates inside the current repository, while workflow
+definitions remain in the installed skills tree:
 
 ```text
 <project-root>/
 ├── ISSUE_CONTEXT.md
-├── .issue-flow-core/
 └── .issue-flow/
     └── cases/
         └── <case-id>/
 ```
 
-`<project-root>/.issue-flow-core/` is the runtime core directory. Skills should
-resolve the current git repository root first, bootstrap `.issue-flow-core/`
-when missing, and only proceed once required runtime assets exist.
+The runtime model is intentionally small:
+
+- `ISSUE_CONTEXT.md` is the optional project-level context file
+- `.issue-flow/cases/<case-id>/` is the only issue-flow runtime workspace
+
+Skills should resolve the current git repository root first, then read workflow
+docs, templates, and scripts from the installed skills tree while writing case
+artifacts only inside `.issue-flow/cases/<case-id>/`.
 
 The user-facing entry skills are:
 
