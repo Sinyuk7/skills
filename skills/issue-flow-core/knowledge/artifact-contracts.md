@@ -2,17 +2,16 @@
 
 ## Minimal Artifact Set
 
-Issue-flow enforces a strict minimal artifact architecture to eliminate redundancy and maintain single-source-of-truth.
+Issue-flow keeps a fixed, minimal artifact set. Anything else is out of contract.
 
 ### Core Principles
-1. **One artifact per concept** — No duplication of information across files
+1. **One artifact per concept** — Do not duplicate information across files
 2. **Traceability is mandatory** — All downstream facts MUST reference upstream IDs
-3. **Merging over splitting** — Prefer consolidated artifacts over multiple small files
-4. **No optional artifacts** — Every artifact serves a decision-making purpose
+3. **No unsupported artifacts** — If an artifact does not support a decision or verification step, do not add it
 
 ---
 
-## Case Management (ALL STAGES)
+## Case Management
 
 | Artifact | Format | Purpose | Owner |
 |----------|--------|---------|-------|
@@ -20,7 +19,7 @@ Issue-flow enforces a strict minimal artifact architecture to eliminate redundan
 | `case/sources.yaml` | YAML | Source registration + mutation log | Collect (write), Handoff/Resolve (read) |
 | `case/activity.md` | Markdown | Append-only event log | All stages (append) |
 
-**Constraint**: `status.yaml` is the SINGLE source of truth for lifecycle state. No project-level case indexes allowed.
+**Constraint**: `status.yaml` is the single source of truth for lifecycle state. No project-level case indexes allowed.
 
 ---
 
@@ -29,12 +28,12 @@ Issue-flow enforces a strict minimal artifact architecture to eliminate redundan
 **Inputs**: User-provided issue materials (external paths)
 
 **Outputs**:
-- `curated/*` directories — Organized evidence workspace (logs/, media/, notes/, excerpts/, ocr/)
-- `case/sources.yaml` — Source registration with collection status
-- `case/status.yaml` — Lifecycle: `new` → `collecting` → `collected`
-- `case/activity.md` — Case creation and collection events
+- `curated/*` directories — evidence workspace for logs, media, notes, excerpts, ocr
+- `case/sources.yaml`
+- `case/status.yaml`
+- `case/activity.md`
 
-**Artifacts NOT allowed**: None (no synthesis at this stage)
+**Rule**: no synthesis artifacts at this stage.
 
 ---
 
@@ -43,22 +42,10 @@ Issue-flow enforces a strict minimal artifact architecture to eliminate redundan
 **Inputs**: `curated/*`, `sources.yaml`, `ISSUE_CONTEXT.md`
 
 **Outputs**:
-- **`analysis/investigation.xml`** — FACT OF RECORD
-  - Evidence refs (issue materials + repository)
-  - Evidence excerpts with IDs
-  - Confirmed facts with IDs (F-001, F-002, ...)
-  - Inferred conclusions with IDs (I-001, I-002, ...)
-  - Open questions with IDs (Q-001, Q-002, ...)
-  - Detailed narrative sections
+- `analysis/investigation.xml` — evidence refs, excerpts, confirmed facts, inferences, open questions, details
+- `analysis/handoff.xml` — summary, code context, known items, next_step, references
 
-- **`analysis/handoff.xml`** — DOWNSTREAM DELIVERY
-  - Concise 2-4 paragraph summary
-  - Code context (affected files, key symbols with evidence refs, critical sections)
-  - Known items (MUST reference investigation fact IDs via `fact_ref` attribute)
-  - Next step recommendation
-  - References: investigation.xml, ISSUE_CONTEXT.md
-
-**Traceability Constraint**: Every `<known>` item in handoff.xml MUST have `fact_ref="F-XXX"` pointing to investigation.xml fact ID. Validation enforced via `validate-traceability.py`.
+**Traceability Constraint**: Every `<known>` item in `handoff.xml` MUST have `fact_ref="F-XXX"` pointing to a confirmed fact in `investigation.xml`. If a fact is backed by a log, it MUST also point to a matching `source_excerpt` from the same log file.
 
 ---
 
@@ -67,46 +54,25 @@ Issue-flow enforces a strict minimal artifact architecture to eliminate redundan
 **Inputs**: `analysis/handoff.xml`, `analysis/investigation.xml`, `ISSUE_CONTEXT.md`
 
 **Outputs**:
-- **`resolve/resolution.xml`** — IMPLEMENTATION OUTCOME
-  - Summary
-  - Outcome type (code_fix, config_change, non_code_conclusion, external)
-  - Enhanced delivery section with commits
-  - Verification status + summary
-  - References: handoff.xml
+- `resolve/resolution.xml` — outcome, delivery metadata, verification summary
+- `resolve/verification.md` — verification plan, results, evidence
 
-- **`resolve/verification.md`** — VERIFICATION EVIDENCE
-  - Detailed verification plan
-  - Test results (automated + manual)
-  - Before/after evidence
-  - Verification status
-
-**Intentional Split**: resolution.xml (structured metadata) + verification.md (detailed evidence) is NOT redundant — different purposes and audiences.
+**Rule**: `resolution.xml` and `verification.md` are separate on purpose; keep metadata in XML and evidence in Markdown.
 
 ---
 
-## Artifact Dependency Graph
+## Artifact Count
 
-```
-sources.yaml → curated/* → investigation.xml → handoff.xml → resolution.xml
-                                                    ↓              ↓
-                                              (next_step)    verification.md
-```
-
-**Total Artifacts Per Complete Case**: 8
-- 3 case management (status, sources, activity)
-- 1 evidence workspace (curated/)
-- 2 handoff (investigation, handoff)
-- 2 resolve (resolution, verification)
-- 1 project context (ISSUE_CONTEXT.md, shared)
+**Total artifacts per complete case**: 8
+- 3 case management: `status.yaml`, `sources.yaml`, `activity.md`
+- 1 evidence workspace: `curated/*`
+- 2 handoff: `investigation.xml`, `handoff.xml`
+- 2 resolve: `resolution.xml`, `verification.md`
+- 1 shared project context: `ISSUE_CONTEXT.md`
 
 ---
 
 ## Validation & Enforcement
-
-### Pre-Flight Checks (Every Skill Invocation)
-```bash
-scripts/detect-forbidden-artifacts.py <case-dir>
-```
 
 ### Handoff-Ready Gate (Blocking)
 ```bash
@@ -125,11 +91,9 @@ xmllint --schema schemas/resolution.xsd resolve/resolution.xml
 scripts/check-artifact-limits.sh <case-dir>
 ```
 
-**Failure Mode**: Any validation failure BLOCKS lifecycle transition (collect_ready, handoff_ready, resolve_ready).
+**Failure Mode**: Any validation failure BLOCKS the relevant lifecycle transition.
 
 ---
-
-
 
 ## Anti-Patterns (FORBIDDEN)
 
@@ -139,42 +103,3 @@ scripts/check-artifact-limits.sh <case-dir>
 ❌ **Project-level case indexes** (violates "Status Truth Lives Inside the Case")  
 ❌ **Nested case subdirectories** (violates flat structure principle)  
 ❌ **Multiple investigation files** per case (only ONE fact-of-record allowed)
-
----
-
-## Design Rationale
-
-**Why so strict?**
-- Prevents artifact drift (summaries diverging from source facts)
-- Enforces traceability (every claim has provenance)
-- Reduces cognitive load (fewer files to track)
-- Optimizes for long-term clarity over completeness
-- Makes cases resumable (clear fact-of-record ownership)
-
-**Why include next_step in handoff?**
-- Next-step recommendation is part of handoff delivery
-- Consolidates "what to do next" decision with investigation output
-- Reduces file count without losing information
-
-**Why include commits in resolution?**
-- Commits are delivery metadata, not standalone artifacts
-- Resolution already tracks delivery outcomes
-- Consolidates all "what shipped" info in one place
-
-**Why keep verification.md separate?**
-- Detailed verification evidence is distinct from structured outcome metadata
-- Different audiences (engineers vs stakeholders)
-- Markdown format better for test output, screenshots, logs
-- XML for structured data, Markdown for narrative evidence
-
----
-
-## Questions & Escalation
-
-If you encounter a case where the minimal structure seems insufficient:
-1. Document the limitation with a specific example
-2. Propose the MINIMUM additional artifact needed
-3. Justify why existing artifacts cannot absorb the information
-4. Escalate to architecture review before creating new artifact types
-
-**Default bias**: Prefer verbosity loss over artifact proliferation.
