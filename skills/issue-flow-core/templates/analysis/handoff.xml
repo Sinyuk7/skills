@@ -34,7 +34,7 @@
   </investigation_ref>
   
   <issue_context_ref>
-    <!-- Pointer to project-level context if used -->
+    <!-- Pointer to project-level context if used; keep this pointed at <repo-root>/ISSUE_CONTEXT.md -->
     ISSUE_CONTEXT.md
   </issue_context_ref>
 </handoff>

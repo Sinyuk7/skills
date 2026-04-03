@@ -45,17 +45,22 @@ Users with all-lowercase usernames like "admin" can log in fine.
 ### Result Structure
 
 ```text
-.issue-flow/cases/login-case-sensitivity-bug/
-├── status.yaml           # lifecycle: collected
-├── activity.md           # Logs: case created, sources registered, collection complete
-├── sources.yaml          # 3 issue materials + 1 repository ref
-└── curated/
-    ├── logs/
-    │   └── error.log
-    ├── media/
-    │   └── login-error.png
-    └── notes/
-        └── problem-statement.txt
+<project-root>/
+├── ISSUE_CONTEXT.md
+├── .issue-flow-core/
+└── .issue-flow/
+    └── cases/
+        └── login-case-sensitivity-bug/
+            ├── status.yaml           # lifecycle: collected
+            ├── activity.md           # Logs: case created, sources registered, collection complete
+            ├── sources.yaml          # 3 issue materials + 1 repository ref
+            └── curated/
+                ├── logs/
+                │   └── error.log
+                ├── media/
+                │   └── login-error.png
+                └── notes/
+                    └── problem-statement.txt
 ```
 
 **status.yaml**:
@@ -238,6 +243,8 @@ recommended_action: resolve
 
 confidence: high
 
+solution_approved: false
+
 reasoning: |
   Root cause is clear and fix is straightforward. The normalizeUsername
   helper already exists and just needs to be called before validation.
@@ -271,11 +278,14 @@ notes: ""
 
 ### Resolve Actions
 
-1. **Implement fix**: Add normalization call in validateCredentials
-2. **Add tests**: Create test coverage for mixed-case usernames
-3. **Verify fix**: Run automated tests and manual verification
-4. **Create resolution.xml**: Document outcome and delivery
-5. **Create verification.md**: Detail verification steps and results
+1. **Review handoff and project context**: Re-read `analysis/handoff.xml`, `analysis/next-step.yaml`, and `<project-root>/ISSUE_CONTEXT.md`
+2. **Present proposal and get approval**: Summarize the fix, affected files, and verification plan; wait for explicit user approval
+3. **Record approval**: Update `analysis/next-step.yaml` with `solution_approved: true`
+4. **Implement fix**: Add normalization call in validateCredentials
+5. **Add tests**: Create test coverage for mixed-case usernames
+6. **Verify fix**: Run automated tests and manual verification
+7. **Create resolution.xml**: Document outcome and delivery
+8. **Create verification.md**: Detail verification steps and results
 
 ### Result Structure
 

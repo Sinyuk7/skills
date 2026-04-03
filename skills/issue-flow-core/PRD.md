@@ -20,7 +20,8 @@ The system is split into three thin skill entrypoints:
 - `issue-handoff`
 - `issue-resolve`
 
-The shared logic lives in `skills/issue-flow-core/`.
+The design-time source lives in `skills/issue-flow-core/`. At runtime, skills
+operate against `<repo-root>/.issue-flow-core/` inside the current project.
 
 ## 2. Problem
 
@@ -98,6 +99,7 @@ screenshots, videos, archives, or user-provided issue notes.
 ```text
 <project-root>/
 ├── ISSUE_CONTEXT.md
+├── .issue-flow-core/
 └── .issue-flow/
     └── cases/
         └── <case-id>/
@@ -146,6 +148,9 @@ Responsibilities:
 Boundary:
 
 - does not try to produce the final handoff
+- does not create case-level copies of `ISSUE_CONTEXT.md`
+- does not create `case.md`, `project-context.snapshot.md`, `case-status.json`,
+  or case-top-level `logs/`
 - does not default to repeated rescans of the raw source directories after
   curation is complete
 - must decide when evidence is "collect enough" for the case to advance
@@ -185,6 +190,8 @@ Boundary:
 - repository evidence should be recorded as direct repository references such as
   file paths, symbols, and line numbers, not copied into the case workspace as
   code excerpts in v1
+- `issue_context_ref` points to the project-level `ISSUE_CONTEXT.md`, not a
+  case-local copy
 - one case produces one `handoff.xml`; v1 does not require additional nested
   per-problem handoff structures
 - handoff is read-only against both source roots
@@ -200,6 +207,7 @@ Primary outputs:
 Responsibilities:
 
 - optionally continue from handoff into a fix or final disposition
+- re-read `ISSUE_CONTEXT.md` directly when present before implementation
 - record implementation, verification, and closure artifacts
 - support non-code conclusions when resolution is external or unnecessary
 - may modify the current project repository when resolution requires code
@@ -211,6 +219,8 @@ Boundary:
 - should not rewrite or replace prior evidence artifacts
 - requires an existing `handoff.xml`; if it is missing, the workflow should stop
   and direct the user back to `issue-handoff`
+- must present the proposed solution and obtain explicit user approval before
+  modifying the project repository
 - resolve does not grant permission to rewrite prior issue-material roots as a
   substitute for case artifacts
 
@@ -622,6 +632,74 @@ workflow to advance immediately.
 - result files should be explicit about what is known, what is inferred, and
   what remains open
 - v1 does not add a separate sharing or redaction layer on top of the case
+
+## 10.6 Runtime Core Rule
+
+- `skills/issue-flow-core/` is a design-time source tree in the skills repo
+- runtime issue-flow assets live under `<repo-root>/.issue-flow-core/`
+- skills resolve the git repository root first, then use or bootstrap
+  `.issue-flow-core/`
+- failure to initialize `.issue-flow-core/` is a startup error; skills must not
+  guess runtime paths from the installed skill directory
+
+### 10.6.1 Runtime Core Bootstrap
+
+When `.issue-flow-core/` does not exist at the repository root, the workflow
+must bootstrap it before any case work begins.
+
+**Bootstrap behavior**:
+
+- create `<repo-root>/.issue-flow-core/` directory
+- copy `templates/` from the design-time source into the runtime directory
+- copy `scripts/` from the design-time source into the runtime directory
+- do not copy `workflows/`, `knowledge/`, `examples/`, `PRD.md`, or `README.md`
+  into runtime; those remain design-time references only
+
+**Runtime directory structure after bootstrap**:
+
+```text
+<repo-root>/.issue-flow-core/
+├── templates/
+│   ├── analysis/
+│   │   ├── handoff.xml
+│   │   ├── investigation.xml
+│   │   └── next-step.yaml
+│   ├── case/
+│   │   ├── activity.md
+│   │   ├── inventory.yaml
+│   │   ├── source-manifest.yaml
+│   │   ├── sources.yaml
+│   │   └── status.yaml
+│   ├── resolve/
+│   │   ├── resolution.xml
+│   │   └── verification.md
+│   └── ISSUE_CONTEXT.md
+└── scripts/
+    ├── check_readiness.py
+    └── (other scripts)
+```
+
+**Bootstrap is idempotent**:
+
+- if `.issue-flow-core/` already exists, bootstrap does not overwrite
+- version upgrades are out of scope for v1; users may manually refresh the
+  runtime directory from an updated skills repo
+
+**Bootstrap triggers**:
+
+- any entry skill (`issue-collect`, `issue-handoff`, `issue-resolve`) that
+  detects missing `.issue-flow-core/` should bootstrap before proceeding
+- bootstrap failure is a blocking error; the workflow must not continue with
+  a partial or missing runtime directory
+
+## 10.7 Project Context Rule
+
+- `<repo-root>/ISSUE_CONTEXT.md` is the only project-level context source
+- cases may reference project context, but they do not own a copied
+  `ISSUE_CONTEXT.md`
+- v1 does not create `project-context.snapshot.md`
+- case overview data belongs in canonical artifacts such as `status.yaml`,
+  `activity.md`, `investigation.xml`, and `handoff.xml`
 
 ## 11. Case Identity Rules
 

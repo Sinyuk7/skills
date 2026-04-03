@@ -2,7 +2,9 @@
 
 Project-level context for issue investigation workflows.
 
-This file is read by `issue-collect` and `issue-handoff` when present. It provides stable context about your project's conventions, common failure modes, and investigation priorities.
+This file belongs at `<repo-root>/ISSUE_CONTEXT.md`. It is the single
+project-level context source for `issue-collect`, `issue-handoff`, and
+`issue-resolve` when present. Do not copy this file into `.issue-flow/cases/`.
 
 ---
 

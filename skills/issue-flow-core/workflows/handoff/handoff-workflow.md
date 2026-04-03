@@ -11,7 +11,7 @@ Synthesize curated evidence into a pure investigation record and a traceable dow
 - Curated case workspace from collect stage
 - `sources.yaml` with registered evidence
 - `curated/*` materials
-- Optional: `ISSUE_CONTEXT.md` for project context
+- Optional: `<repo-root>/ISSUE_CONTEXT.md` for project context
 - Optional: Repository access for code context
 
 ## Outputs
@@ -34,7 +34,7 @@ If not ready, direct user back to `issue-collect`.
 
 ### 2. Context Loading
 
-- Read `ISSUE_CONTEXT.md` if present
+- Read `<repo-root>/ISSUE_CONTEXT.md` if present
 - Load `sources.yaml` for evidence inventory
 - Review curated materials in `curated/`
 
@@ -109,7 +109,7 @@ Create `analysis/handoff.xml` with:
 
 **References**:
 - Pointer to full investigation record
-- Pointer to ISSUE_CONTEXT.md if used
+- Pointer to the project-level `ISSUE_CONTEXT.md` if used
 
 ### 6. Next Action Recommendation
 
@@ -161,13 +161,14 @@ Log transition in `activity.md`.
 - Synthesize investigation with evidence refs and expanded details
 - Assemble traceable handoff with concise summary and code context
 - Declare next recommended action
-- Read ISSUE_CONTEXT.md when present
+- Read the project-level ISSUE_CONTEXT.md when present
 - Ensure traceability across all artifacts
 
 ### Must Not Do
 
 - Force mandatory fixing (optional next stage)
 - Copy code excerpts into case workspace (use direct refs in v1)
+- Create or rely on a case-local copy of `ISSUE_CONTEXT.md`
 - Create multiple per-problem handoff structures (one case = one handoff in v1)
 - Modify source roots (read-only against both issue materials and repository)
 - Do unrestricted whole-repo exploration

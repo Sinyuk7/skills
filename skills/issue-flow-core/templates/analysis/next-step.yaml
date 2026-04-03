@@ -5,6 +5,8 @@ recommended_action: "{{action}}"  # resolve, collect, external, none, blocked
 
 confidence: "{{confidence}}"  # high, medium, low
 
+solution_approved: {{solution_approved}}  # true, false; true only after the user approves implementation
+
 verification_status: "{{verification_status}}"  # optional until close; use verified, partial, unavailable when closing
 
 reasoning: |

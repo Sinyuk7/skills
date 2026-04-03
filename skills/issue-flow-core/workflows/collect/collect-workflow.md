@@ -12,6 +12,15 @@ Transform raw user-provided issue materials into a curated evidence workspace.
 - Optional: existing case to append to
 - Optional: ISSUE_CONTEXT.md for project-level conventions
 
+## Runtime Core
+
+Before collect work begins:
+
+- Resolve the current git repository root
+- Use `<repo-root>/.issue-flow-core/` as the runtime core directory
+- Bootstrap `.issue-flow-core/` when missing
+- Stop with a clear initialization error if required runtime assets are still missing
+
 ## Outputs
 
 - `status.yaml` with lifecycle state
@@ -45,6 +54,9 @@ Extract relevant:
 - Critical areas
 - Architecture notes
 - Investigation priorities
+
+`ISSUE_CONTEXT.md` remains a project-level source file. Do not copy it into the
+case directory or create case-local variants.
 
 ### 3. Source Registration
 
@@ -129,6 +141,8 @@ If check fails, address blocking issues before advancing.
 ### Must Not Do
 
 - Try to produce final handoff
+- Create case-level `ISSUE_CONTEXT.md` or any project-context snapshot file
+- Create `case.md`, `case-status.json`, or case-top-level `logs/`
 - Repeatedly rescan raw directories after curation complete
 - Modify project repository (read-only for collect)
 - Start a case from repository alone without issue materials

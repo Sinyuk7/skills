@@ -24,7 +24,10 @@ Artifacts should work for both humans and LLMs. Markdown, YAML, and XML over JSO
 
 ## Shared Namespace
 
-Workflow logic is shared across skills. Entry skills (`issue-collect`, `issue-handoff`, `issue-resolve`) stay small. Delegate to the shared `issue-flow-core/` namespace.
+Workflow logic is shared across skills, but runtime state lives in the current
+repository. Entry skills (`issue-collect`, `issue-handoff`, `issue-resolve`)
+stay small. Use the design-time source in `skills/issue-flow-core/` to define
+behavior, and use `<repo-root>/.issue-flow-core/` for runtime assets.
 
 ## Status Truth Lives Inside the Case
 

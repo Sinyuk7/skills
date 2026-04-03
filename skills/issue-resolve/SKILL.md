@@ -7,7 +7,10 @@ description: Continue an issue-flow case from handoff into implementation, verif
 
 Thin entry skill for Stage 3 of the issue-flow system.
 
-Shared logic lives in `../issue-flow-core/`. Use this skill as the user-facing entrypoint, then load the shared core files you need.
+The design-time source for the shared workflow lives in this skills repo, but
+the runtime workflow lives inside the current project. Resolve the current git
+repository root first, then use or bootstrap `<repo-root>/.issue-flow-core/`
+before proceeding.
 
 ## Load These Core Files First
 
@@ -37,6 +40,10 @@ Record the result in:
 ## Non-Negotiables
 
 - Require an existing handoff before resolve work starts.
+- Runtime assets live in `<repo-root>/.issue-flow-core/`, not in the installed skills directory.
+- If `.issue-flow-core/` is missing, bootstrap it before workflow execution.
+- Re-read the repo-level `ISSUE_CONTEXT.md` when present before implementation.
+- Present the proposed solution and obtain explicit user approval before any repository change.
 - Only resolve may modify the project repository.
 - Do not rewrite prior collect or handoff artifacts as a substitute for resolution output.
 - Record verification state explicitly for every outcome.

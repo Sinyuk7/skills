@@ -11,6 +11,7 @@ Optionally continue from handoff into a fix or final disposition, recording impl
 - Case with `handoff_ready` status
 - `analysis/handoff.xml` with issue summary and code context
 - `analysis/next-step.yaml` with recommended action
+- Optional: `<repo-root>/ISSUE_CONTEXT.md` for project context
 - Repository with write access (when resolution requires code changes)
 
 ## Outputs
@@ -42,10 +43,25 @@ Read `analysis/next-step.yaml` for:
 - Recommended action
 - Confidence level
 - Prerequisites
+- Whether `solution_approved` is already recorded
+
+Read `<repo-root>/ISSUE_CONTEXT.md` if present to refresh project-level
+constraints, conventions, and verification expectations before proposing or
+implementing a fix.
 
 ### 3. Resolution Path Selection
 
-Based on next-step recommendation and user intent:
+Before any repository change:
+
+- Summarize the proposed resolution path, affected areas, and verification plan
+- Ask the user to explicitly approve the current solution
+- Record or update `solution_approved: true|false` in `analysis/next-step.yaml`
+  when the workflow is maintaining that field
+
+Without explicit user approval, resolve may analyze, summarize, and refine the
+proposal, but it must not modify the project repository.
+
+After approval, choose the resolution path:
 
 **Code Fix**:
 - Implement changes to project repository
@@ -66,7 +82,7 @@ Based on next-step recommendation and user intent:
 ### 4. Implementation (if code changes)
 
 **Permission**:
-- Resolve MAY modify project repository when needed
+- Resolve MAY modify project repository only after the user approves the current solution
 - Collect and handoff are read-only, only resolve can write to repo
 
 **Implementation Rules**:
@@ -161,6 +177,9 @@ If ready and user confirms:
 ### Must Do
 
 - Require existing handoff.xml (stop without it)
+- Re-read the project-level `ISSUE_CONTEXT.md` when present
+- Present the proposed solution and obtain explicit user approval before
+  modifying the repository
 - Record implementation and verification
 - Support non-code conclusions
 - May modify project repository when resolution requires code changes
@@ -171,6 +190,7 @@ If ready and user confirms:
 - Rewrite prior evidence artifacts from collect/handoff
 - Rewrite prior issue-material roots as substitute for case artifacts
 - Force every case through resolution (optional stage)
+- Treat closure confirmation as a substitute for implementation approval
 - Silently skip verification without documenting why
 
 ## Non-Code Resolutions
