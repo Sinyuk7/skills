@@ -12,17 +12,51 @@ the runtime workflow lives inside the current project. Resolve the current git
 repository root first, then use or bootstrap `<repo-root>/.issue-flow-core/`
 before proceeding.
 
-## Load These Core Files First
+## Step 1: Load Project Context (Required)
 
-- `../issue-flow-core/workflows/collect/collect-workflow.md`
-- `../issue-flow-core/workflows/actions/lifecycle-management.md`
-- `../issue-flow-core/knowledge/issue-flow-principles.md`
-- `../issue-flow-core/knowledge/case-id-policy.md`
+Before any case work, load and prove the project-level context:
 
-Load templates and scripts only when needed:
+<action tool="read_file">
+<repo-root>/ISSUE_CONTEXT.md
+</action>
+
+If present, prove you read the key sections:
+
+<proof file="ISSUE_CONTEXT.md" section="Common Issue Patterns" preview="### Recurring Problems..." />
+<proof file="ISSUE_CONTEXT.md" section="Critical Areas" preview="Areas that require extra..." />
+<proof file="ISSUE_CONTEXT.md" section="Architecture Notes" preview="### Key Components..." />
+
+If `ISSUE_CONTEXT.md` does not exist, note this explicitly before proceeding.
+
+## Step 2: Load Core Workflow Files
+
+<action tool="read_file">
+../issue-flow-core/workflows/collect/collect-workflow.md
+</action>
+
+<proof file="collect-workflow.md" lines="1-10" preview="# Collect Workflow..." />
+
+<action tool="read_file">
+../issue-flow-core/workflows/actions/lifecycle-management.md
+</action>
+
+<proof file="lifecycle-management.md" lines="1-10" preview="# Lifecycle and State..." />
+
+<action tool="read_file">
+../issue-flow-core/knowledge/issue-flow-principles.md
+</action>
+
+<proof file="issue-flow-principles.md" lines="1-10" preview="# Issue-Flow Principles..." />
+
+<action tool="read_file">
+../issue-flow-core/knowledge/case-id-policy.md
+</action>
+
+<proof file="case-id-policy.md" lines="1-10" preview="# case-id policy..." />
+
+## Step 3: Load Templates and Scripts (When Needed)
 
 - `../issue-flow-core/templates/case/`
-- `../issue-flow-core/templates/ISSUE_CONTEXT.md` as the project-level file template only
 - `../issue-flow-core/scripts/check_readiness.py`
 
 ## Mission
@@ -35,6 +69,7 @@ Curate raw user-provided issue materials into a stable case workspace under:
 
 ## Non-Negotiables
 
+- **Prove context loading**: You must provide `<proof>` tags showing you read `ISSUE_CONTEXT.md` and core workflow files before case work begins.
 - Require at least one non-repository issue input before creating a case.
 - Use the shared `.issue-flow/cases/<case-id>/` workspace. Do not invent stage-specific workspaces.
 - Runtime assets live in `<repo-root>/.issue-flow-core/`, not in the installed skills directory.
