@@ -1,6 +1,6 @@
 ---
 name: issue-handoff
-description: Build a traceable investigation and downstream handoff from an existing issue-flow case. Use when curated evidence already exists and the user wants synthesis, analysis, or a handoff package for another engineer or later session.
+description: Build a traceable investigation and downstream handoff from an existing issue-flow case. Use when curated evidence already exists and the user wants synthesis, analysis, or a handoff package for another engineer or later session. Do not use for fresh issue intake, collecting raw materials, implementing fixes, or syncing to trackers.
 ---
 
 # Issue Handoff

@@ -1,6 +1,6 @@
 ---
 name: issue-resolve
-description: Continue an issue-flow case from handoff into implementation, verification, or a final non-code disposition. Use when a case already has `handoff.xml` and the user wants to fix, verify, or close it.
+description: Continue an issue-flow case from handoff into implementation, verification, or a final non-code disposition. Use when a case already has `handoff.xml` and the user wants to fix, verify, or close it. Do not use for evidence collection, building handoffs, or standalone tracker sync.
 ---
 
 # Issue Resolve
@@ -59,6 +59,11 @@ If `ISSUE_CONTEXT.md` does not exist, note this explicitly before proceeding.
 
 - `../issue-flow-core/templates/resolve/`
 - `../issue-flow-core/scripts/check_readiness.py`
+
+## Prerequisites
+
+- Existing case with `analysis/handoff.xml` (handoff must be completed first)
+- Explicit user approval required before any repository modification
 
 ## Mission
 

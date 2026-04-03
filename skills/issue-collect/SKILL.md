@@ -1,6 +1,6 @@
 ---
 name: issue-collect
-description: Create or update an issue-flow case by curating raw issue materials into `.issue-flow/cases/<case-id>/`. Use when a user provides logs, screenshots, archives, notes, or asks to start investigating a fresh issue.
+description: Create or update an issue-flow case by curating raw issue materials into `.issue-flow/cases/<case-id>/`. Use when a user provides logs, screenshots, archives, notes, or asks to start investigating a fresh issue. Do not use for synthesis, analysis, fixing, or syncing.
 ---
 
 # Issue Collect
@@ -58,6 +58,13 @@ If `ISSUE_CONTEXT.md` does not exist, note this explicitly before proceeding.
 
 - `../issue-flow-core/templates/case/`
 - `../issue-flow-core/scripts/check_readiness.py`
+
+## Prerequisites
+
+- At least one non-repository issue input (logs, screenshots, archives, notes, etc.)
+- OR existing case with incomplete evidence requiring additional collection
+
+**Note**: The repository alone is insufficient to start a new case.
 
 ## Mission
 

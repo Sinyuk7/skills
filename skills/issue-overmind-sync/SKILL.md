@@ -1,6 +1,6 @@
 ---
 name: issue-overmind-sync
-description: Sync resolve artifacts to Overmind bug fields via MCP. Use after issue-resolve completes, when retrying a failed Overmind update, or when filling remaining bug fields from case artifacts.
+description: Sync resolve artifacts to Overmind bug fields via MCP. Use after issue-resolve completes, when retrying a failed Overmind update, or when filling remaining bug fields from case artifacts. This is a post-resolve plugin only - do not use for investigation, fixing, or building handoffs.
 ---
 
 # Issue Overmind Sync
