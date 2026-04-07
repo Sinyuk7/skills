@@ -11,13 +11,16 @@
 #   --claude        Sync to ~/.claude/skills
 #   --codex         Sync to ~/.codex/skills
 #   --agents        Sync to ~/.agents/skills (canonical user-level store)
+#   --codemaker     Sync to ~/.codemaker/skills
 #   --all           Sync to all known agent directories
 #   --dry-run       Show what would be done without making changes
 #   --force         Override conflicting SYMLINKS only (safe)
 #   --force-all     Override including REAL DIRECTORIES (DESTRUCTIVE - will delete data!)
+#   --refresh       Remove and recreate same-name entries before linking
+#   --kill-stale    Terminate known CodeMaker/Qzhddr backend processes after sync
 #   --help          Show this help message
 #
-# Without options, syncs to default agents: .agents, .claude, .codex
+# Without options, syncs to default agents: .agents, .claude, .codex, .codemaker
 #
 # Notes:
 #   - Uses absolute paths for symlinks to avoid relative path resolution issues
@@ -40,7 +43,7 @@ KNOWN_AGENTS=(
 )
 
 # Default agents to sync (if no --agent flags provided)
-DEFAULT_AGENTS=("agents" "claude" "codex")
+DEFAULT_AGENTS=("agents" "claude" "codex" "codemaker")
 
 # Helper function to get agent path by name
 get_agent_path() {
@@ -152,6 +155,8 @@ SOURCE_DIR="$SCRIPT_DIR/skills"
 DRY_RUN=false
 FORCE=false
 FORCE_ALL=false
+REFRESH=false
+KILL_STALE=false
 SELECTED_AGENTS=()
 
 # ========================================
@@ -177,15 +182,20 @@ OPTIONS:
     --dry-run       Show what would be done without making changes
     --force         Override conflicting SYMLINKS only (safe)
     --force-all     Override including REAL DIRECTORIES (DESTRUCTIVE!)
+    --refresh       Remove and recreate same-name entries before linking
+    --kill-stale    Terminate known CodeMaker/Qzhddr backend processes after sync
     --help          Show this help message
 
 EXAMPLES:
-    ./init.sh                       # Sync to default agents (.agents, .claude, .codex)
+    ./init.sh                       # Sync to default agents (.agents, .claude, .codex, .codemaker)
     ./init.sh --claude --codex      # Sync only to Claude and Codex
     ./init.sh --all                 # Sync to all known agents
     ./init.sh --dry-run             # Preview what would be done
     ./init.sh --force               # Override conflicting symlinks
     ./init.sh --force-all           # Override everything (DANGER: deletes real directories!)
+    ./init.sh --refresh             # Recreate managed entries even if already linked
+    ./init.sh --refresh --kill-stale
+                                   # Recreate links, then restart stale CodeMaker backends
 
 NOTES:
     - Uses absolute symlink paths to avoid resolution issues
@@ -195,7 +205,9 @@ NOTES:
     - Some agents may cache skill content per session/thread and require a new chat or restart
     - --force only overrides symlinks (safe)
     - --force-all WILL DELETE real directories (use with extreme caution!)
-    - Default agents: .agents (canonical), .claude, .codex
+    - --refresh touches only same-name managed skill entries under selected agent roots
+    - --kill-stale only affects known CodeMaker/Qzhddr backend processes
+    - Default agents: .agents (canonical), .claude, .codex, .codemaker
 
 EOF
 }
@@ -222,6 +234,14 @@ parse_args() {
             --force-all)
                 FORCE_ALL=true
                 FORCE=true  # force-all implies force
+                shift
+                ;;
+            --refresh)
+                REFRESH=true
+                shift
+                ;;
+            --kill-stale)
+                KILL_STALE=true
                 shift
                 ;;
             --all)
@@ -264,6 +284,19 @@ parse_args() {
     fi
 }
 
+has_selected_agent() {
+    local wanted="$1"
+    local agent_name
+
+    for agent_name in "${SELECTED_AGENTS[@]}"; do
+        if [[ "$agent_name" == "$wanted" ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 # ========================================
 # Symlink Management
 # ========================================
@@ -300,6 +333,29 @@ create_symlink() {
     
     # Check if target exists
     if [[ -e "$target" || -L "$target" ]]; then
+        if [[ "$REFRESH" == true ]]; then
+            if [[ "$DRY_RUN" == true ]]; then
+                log_dry_run "Would refresh: $skill_name"
+                RESULT_SKIPPED=1
+                return
+            fi
+
+            if [[ -L "$target" ]]; then
+                rm -f "$target"
+            else
+                rm -rf "$target"
+            fi
+
+            if ln -s "$source" "$target" 2>/dev/null; then
+                log_success "Refreshed: $skill_name"
+                RESULT_CREATED=1
+            else
+                log_error "Failed to refresh: $skill_name"
+                RESULT_FAILED=1
+            fi
+            return
+        fi
+
         # It's a symlink
         if [[ -L "$target" ]]; then
             local current_link
@@ -386,22 +442,89 @@ create_symlink() {
     fi
 }
 
-print_post_sync_notes() {
-    local has_codemaker=0
+collect_pids_by_substring() {
+    local needle="$1"
 
-    for agent_name in "${SELECTED_AGENTS[@]}"; do
-        if [[ "$agent_name" == "codemaker" ]]; then
-            has_codemaker=1
-            break
+    ps ax -o pid= -o command= 2>/dev/null | awk -v needle="$needle" '{ cmd = substr($0, index($0, $2)); if (index(cmd, needle)) print $1 }'
+}
+
+kill_process_group_by_substring() {
+    local label="$1"
+    local needle="$2"
+    local -a pids=()
+    local pid
+
+    while IFS= read -r pid; do
+        [[ -n "$pid" ]] && pids+=("$pid")
+    done < <(collect_pids_by_substring "$needle")
+
+    if [[ ${#pids[@]} -eq 0 ]]; then
+        if [[ "$DRY_RUN" == true ]]; then
+            log_dry_run "No $label processes found"
+        else
+            log_info "No $label processes found"
+        fi
+        return
+    fi
+
+    if [[ "$DRY_RUN" == true ]]; then
+        log_dry_run "Would terminate $label PID(s): ${pids[*]}"
+        return
+    fi
+
+    log_warning "Terminating $label PID(s): ${pids[*]}"
+    kill "${pids[@]}" 2>/dev/null || true
+    sleep 1
+
+    local -a stubborn=()
+    for pid in "${pids[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then
+            stubborn+=("$pid")
         fi
     done
 
-    if [[ $has_codemaker -eq 1 ]]; then
+    if [[ ${#stubborn[@]} -gt 0 ]]; then
+        log_warning "Escalating to SIGKILL for $label PID(s): ${stubborn[*]}"
+        kill -9 "${stubborn[@]}" 2>/dev/null || true
+        sleep 1
+    fi
+
+    local -a survivors=()
+    for pid in "${pids[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then
+            survivors+=("$pid")
+        fi
+    done
+
+    if [[ ${#survivors[@]} -eq 0 ]]; then
+        log_success "Terminated $label"
+    else
+        log_warning "$label still running after restart attempt: ${survivors[*]}"
+    fi
+}
+
+restart_stale_processes() {
+    echo ""
+    log_info "Refreshing stale backend processes"
+
+    kill_process_group_by_substring "CodeMaker gateway" "codemaker.bin gateway"
+    kill_process_group_by_substring "CodeMaker agent" "codemaker-agent-"
+    kill_process_group_by_substring "QzhddrAgent" "QzhddrAgent"
+    kill_process_group_by_substring "QzhddrSrv" "QzhddrSrv"
+}
+
+print_post_sync_notes() {
+    if has_selected_agent "codemaker"; then
         echo ""
         log_warning "CodeMaker caveat:"
         echo "  - init.sh only syncs skill files on disk."
         echo "  - Already-activated skills can keep the old instruction snapshot for the current session/thread."
-        echo "  - Start a new chat or restart CodeMaker after changing SKILL content."
+        if [[ "$KILL_STALE" == true ]]; then
+            echo "  - Known CodeMaker/Qzhddr backends were restarted; reopen CodeMaker if it was running."
+        else
+            echo "  - Use --kill-stale if you want init.sh to restart known CodeMaker/Qzhddr backends."
+            echo "  - Otherwise, start a new chat or restart CodeMaker after changing SKILL content."
+        fi
         echo "  - Runtime cwd still comes from CodeMaker's active workspace/session, not from init.sh."
     fi
 }
@@ -421,10 +544,15 @@ main() {
     if [[ "$DRY_RUN" == true ]]; then
         log_dry_run "DRY-RUN mode (no changes will be made)"
     fi
-    if [[ "$FORCE_ALL" == true ]]; then
+    if [[ "$REFRESH" == true ]]; then
+        log_warning "REFRESH mode (will recreate same-name managed entries)"
+    elif [[ "$FORCE_ALL" == true ]]; then
         log_error "FORCE-ALL mode (WILL DELETE real directories!)"
     elif [[ "$FORCE" == true ]]; then
         log_warning "FORCE mode (will override conflicting symlinks)"
+    fi
+    if [[ "$KILL_STALE" == true ]]; then
+        log_warning "KILL-STALE mode (will terminate known CodeMaker/Qzhddr backends)"
     fi
     echo ""
     log_info "User Home: $USER_HOME"
@@ -570,6 +698,9 @@ main() {
     if [[ "$DRY_RUN" == true ]]; then
         log_info "This was a dry-run. Run without --dry-run to apply changes."
     elif [[ $total_failed -eq 0 ]]; then
+        if [[ "$KILL_STALE" == true ]]; then
+            restart_stale_processes
+        fi
         log_success "Sync completed successfully!"
         print_post_sync_notes
     else

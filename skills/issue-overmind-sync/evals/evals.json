@@ -4,11 +4,12 @@
     {
       "id": 1,
       "prompt": "帮我把 `.issue-flow/cases/OMMUSIC-3397323/` 这个 case 的处理结果同步到 overmind。能关就关，关不了至少把问题原因、解决方案、测试方法这些字段补齐。",
-      "expected_output": "The skill reads the resolved case artifacts, uses `EFFICIENCY_issue_get_issue_detail` / `EFFICIENCY_issue_get_issue_field_config` / `EFFICIENCY_issue_update`, performs a template-driven sync through Overmind MCP, and reports the actual execution result without creating local sync files.",
+      "expected_output": "The skill reads the resolved case artifacts, prepares a compact confirmation draft for the target fields, waits for user approval, and only then uses `EFFICIENCY_issue_get_issue_detail` / `EFFICIENCY_issue_get_issue_field_config` / `EFFICIENCY_issue_update` to sync through Overmind MCP without creating local sync files.",
       "files": [],
       "expectations": [
         "The workflow treats the case workspace as the source of truth.",
         "The workflow uses the real EFFICIENCY_issue_* tools rather than generic Overmind placeholders.",
+        "The workflow asks the user to confirm the drafted field values before any write.",
         "The workflow treats status as read-only context and does not write it.",
         "The result explicitly reports partial success or manual follow-up when some fields cannot be updated.",
         "The workflow does not create integrations/overmind/sync.yaml by default."
@@ -17,10 +18,11 @@
     {
       "id": 2,
       "prompt": "重新提交一下这个 BUG 的处理结果，先按模板把能补齐的字段补齐。",
-      "expected_output": "The skill retries the supported fields without treating status as an MCP write target, and reports any skipped or failed fields explicitly.",
+      "expected_output": "The skill retries the supported fields by drafting the update, asking for confirmation, and only then writing the supported fields without treating status as an MCP write target.",
       "files": [],
       "expectations": [
         "The workflow fetches field config for enum-like fields before writing them.",
+        "The workflow does not execute `EFFICIENCY_issue_update` before user confirmation.",
         "The workflow records failed and skipped fields rather than hiding them.",
         "The workflow avoids repeating the same failing close mutation without new evidence.",
         "The workflow skips external reply when there is no writable landing field."
@@ -48,6 +50,42 @@
         "The workflow does not default to `$HOME/.issue-flow`.",
         "The workflow treats issueKey and case path as different things.",
         "The workflow reports the case path used for the run."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "直接解决该问题并同步到 Overmind。原因和方案都已经清晰：根因是系统原因；解决方案应该是 app 层面自己解决，而不是我们 SDK 处理；比如应用进入后台时启动前台服务（Foreground Service），保持音频播放不被系统限制。",
+      "expected_output": "The skill prioritizes `解决方案` and `问题原因` as the primary sync targets, uses the user-provided root cause and solution text with higher priority than artifact inference, shows a confirmation draft first, and treats `备注说明` as optional only.",
+      "note": "Live-environment eval: user explicitly provides root cause and solution inline. No case artifact is needed — the point is that user-provided text must outrank artifact inference. Run manually against a real Overmind issue; not suitable for offline CI.",
+      "files": [],
+      "expectations": [
+        "The workflow treats `解决方案` and `问题原因` as required primary fields for a resolved-case sync.",
+        "The workflow shows the drafted values and waits for explicit confirmation before updating Overmind.",
+        "The workflow does not collapse the structured cause / solution into `备注说明` only.",
+        "The workflow reports `partial` or manual follow-up when the primary fields are not verified by reread.",
+        "The workflow may still write `备注说明`, but never treats that as sufficient evidence of a successful sync."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "先把 overmind 要写的内容整理给我确认，只需要准备解决方案、问题原因，备注说明可选。确认后你再更新。",
+      "expected_output": "The skill prepares a concise draft for `解决方案`, `问题原因`, and optional `备注说明`, stops in an awaiting-confirmation state, and does not write anything to Overmind before the user approves.",
+      "files": [],
+      "expectations": [
+        "The workflow keeps the confirmation prompt focused on the three fields only.",
+        "The workflow treats `备注说明` as optional and may omit it from the write plan.",
+        "The workflow does not call `EFFICIENCY_issue_update` before the user confirms."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "问题原因不够详细，请务必带上作证的日志和时间戳。原因必须有直接可以定位的证据，确认后再更新。",
+      "expected_output": "The skill revises the draft so `问题原因` includes direct evidence such as timestamps and log references, and it does not proceed to update Overmind until the user confirms the stronger evidence-based wording.",
+      "files": [],
+      "expectations": [
+        "The workflow treats direct evidence as required for a high-confidence `问题原因` field.",
+        "The workflow keeps the confirmation loop open when the user asks for stronger evidence.",
+        "The workflow does not proceed to the write step until the evidence-bearing draft is confirmed."
       ]
     }
   ]

@@ -36,12 +36,22 @@
 - ✓ 支持 `--force` 强制覆盖冲突
 - ✓ 内置可扩展的 agent 目录映射表
 
+### ✅ 问题 7：面向更新场景的强刷新
+- ✓ `--refresh` 会先删除选中 agent 下的同名 skill 条目，再重建 symlink
+- ✓ 同名条目无论是 symlink、真实目录还是文件，都能统一刷新
+- ✓ 只影响“本次要同步的 skill 名称”，不会清空整个 `skills/` 根目录
+
+### ✅ 问题 8：CodeMaker stale 进程兜底
+- ✓ `--kill-stale` 会在同步成功后终止已知的 CodeMaker/Qzhddr 后台进程
+- ✓ 适合 `SKILL.md` 已更新但客户端仍旧吃旧快照的场景
+- ✓ 默认不启用，避免脚本悄悄中断正在运行的客户端
+
 ## 🚀 使用方法
 
 ### 基本用法
 
 ```bash
-# 同步到默认 agents (.agents, .claude, .codex)
+# 同步到默认 agents (.agents, .claude, .codex, .codemaker)
 ./init.sh
 
 # 只同步到 Claude
@@ -58,6 +68,12 @@
 
 # 组合使用
 ./init.sh --claude --codex
+
+# 强制刷新同名 skill 项
+./init.sh --refresh
+
+# 刷新 skill 并重启已知 CodeMaker 后台
+./init.sh --refresh --kill-stale
 ```
 
 ### 高级选项
@@ -68,6 +84,12 @@
 
 # 强制覆盖已存在的目录/链接
 ./init.sh --force
+
+# 删除同名 skill 条目后重建
+./init.sh --refresh
+
+# 删除同名条目后重建，并清理 stale CodeMaker 后台
+./init.sh --refresh --kill-stale
 
 # 预览强制模式
 ./init.sh --dry-run --force
@@ -92,7 +114,7 @@
 | `codemaker` | `~/.codemaker/skills` | CodeMaker |
 | `cursor` | `~/.cursor/skills` | Cursor |
 
-**默认 agents**：`.agents`, `.claude`, `.codex`
+**默认 agents**：`.agents`, `.claude`, `.codex`, `.codemaker`
 
 ## 🔍 工作原理
 
@@ -103,6 +125,7 @@
    - ⚠️ 如果 symlink 指向其他位置，显示警告（`--force` 可覆盖）
    - ⚠️ 如果存在真实目录/文件，显示警告（`--force` 可覆盖）
 4. 输出详细的统计信息
+5. 可选：如果传入 `--kill-stale`，在同步成功后终止已知 CodeMaker/Qzhddr 后台进程
 
 ## ⚠️ Agent 缓存注意事项
 
@@ -122,9 +145,10 @@
 
 ```bash
 # 1. 同步磁盘上的 skill
-./init.sh --codemaker
+./init.sh --codemaker --refresh
 
-# 2. 然后新开一个聊天，必要时重启 CodeMaker
+# 2. 如果怀疑旧快照卡住，再清理 stale 后台
+./init.sh --codemaker --refresh --kill-stale
 ```
 
 如果你刚修改了 `SKILL.md`、workflow 或 template，看到行为没变，优先怀疑是 agent 会话缓存，而不是 symlink 没更新。
@@ -169,6 +193,8 @@ $ ./init.sh --claude --dry-run
 
 - **默认跳过冲突**：不会意外覆盖已存在的文件/目录
 - **Dry-run 模式**：可以先预览再执行
+- **Refresh 模式只清同名项**：不会整目录清空
+- **Stale 清理显式开启**：只有传 `--kill-stale` 才会杀已知后台进程
 - **详细日志**：清晰显示每个操作的结果
 - **绝对路径**：避免 symlink 解析问题
 - **退出状态**：失败时返回非零退出码
@@ -184,8 +210,11 @@ $ ./init.sh --claude --dry-run
 # 2. 确认无误后执行
 ./init.sh
 
-# 3. 如果有冲突需要覆盖
-./init.sh --force
+# 3. 如果你在做 skill 更新，优先用 refresh
+./init.sh --refresh
+
+# 4. 如果 CodeMaker 还在吃旧快照，再带上 stale 清理
+./init.sh --refresh --kill-stale
 ```
 
 ### 添加新的 Agent
@@ -236,8 +265,9 @@ declare -A KNOWN_AGENTS=(
 1. **Canonical Store 优先**：支持 `~/.agents/skills` 作为标准存储位置
 2. **绝对路径 Symlink**：避免相对路径在嵌套 symlink 场景下的解析问题
 3. **用户友好**：默认安全（跳过冲突），提供 `--force` 选项
-4. **可观测性**：详细的日志和统计信息
-5. **可扩展性**：易于添加新的 agent 支持
+4. **更新优先**：提供 `--refresh` 覆盖“同名目录残留 / 旧 symlink”场景
+5. **可观测性**：详细的日志和统计信息
+6. **可扩展性**：易于添加新的 agent 支持
 
 ## 📝 技术说明
 
