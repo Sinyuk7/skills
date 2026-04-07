@@ -1,62 +1,233 @@
 ---
 name: issue-resolve
-description: Implement fix, verify, and document resolution. Use when investigation complete.
+description: Continue an issue-flow case from investigation into implementation, verification, or a final non-code disposition. Use when a case has `status: investigated` and the user wants to fix, verify, or close it.
 ---
 
-# Resolve
+# Issue Resolve
 
-Fix the issue and verify the fix works.
+Implement the fix, verify it works, and document the resolution.
 
-## Input
+## Step 1: Locate Case Workspace
 
-- `investigation.md` — Root cause and proposed fix
-- `case.yaml` — Current status
-- Repository code (read-write)
+Execute to get project root:
 
-## Output
+```bash
+git rev-parse --show-toplevel
+```
 
-**resolution.md** containing:
+Then find the case:
 
-1. **Fix Applied** — What changed
-2. **Fix Details** — Code diff or description
-3. **Verification Context** — Method, environment, and any useful tester notes
-4. **Verification** — Test cases with results
-5. **Verification Status** — VERIFIED | PARTIAL | UNVERIFIED
-6. **Delivery** — Commit SHA, branch, PR
+```
+PROJECT_ROOT/.issue-flow/cases/<case-id>/
+```
 
-## Rules
+## Step 2: Load Investigation Context
 
-- ASK USER BEFORE MODIFYING CODE
-- Follow investigation's proposed fix
-- Test before marking verified
-- Capture verification method and environment in `resolution.md` when they are known
-- If fix doesn't work, update `investigation.md` with new findings
-- Update `case.yaml` when done:
-  ```yaml
-  status: resolved
-  next_step:
-    action: close
-  ```
+Read these files:
 
-## Verification Levels
+1. `case.yaml` — Verify `status: investigated`
+2. `investigation.md` — Get root cause and proposed fix
 
-- **VERIFIED**: Tests pass, issue fixed
-- **PARTIAL**: Some verification, not complete
-- **UNVERIFIED**: Fix applied but not tested (document why)
+Extract from investigation.md:
+- Root cause location (file:line)
+- Recommended fix option
+- Verification plan
+
+## Step 3: Confirm Fix Approach with User
+
+Before modifying code, present the fix plan:
+
+```
+📋 **Fix Plan for case `<case-id>`**
+
+**Root Cause:** <summary from investigation>
+**Location:** `path/to/file.kt:42`
+
+**Proposed Change:**
+<description of what will be modified>
+
+**Files to modify:**
+- `path/to/file.kt` — <change description>
+
+Proceed with this fix? (yes/no/modify)
+```
+
+**WAIT FOR USER CONFIRMATION** before proceeding.
+
+## Step 4: Implement Fix
+
+After user confirms:
+
+1. Make the code changes
+2. Keep changes minimal and focused
+3. Follow project coding conventions
+
+Document each change:
+
+```markdown
+### Change 1: `path/to/file.kt`
+
+**Lines modified:** 42-48
+
+**Before:**
+```kotlin
+// old code
+```
+
+**After:**
+```kotlin
+// new code
+```
+
+**Rationale:** <why this fixes the root cause>
+```
+
+## Step 5: Verify Fix
+
+Follow the verification plan from investigation.md:
+
+### Verification Methods
+
+| Method      | When to Use        | How                              |
+|-------------|--------------------|----------------------------------|
+| Unit test   | Logic change       | Run existing tests or write new one |
+| Build       | Any code change    | `./gradlew build` or equivalent  |
+| Manual test | UI/behavior change | Steps to reproduce and verify    |
+| Code review | Complex change     | Walk through logic               |
+
+Document results:
+
+```markdown
+## Verification Results
+
+### Test 1: <test name>
+- **Method:** <unit test / build / manual>
+- **Command:** `<command run>`
+- **Result:** ✅ PASS / ❌ FAIL
+- **Evidence:** <output or screenshot>
+
+### Test 2: ...
+```
+
+## Step 6: Write resolution.md
+
+Create `resolution.md`:
+
+```markdown
+# Resolution: <case-id>
+
+## Summary
+<one paragraph: what was fixed and how>
+
+## Fix Applied
+
+### Change 1: `path/to/file.kt`
+<from Step 4>
+
+## Verification
+
+### Environment
+- Branch: `<branch-name>`
+- Build: `<build command>`
+- Device/Emulator: `<if applicable>`
+
+### Results
+<from Step 5>
+
+## Verification Status
+
+**Status:** VERIFIED | PARTIAL | UNVERIFIED
+
+<if PARTIAL or UNVERIFIED, explain why>
+
+## Delivery
+
+- [ ] Commit: `<SHA>` — `<commit message>`
+- [ ] Branch: `<branch-name>`
+- [ ] PR: `<PR link if created>`
+
+## Remaining Items
+- <any follow-up tasks>
+- <any related issues discovered>
+
+## Lessons Learned
+- <what could prevent similar issues>
+```
+
+## Step 7: Update case.yaml
+
+```yaml
+status: resolved
+updated: "<ISO-8601 timestamp>"
+resolution:
+  type: code_fix  # or: already_fixed, wont_fix, cannot_reproduce, duplicate
+  summary: "<one-line resolution summary>"
+  commit: "<SHA if applicable>"
+  verification: VERIFIED  # or: PARTIAL, UNVERIFIED
+next_step:
+  action: complete
+  note: "Resolution complete, PR ready"
+closed: "<ISO-8601 timestamp>"
+```
 
 ## Non-Code Resolutions
 
-If no code change needed:
-- **Already Fixed**: Issue fixed elsewhere
-- **Won't Fix**: Working as intended
-- **Cannot Reproduce**: Insufficient info
-- **Duplicate**: Same as another case
+If investigation reveals no code change is needed:
 
-Still create `resolution.md` documenting why.
+### Already Fixed
+```yaml
+resolution:
+  type: already_fixed
+  summary: "Fixed in commit <SHA> / PR #123"
+  reference: "<link or commit>"
+```
+
+### Won't Fix
+```yaml
+resolution:
+  type: wont_fix
+  summary: "Working as intended because <reason>"
+  rationale: "<detailed explanation>"
+```
+
+### Cannot Reproduce
+```yaml
+resolution:
+  type: cannot_reproduce
+  summary: "Unable to reproduce with provided evidence"
+  attempts: "<what was tried>"
+```
+
+### Duplicate
+```yaml
+resolution:
+  type: duplicate
+  summary: "Duplicate of case <other-case-id>"
+  duplicate_of: "<case-id>"
+```
+
+Still create `resolution.md` documenting the disposition.
+
+## Rules
+
+- **MUST** get user confirmation before modifying code
+- **MUST** follow the fix recommended in investigation.md (or discuss deviation)
+- **MUST** attempt verification before marking resolved
+- If fix doesn't work, update `investigation.md` with new findings and re-investigate
+- Keep fixes minimal—don't refactor unrelated code
 
 ## Done When
 
-- Fix applied (if needed)
-- Verification attempted
-- `resolution.md` complete
-- `case.yaml` has `status: resolved`
+- [ ] User confirmed fix approach
+- [ ] Code changes applied (if needed)
+- [ ] Verification attempted and documented
+- [ ] `resolution.md` created
+- [ ] `case.yaml` has `status: resolved`
+
+## Handoff
+
+When complete, tell user:
+> Case `<case-id>` resolved. <summary of fix>. Verification: <status>. 
+> Commit ready on branch `<branch>`. Create PR when ready.
+> 
+> Optional: Run `/issue-overmind-sync` to sync resolution to Overmind bug tracker.

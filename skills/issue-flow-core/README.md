@@ -2,45 +2,93 @@
 
 Minimal issue investigation framework.
 
-## Architecture
+## Overview
 
-This directory contains **templates only**. At runtime, issue-flow operates inside the current repository:
+Issue-flow is a 3-stage workflow for structured bug investigation:
+
+1. **Collect** → Curate evidence
+2. **Investigate** → Find root cause  
+3. **Resolve** → Fix and verify
+
+## Runtime Location
+
+At runtime, issue-flow operates inside the **current git repository**:
 
 ```
-<repo>/.issue-flow/cases/<case-id>/
-├── case.yaml          # State
-├── evidence/          # Raw materials
-│   ├── logs/
-│   ├── media/
-│   └── notes/
-├── collect.md         # What was collected
-├── investigation.md   # Root cause analysis
-└── resolution.md      # Fix + verification (if resolved)
+<git-repo-root>/.issue-flow/cases/<case-id>/
+├── case.yaml          # State (single source of truth)
+├── evidence/          # Raw materials from user
+│   ├── logs/          # Log files
+│   ├── media/         # Screenshots, videos
+│   └── notes/         # Text descriptions
+├── collect.md         # Stage 1 output: what was collected
+├── investigation.md   # Stage 2 output: root cause analysis
+└── resolution.md      # Stage 3 output: fix + verification
 ```
 
-## Stages
+## Skills (Self-Contained)
 
-1. **Collect** (`issue-collect`) — Curate user-provided materials into evidence/
-2. **Investigate** (`issue-investigate`) — Analyze evidence, find root cause
-3. **Resolve** (`issue-resolve`) — Fix, verify, document
+Each skill is **fully self-contained** with embedded templates and step-by-step instructions:
 
-## Templates
+| Skill | Purpose | Entry Point |
+|-------|---------|-------------|
+| `issue-collect` | Curate user-provided materials | `/issue-collect` |
+| `issue-investigate` | Analyze evidence, find root cause | `/issue-investigate` |
+| `issue-resolve` | Implement fix, verify, document | `/issue-resolve` |
+| `issue-overmind-sync` | Sync resolved case to Overmind bug tracker | `/issue-overmind-sync` |
 
-- `templates/case.yaml` — State structure
-- `templates/collect.md` — Collection documentation
-- `templates/investigation.md` — Investigation findings
-- `templates/resolution.md` — Resolution + verification
+Skills do NOT depend on loading files from this directory at runtime.
+
+## Templates (Reference Only)
+
+The `templates/` directory contains **reference templates** for documentation purposes. Skills have their own embedded versions and do not load from here.
+
+- `templates/case.yaml` — State structure reference
+- `templates/collect.md` — Collection documentation reference
+- `templates/investigation.md` — Investigation findings reference
+- `templates/resolution.md` — Resolution documentation reference
 
 ## Design Principles
 
-- **Minimal artifacts**: 4 files per case (1 state + 3 stage outputs)
-- **No ceremony**: Skills are self-contained, no mandatory file loads
-- **Markdown native**: No XML, no validation scripts
-- **State in one place**: `case.yaml` is the only state file
-- **Progressive**: Each stage adds one file
+1. **Self-contained skills**: Each skill embeds all instructions—no external file loading
+2. **Explicit path resolution**: Skills use `git rev-parse --show-toplevel` to find project root
+3. **Minimal artifacts**: 4 files per case (1 state + 3 stage outputs)
+4. **Markdown native**: No XML, no validation scripts, no ceremony
+5. **Single state file**: `case.yaml` is the only state file
+6. **Progressive workflow**: Each stage adds exactly one file
 
-## User-Facing Skills
+## Case Lifecycle
 
-- `../issue-collect` — Stage 1
-- `../issue-investigate` — Stage 2 
-- `../issue-resolve` — Stage 3
+```
+[User reports issue]
+        ↓
+   /issue-collect
+        ↓
+   status: collected ←──────────┐
+        ↓                       │
+  /issue-investigate            │
+        ↓                       │
+   [evidence sufficient?]       │
+        ↓ yes           no ↓    │
+   status: investigated    next_step.action: blocked
+        ↓                       │
+   /issue-resolve          [user provides more evidence]
+        ↓                       │
+   status: resolved ────────────┘
+        ↓
+   /issue-overmind-sync (optional)
+```
+
+## Path Resolution
+
+All skills resolve paths the same way:
+
+```bash
+# Get project root
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+
+# Case workspace
+CASE_DIR="$PROJECT_ROOT/.issue-flow/cases/<case-id>"
+```
+
+This ensures consistent behavior regardless of where the skill is invoked from.

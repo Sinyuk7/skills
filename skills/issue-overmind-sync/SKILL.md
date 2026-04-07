@@ -5,42 +5,69 @@ description: Sync resolve artifacts to Overmind bug fields via MCP. Use after is
 
 # Issue Overmind Sync
 
-Post-resolve plugin that reads `resolve/resolution.md` and `investigation.md`, then fills Overmind bug fields through MCP. For older cases, fall back to `resolve/resolution.xml` and `resolve/verification.md` if those are the only artifacts available.
+Post-resolve plugin that syncs case artifacts to Overmind bug tracking system via MCP.
 
 ## When To Use
 
-- Case has resolve artifacts and needs Overmind fields filled
+- Case has `status: resolved` and needs Overmind fields filled
 - Retry a failed Overmind update
 - Write issue-thread reply to `备注说明`
 
-## Procedure
+## Step 1: Locate Case Workspace
 
-### 1. Validate Environment
+Execute to get project root:
 
-- Confirm Overmind MCP is available by calling `EFFICIENCY_issue_get_issue_detail`
-- Require explicit `issueKey` before any write
-- Resolve case path from current repo only — never fall back to `$HOME/.issue-flow/`
+```bash
+git rev-parse --show-toplevel
+```
 
-### 2. Read Artifacts
+Then find the case:
 
-From the resolved case path:
-- `resolve/resolution.md` — outcome, summary, changes, verification context
-- `investigation.md` — root cause and affected code
-- `resolve/resolution.xml` / `resolve/verification.md` — fallback for older cases only
-- `analysis/handoff.xml` — legacy fallback only when the case predates the markdown migration
+```
+PROJECT_ROOT/.issue-flow/cases/<case-id>/
+```
 
-### 3. Fetch Current Issue
+**Never** fall back to `$HOME/.issue-flow/` — only use project-local cases.
+
+## Step 2: Validate Environment
+
+Confirm Overmind MCP is available:
+
+```
+EFFICIENCY_issue_get_issue_detail(issueKey: "<user-provided-key>")
+```
+
+- **REQUIRE** explicit `issueKey` from user before any write
+- If MCP unavailable, **STOP** and report to user
+
+## Step 3: Read Case Artifacts
+
+From the case workspace, read:
+
+| File | Purpose |
+|------|---------|
+| `case.yaml` | Verify `status: resolved` |
+| `resolution.md` | Fix details, verification context |
+| `investigation.md` | Root cause and affected code |
+
+**Legacy fallback** (only for older cases):
+- `resolve/resolution.md`
+- `resolve/resolution.xml`
+- `resolve/verification.md`
+- `analysis/handoff.xml`
+
+## Step 4: Fetch Current Issue
 
 Call `EFFICIENCY_issue_get_issue_detail` to get:
 - Current field values and placeholders (`请选择`)
 - Issue type from `类型` field
 - Issue URL
 
-### 4. Fetch Field Config
+## Step 5: Fetch Field Config
 
 For enum fields, call `EFFICIENCY_issue_get_issue_field_config` with both `name` and `issueType`.
 
-### 5. Build Update Payload
+## Step 6: Build Update Payload
 
 **Value priority:** User instruction > Artifact value > Safe inference > Skip
 
@@ -58,7 +85,7 @@ For enum fields, call `EFFICIENCY_issue_get_issue_field_config` with both `name`
 
 **Never write:** `状态`, `所属迭代`
 
-### 6. Execute & Verify
+## Step 7: Execute & Verify
 
 ```
 EFFICIENCY_issue_update → check failedFields → EFFICIENCY_issue_get_issue_detail
@@ -66,7 +93,7 @@ EFFICIENCY_issue_update → check failedFields → EFFICIENCY_issue_get_issue_de
 
 If field fails, record it and continue with remaining fields.
 
-### 7. Issue Reply (Optional)
+## Step 8: Issue Reply (Optional)
 
 Only write to `备注说明` if the field is writable:
 
