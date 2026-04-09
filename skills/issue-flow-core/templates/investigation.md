@@ -8,7 +8,7 @@ User reports crash on login. Logs show NullPointerException in `AuthService.vali
 
 ### Error Pattern
 
-From `logs/app.log` lines 234-236:
+From `/tmp/auth-bug/app.log` lines 234-236:
 ```
 2026-04-03 10:15:32 ERROR [AuthService] NullPointerException at validateToken:42
 2026-04-03 10:15:32 ERROR [AuthService] Token validation failed for user_id=null

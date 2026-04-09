@@ -3,16 +3,27 @@ created: "2026-04-03T10:30:00Z"
 updated: "2026-04-03T11:45:00Z"
 
 status: collected | investigated | resolved | closed
+summary: "Playback does not recover after audio focus changes"
+user_context: |
+  播放过程中切换音频焦点后无法恢复播放。
 
-next_step: 
+next_step:
   action: investigate | resolve | close | blocked
   note: "Brief reason if blocked"
 
-evidence:
-  - logs/app.log
-  - logs/error.log
-  - media/screenshot.png
-  - notes/user-report.md
+evidence_sources:
+  - kind: log
+    path: "/tmp/audio-focus-bug/player.log"
+    note: "Playback failure log from the repro run"
+  - kind: screenshot
+    path: "/tmp/audio-focus-bug/screenshot.png"
+    note: "UI state when playback did not recover"
+  - kind: archive
+    path: "/Users/shenyeke01/Downloads/bug-report.zip"
+    note: "Original archive provided by the user"
+  - kind: code_reference
+    path: "biz/player/src/main/java/com/netease/music/iot/player/CarAudioFocusManager.kt"
+    note: "User suspects this area"
 
 blockers: []
   # - "Missing reproduction steps"

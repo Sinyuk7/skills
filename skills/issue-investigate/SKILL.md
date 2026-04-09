@@ -1,11 +1,11 @@
 ---
 name: issue-investigate
-description: Build a traceable investigation from collected evidence. Use when a case has evidence collected and needs root cause analysis.
+description: Build a traceable investigation from referenced evidence. Use when a case has evidence collected and needs root cause analysis.
 ---
 
 # Issue Investigate
 
-Analyze collected evidence to find root cause with traceable evidence chains.
+Analyze referenced evidence to find root cause with traceable evidence chains.
 
 ## Step 1: Locate Case Workspace
 
@@ -28,7 +28,7 @@ Then find the case:
 PROJECT_ROOT/.issue-flow/cases/<case-id>/
 ```
 
-If user doesn't specify case-id, list available cases:
+If the user does not specify `case-id`, list available cases:
 
 ```bash
 ls "$PROJECT_ROOT/.issue-flow/cases/"
@@ -40,20 +40,26 @@ If `"$PROJECT_ROOT/.issue-flow/cases/"` does not exist, report that the target r
 
 Read these files in order:
 
-1. `case.yaml` — Current state and user context
-2. `collect.md` — What evidence was collected
-3. `evidence/` — The actual materials
+1. `case.yaml` — Current state, user context, and `evidence_sources`
+2. `collect.md` — What evidence references were registered
 
 Verify `status: collected` before proceeding.
 
 ## Step 3: Analyze Evidence
 
-For each piece of evidence, extract key information:
+For each entry in `evidence_sources`, read the material directly from its recorded path:
+
+- For `kind: log` or `kind: note`, open the original file at `path`
+- For `kind: screenshot` or `kind: video`, inspect the original file at `path`
+- For `kind: archive`, inspect or extract it in the archive's original directory if needed, then cite the actual extracted file path you used
+- For `kind: code_reference`, do not treat it as evidence by itself; use it in Step 4
+
+If a referenced file no longer exists or cannot be read, stop and mark the case as blocked with the exact missing path.
 
 ### Log Analysis Pattern
 
 ```markdown
-### Evidence: `evidence/logs/filename.log`
+### Evidence: `/tmp/audio-focus-bug/player.log`
 
 **Relevant excerpts:**
 
@@ -70,22 +76,32 @@ Lines 234-236:
 ### Media Analysis Pattern
 
 ```markdown
-### Evidence: `evidence/media/screenshot.png`
+### Evidence: `/tmp/audio-focus-bug/screenshot.png`
 
 **Shows:** <describe what's visible>
 **Relevant UI state:** <what state the app is in>
 **Anomaly:** <what looks wrong>
 ```
 
+### Archive Analysis Pattern
+
+```markdown
+### Evidence: `/Users/shenyeke01/Downloads/bug-report.zip`
+
+**Inspected in place:** extracted in the archive's original directory
+**File used:** `/Users/shenyeke01/Downloads/bug-report/logs/app.log`
+**Relevant excerpts:** <quoted lines or summarized visual evidence>
+```
+
 ## Step 4: Read Repository Code
 
 Now you MAY read repository code to correlate with evidence.
 
-For each code reference from `case.yaml`:
+For each `kind: code_reference` entry from `case.yaml`:
 
 1. Read the file
 2. Understand the logic flow
-3. Correlate with evidence timestamps/states
+3. Correlate with evidence timestamps and states
 
 Document findings:
 
@@ -98,7 +114,7 @@ Document findings:
 ```kotlin
 // key code snippet
 ```
-**Correlation with evidence:** <how this explains the logs/behavior>
+**Correlation with evidence:** <how this explains the logs or behavior>
 ```
 
 ## Step 5: Build Root Cause Chain
@@ -109,17 +125,17 @@ Connect evidence → code → root cause:
 ## Root Cause Chain
 
 1. **Trigger:** <what initiated the issue>
-   - Evidence: `evidence/logs/xxx.log` line 123
+   - Evidence: `/tmp/audio-focus-bug/player.log:123`
 
 2. **Failure point:** <where things went wrong>
    - Code: `path/to/File.kt:45` in `functionName()`
-   - Evidence: <log/screenshot showing the failure>
+   - Evidence: `/tmp/audio-focus-bug/player.log:234-236`
 
 3. **Root cause:** <why it failed>
    - <technical explanation>
 
 4. **Impact:** <what the user experienced>
-   - Evidence: <user description or screenshot>
+   - Evidence: `/tmp/audio-focus-bug/screenshot.png`
 ```
 
 ## Step 6: Write investigation.md
@@ -139,6 +155,9 @@ Create `investigation.md` with this structure:
 
 ### Media
 <analysis from Step 3>
+
+### Archives
+<analysis from Step 3 if applicable>
 
 ## Code Analysis
 <analysis from Step 4>
@@ -183,7 +202,7 @@ root_cause:
   summary: "<one-line root cause>"
   location: "path/to/file.kt:42"
   evidence_refs:
-    - "evidence/logs/app.log:234-236"
+    - "/tmp/audio-focus-bug/player.log:234-236"
 next_step:
   action: resolve
   note: "Root cause identified, ready to fix"
@@ -191,23 +210,25 @@ next_step:
 
 ## Rules
 
-- **MUST** quote evidence with exact source and line numbers
-- **MUST** correlate code with evidence—no speculation
+- **MUST** quote evidence with exact source paths and line numbers when available
+- **MUST** correlate code with evidence and avoid speculation
 - **DO NOT** modify any code during investigation
-- If evidence is insufficient, keep status as `collected` but set next_step to blocked:
+- **DO NOT** copy or move evidence into the case workspace
+- If archive contents are needed, inspect or extract them in the archive's original directory and cite the actual file path used
+- If evidence is insufficient, keep status as `collected` but set `next_step` to blocked:
   ```yaml
   status: collected
   next_step:
     action: blocked
-    note: "Need: <specific missing evidence>"
+    note: "Need: <specific missing evidence path or missing source>"
   ```
-  When user provides additional evidence, update `next_step.action: investigate` and re-run `/issue-investigate`.
+  When the user provides additional evidence, update `next_step.action: investigate` and re-run `/issue-investigate`.
 
 ## Done When
 
 - [ ] `investigation.md` created with complete analysis
-- [ ] Root cause grounded in evidence (not guessed)
-- [ ] Affected code identified with file:line references
+- [ ] Root cause grounded in evidence, not guessed
+- [ ] Affected code identified with `file:line` references
 - [ ] Proposed fix documented
 - [ ] `case.yaml` has `status: investigated`
 

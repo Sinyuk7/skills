@@ -6,8 +6,8 @@ Minimal issue investigation framework.
 
 Issue-flow is a 3-stage workflow for structured bug investigation:
 
-1. **Collect** → Curate evidence
-2. **Investigate** → Find root cause  
+1. **Collect** → Register evidence references
+2. **Investigate** → Find root cause
 3. **Resolve** → Fix and verify
 
 ## Runtime Location
@@ -17,14 +17,12 @@ At runtime, issue-flow operates inside the **current git repository**:
 ```
 <git-repo-root>/.issue-flow/cases/<case-id>/
 ├── case.yaml          # State (single source of truth)
-├── evidence/          # Raw materials from user
-│   ├── logs/          # Log files
-│   ├── media/         # Screenshots, videos
-│   └── notes/         # Text descriptions
-├── collect.md         # Stage 1 output: what was collected
+├── collect.md         # Stage 1 output: what was registered
 ├── investigation.md   # Stage 2 output: root cause analysis
 └── resolution.md      # Stage 3 output: fix + verification
 ```
+
+User-provided logs, screenshots, videos, and archives stay in their original locations. The case workspace stores references to those paths in `case.yaml` instead of copying raw evidence into the repository.
 
 ## Skills (Self-Contained)
 
@@ -32,8 +30,8 @@ Each skill is **fully self-contained** with embedded templates and step-by-step 
 
 | Skill | Purpose | Entry Point |
 |-------|---------|-------------|
-| `issue-collect` | Curate user-provided materials | `/issue-collect` |
-| `issue-investigate` | Analyze evidence, find root cause | `/issue-investigate` |
+| `issue-collect` | Register user-provided materials | `/issue-collect` |
+| `issue-investigate` | Analyze referenced evidence and find root cause | `/issue-investigate` |
 | `issue-resolve` | Implement fix, verify, document | `/issue-resolve` |
 | `issue-overmind-sync` | Sync resolved case to Overmind bug tracker | `/issue-overmind-sync` |
 
@@ -50,10 +48,10 @@ The `templates/` directory contains **reference templates** for documentation pu
 
 ## Design Principles
 
-1. **Self-contained skills**: Each skill embeds all instructions—no external file loading
+1. **Self-contained skills**: Each skill embeds all instructions and examples
 2. **Explicit path resolution**: Skills use `git rev-parse --show-toplevel` to find project root
 3. **Minimal artifacts**: 4 files per case (1 state + 3 stage outputs)
-4. **Markdown native**: No XML, no validation scripts, no ceremony
+4. **Evidence stays in place**: Logs, screenshots, videos, and archives are referenced, not copied
 5. **Single state file**: `case.yaml` is the only state file
 6. **Progressive workflow**: Each stage adds exactly one file
 
@@ -90,5 +88,7 @@ PROJECT_ROOT=$(git rev-parse --show-toplevel)
 # Case workspace
 CASE_DIR="$PROJECT_ROOT/.issue-flow/cases/<case-id>"
 ```
+
+Evidence references recorded in `case.yaml` should point to the original source paths so later stages can inspect the materials in place.
 
 This ensures consistent behavior regardless of where the skill is invoked from.

@@ -12,7 +12,7 @@
         "Proceeded to /issue-collect without asking for confirmation (auto_enter_collect defaults to true)",
         "Passed OMMUSIC-3397323 as case_id to /issue-collect",
         "Forwarded all three materials (player.log, screenshot.png, CarAudioFocusManager.kt) to /issue-collect",
-        "Did NOT create case.yaml, collect.md, or evidence directories itself"
+        "Did NOT create case.yaml, collect.md, or any raw-evidence directories itself"
       ],
       "context": {
         "cwd": "/Users/shenyeke01/Documents/Workspace/Netease/cmiotsdk",

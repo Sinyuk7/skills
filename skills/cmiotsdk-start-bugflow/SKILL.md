@@ -8,7 +8,7 @@ allowed-tools: Bash Read Grep
 
 # cmiotsdk Start Bugflow
 
-Repo-aware wrapper that bootstraps a `bugfix/<TICKET-ID>` branch in `cmiotsdk`, then delegates evidence collection to `/issue-collect`.
+Repo-aware wrapper that bootstraps a `bugfix/<TICKET-ID>` branch in `cmiotsdk`, then delegates evidence registration to `/issue-collect`.
 
 **This skill does NOT replace `/issue-collect`.** It is a thin orchestration layer:
 - Step A: deterministic git bootstrap (via script)
@@ -88,8 +88,8 @@ git -C "$REPO_ROOT" branch --show-current
 | `ticket_id` | → | `case_id` (highest priority, overrides slug) |
 | `summary` | → | `case.yaml` summary field |
 | `user_context` | → | `case.yaml` user_context field |
-| `materials` | → | Files to collect into `evidence/` |
-| `code_references` | → | Note in `case.yaml` only (not copied) |
+| `materials` | → | File paths to register as `evidence_sources` |
+| `code_references` | → | Record in `case.yaml` only (not copied) |
 
 **`ticket_id` as `case_id` is authoritative.** `/issue-collect`'s own "bug tracker ID > slug > date suffix" priority rule naturally handles this — the ticket ID is a bug tracker ID and will be selected first. No special override needed.
 
@@ -117,12 +117,12 @@ Report and stop:
    Branch:     bugfix/<TICKET-ID>
    Base:       origin/develop
 
-   When ready, run /issue-collect to start evidence collection.
+   When ready, run /issue-collect to register evidence references.
 ```
 
 ## Rules
 
-- **DO NOT** create case.yaml, collect.md, or evidence directories — that is `/issue-collect`'s job
+- **DO NOT** create case.yaml, collect.md, or any raw-evidence directories — that is `/issue-collect`'s job
 - **DO NOT** read, analyze, or modify source code
 - **DO NOT** duplicate any `/issue-collect` file-writing logic
 - **DO NOT** run on repositories other than `cmiotsdk`
@@ -194,7 +194,7 @@ code_references:
   - biz/player/src/.../CarAudioFocusManager.kt
 ```
 
-`/issue-collect` takes over → creates `.issue-flow/cases/OMMUSIC-3397323/`, collects evidence, writes `case.yaml` + `collect.md`.
+`/issue-collect` takes over → creates `.issue-flow/cases/OMMUSIC-3397323/`, registers evidence references, writes `case.yaml` + `collect.md`.
 
 ### Final output to user
 
@@ -205,10 +205,10 @@ code_references:
    Case:    .issue-flow/cases/OMMUSIC-3397323/
    Status:  collected
 
-   Collected:
-   - evidence/logs/player.log
-   - evidence/media/screenshot.png
-   - Code ref: biz/player/src/.../CarAudioFocusManager.kt (noted, not copied)
+   Evidence refs:
+   - /tmp/audio-focus-bug/player.log
+   - /tmp/audio-focus-bug/screenshot.png
+   - Code ref: biz/player/src/.../CarAudioFocusManager.kt
 
    Next: run /issue-investigate to analyze evidence and find root cause.
 ```

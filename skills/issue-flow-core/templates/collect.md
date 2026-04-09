@@ -1,22 +1,23 @@
 # Collect: {{case_id}}
 
-## What Was Collected
+## Issue Context
 
-- `logs/app.log` — Application error log from user report
-- `logs/error.log` — System error log, same timeframe
-- `media/screenshot.png` — Error dialog screenshot
-- `notes/user-report.md` — User's description of reproduction steps
+Playback does not recover after audio focus changes.
 
-## Skipped
+## Evidence References
 
-- `old_logs/` — Irrelevant timeframe
-- `video.mp4` — File corrupted, screenshot sufficient
+- `/tmp/audio-focus-bug/player.log` — Application log from the failed repro run
+- `/tmp/audio-focus-bug/screenshot.png` — UI screenshot captured during the failure
+- `/Users/shenyeke01/Downloads/bug-report.zip` — Original archive; inspect or extract in place if needed
 
-## Source Locations
+## Code References
 
-- User email attachment: `~/Downloads/bug-report-2026-04-03.zip`
-- Slack thread: #support 2026-04-03
+- `biz/player/src/main/java/com/netease/music/iot/player/CarAudioFocusManager.kt` — User suspects this code path is involved
+
+## What's Missing
+
+- Additional device-side logs if the app log alone is insufficient
 
 ## Next
 
-Evidence complete. Ready for investigation.
+Evidence references registered. Ready for investigation.
