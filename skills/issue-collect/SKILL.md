@@ -7,15 +7,29 @@ description: Create or update an issue-flow case by curating raw issue materials
 
 Curate user-provided issue materials into a structured case workspace.
 
-## Step 1: Resolve Project Root
+## Step 1: Resolve Target Project Root
 
-Execute this command to get the project root:
+Resolve the repository that owns this issue before doing anything else.
 
-```bash
-git rev-parse --show-toplevel
-```
+Set `PROJECT_ROOT` using this priority order:
 
-All paths below are relative to this PROJECT_ROOT.
+1. If the user explicitly gives a repository path, use that path.
+2. If the user gives a code path, log path, screenshot path, or archive path that lives inside a repository, derive the repo root from that path:
+   ```bash
+   git -C "<file-directory-or-repo-path>" rev-parse --show-toplevel
+   ```
+3. Only if the conversation is already clearly operating inside the target repository may you use:
+   ```bash
+   git rev-parse --show-toplevel
+   ```
+4. If multiple repositories are plausible or the target repo is still unclear, stop and ask the user which repository should own the case.
+
+Rules:
+
+- Never assume the current working directory is the correct project.
+- Never default to the skill repository or some unrelated parent repository just because `git rev-parse --show-toplevel` succeeds there.
+- After resolving `PROJECT_ROOT`, use absolute paths rooted at `PROJECT_ROOT` for the rest of this skill, or run later shell commands from `PROJECT_ROOT` explicitly.
+- Do not inline `git rev-parse --show-toplevel` again in later commands; reuse the already-resolved absolute `PROJECT_ROOT`.
 
 ## Step 2: Determine Case ID
 
@@ -142,7 +156,7 @@ When updating an existing case:
 
 - **DO NOT** read or analyze repository code during collect
 - **DO NOT** attempt to diagnose the issue yet
-- **DO** ask user if unclear which files are relevant
+- **DO** ask user if unclear which files are relevant or which repository owns the case
 - **DO** preserve original filenames when possible
 - **DO** extract archives to access log contents
 

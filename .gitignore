@@ -5,3 +5,4 @@ __pycache__/
 
 skills/issue-triage-handoff/.triage_work
 skills/issue-flow-core/__test__
+skills/cmiotsdk-start-bugflow-workspace

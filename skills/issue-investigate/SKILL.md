@@ -9,11 +9,18 @@ Analyze collected evidence to find root cause with traceable evidence chains.
 
 ## Step 1: Locate Case Workspace
 
-Execute to get project root:
+First resolve `PROJECT_ROOT` using the same rules as `/issue-collect`:
 
-```bash
-git rev-parse --show-toplevel
-```
+- Prefer an explicit repository path from the user
+- Otherwise derive the repo root from a user-provided code path or evidence path:
+  ```bash
+  git -C "<file-directory-or-repo-path>" rev-parse --show-toplevel
+  ```
+- Use plain `git rev-parse --show-toplevel` only when the current working directory is already known to be the target repository
+- If the target repository is ambiguous, stop and ask the user instead of guessing
+
+Never default to the skill repository or any unrelated repo just because the command succeeds there.
+Do not inline `git rev-parse --show-toplevel` again in later commands; reuse the already-resolved absolute `PROJECT_ROOT`.
 
 Then find the case:
 
@@ -24,8 +31,10 @@ PROJECT_ROOT/.issue-flow/cases/<case-id>/
 If user doesn't specify case-id, list available cases:
 
 ```bash
-ls "$(git rev-parse --show-toplevel)/.issue-flow/cases/"
+ls "$PROJECT_ROOT/.issue-flow/cases/"
 ```
+
+If `"$PROJECT_ROOT/.issue-flow/cases/"` does not exist, report that the target repository has no local issue-flow cases yet. Do not silently switch to a different repository.
 
 ## Step 2: Load Case Context
 
