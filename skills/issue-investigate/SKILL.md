@@ -7,9 +7,27 @@ description: Build a traceable investigation from referenced evidence. Use when 
 
 Analyze referenced evidence to find root cause with traceable evidence chains.
 
-## Step 1: Locate Case Workspace
+## Capability Contract
 
-First resolve `PROJECT_ROOT` using the same rules as `/issue-collect`:
+```yaml
+type: routable_skill
+owns: Read and correlate evidence from case workspace; identify root cause with traceable evidence chains; produce investigation.md with proposed fixes
+does_not_own: Evidence collection, code modification, fix implementation, bug tracker sync
+delegate_to: /issue-resolve (after investigation complete)
+refuses_when: Case has no collected evidence (status != collected); user asks to fix code during investigation
+requires_evidence: case.yaml with status collected and populated evidence_sources
+primary_outputs:
+  - investigation.md (evidence analysis, root cause chain, proposed fix)
+  - case.yaml updated with root_cause and status investigated
+allowed_tools: [bash (git rev-parse only), read, grep, glob, look_at]
+forbidden_tools: [edit (no code modification), write (only case artifacts)]
+eval_set: evals/evals.json
+```
+
+## Step 1: Locate Case Workspace
+<!-- validation_step -->
+
+Resolve `PROJECT_ROOT` before doing anything else.
 
 - Prefer an explicit repository path from the user
 - Otherwise derive the repo root from a user-provided code path or evidence path:
@@ -37,6 +55,7 @@ ls "$PROJECT_ROOT/.issue-flow/cases/"
 If `"$PROJECT_ROOT/.issue-flow/cases/"` does not exist, report that the target repository has no local issue-flow cases yet. Do not silently switch to a different repository.
 
 ## Step 2: Load Case Context
+<!-- retrieval_step -->
 
 Read these files in order:
 
@@ -45,13 +64,14 @@ Read these files in order:
 
 Verify `status: collected` before proceeding.
 
-## Step 3: Analyze Evidence
+## Step 3: Extract and Classify Evidence
+<!-- retrieval_step + reasoning_step -->
 
 For each entry in `evidence_sources`, read the material directly from its recorded path:
 
 - For `kind: log` or `kind: note`, open the original file at `path`
-- For `kind: screenshot` or `kind: video`, inspect the original file at `path`
-- For `kind: archive`, inspect or extract it in the archive's original directory if needed, then cite the actual extracted file path you used
+- For `kind: screenshot` or `kind: video`, read the original file at `path` and describe visible state
+- For `kind: archive`, extract it in the archive's original directory if needed, then cite the actual extracted file path used
 - For `kind: code_reference`, do not treat it as evidence by itself; use it in Step 4
 
 If a referenced file no longer exists or cannot be read, stop and mark the case as blocked with the exact missing path.
@@ -94,13 +114,14 @@ Lines 234-236:
 ```
 
 ## Step 4: Read Repository Code
+<!-- retrieval_step + reasoning_step -->
 
 Now you MAY read repository code to correlate with evidence.
 
 For each `kind: code_reference` entry from `case.yaml`:
 
 1. Read the file
-2. Understand the logic flow
+2. Map the control flow relevant to the failure
 3. Correlate with evidence timestamps and states
 
 Document findings:
@@ -118,6 +139,7 @@ Document findings:
 ```
 
 ## Step 5: Build Root Cause Chain
+<!-- reasoning_step -->
 
 Connect evidence → code → root cause:
 
@@ -139,6 +161,7 @@ Connect evidence → code → root cause:
 ```
 
 ## Step 6: Write investigation.md
+<!-- mutation_step -->
 
 Create `investigation.md` with this structure:
 
@@ -194,6 +217,7 @@ Ready for resolution.
 ```
 
 ## Step 7: Update case.yaml
+<!-- mutation_step -->
 
 ```yaml
 status: investigated

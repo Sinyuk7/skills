@@ -7,9 +7,27 @@ description: Continue an issue-flow case from investigation into implementation,
 
 Implement the fix, verify it works, and document the resolution.
 
-## Step 1: Locate Case Workspace
+## Capability Contract
 
-First resolve `PROJECT_ROOT` using the same rules as `/issue-collect`:
+```yaml
+type: routable_skill
+owns: Implement investigated fix, verify the fix, document resolution in resolution.md, update case.yaml to resolved; handle non-code dispositions (already_fixed, wont_fix, cannot_reproduce, duplicate)
+does_not_own: Evidence collection, root cause investigation, bug tracker sync
+delegate_to: /issue-overmind-sync (optional, after resolution complete)
+refuses_when: Case has no investigation (status != investigated); no user confirmation for code changes
+requires_evidence: case.yaml with status investigated; investigation.md with root cause and proposed fix
+primary_outputs:
+  - resolution.md (fix details, verification results, delivery info)
+  - case.yaml updated with resolution and status resolved
+allowed_tools: [bash, read, write, edit, grep, glob, lsp_*]
+forbidden_tools: []
+eval_set: evals/evals.json
+```
+
+## Step 1: Locate Case Workspace
+<!-- validation_step -->
+
+Resolve `PROJECT_ROOT` before doing anything else.
 
 - Prefer an explicit repository path from the user
 - Otherwise derive the repo root from a user-provided code path or evidence path:
@@ -29,6 +47,7 @@ PROJECT_ROOT/.issue-flow/cases/<case-id>/
 ```
 
 ## Step 2: Load Investigation Context
+<!-- retrieval_step -->
 
 Read these files:
 
@@ -38,9 +57,10 @@ Read these files:
 Extract from investigation.md:
 - Root cause location (file:line)
 - Recommended fix option
-- Verification plan
+- Verification plan checklist
 
 ## Step 3: Confirm Fix Approach with User
+<!-- validation_step -->
 
 Before modifying code, present the fix plan:
 
@@ -62,11 +82,12 @@ Proceed with this fix? (yes/no/modify)
 **WAIT FOR USER CONFIRMATION** before proceeding.
 
 ## Step 4: Implement Fix
+<!-- mutation_step -->
 
 After user confirms:
 
-1. Make the code changes
-2. Keep changes minimal and focused
+1. Apply the verified patch to the target file(s)
+2. Restrict changes to the root cause location only
 3. Follow project coding conventions
 
 Document each change:
@@ -90,6 +111,7 @@ Document each change:
 ```
 
 ## Step 5: Verify Fix
+<!-- validation_step -->
 
 Follow the verification plan from investigation.md:
 
@@ -117,6 +139,7 @@ Document results:
 ```
 
 ## Step 6: Write resolution.md
+<!-- mutation_step -->
 
 Create `resolution.md`:
 
@@ -162,6 +185,7 @@ Create `resolution.md`:
 ```
 
 ## Step 7: Update case.yaml
+<!-- mutation_step -->
 
 ```yaml
 status: resolved

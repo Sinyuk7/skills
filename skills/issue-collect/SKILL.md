@@ -7,7 +7,25 @@ description: Create or update an issue-flow case by registering user-provided is
 
 Register user-provided issue materials into a lightweight case workspace.
 
+## Capability Contract
+
+```yaml
+type: routable_skill
+owns: Register user-provided issue materials (logs, screenshots, archives, notes, code references) into a case workspace; create and update case.yaml and collect.md
+does_not_own: Evidence analysis, root cause investigation, code reading, code modification, bug tracker sync
+delegate_to: /issue-investigate (after collection complete)
+refuses_when: User asks to diagnose or fix the issue during collection
+requires_evidence: User-provided materials or references to register
+primary_outputs:
+  - case.yaml (case state with evidence_sources)
+  - collect.md (collection summary)
+allowed_tools: [bash (git rev-parse only), read, write, glob]
+forbidden_tools: [edit (no code modification), lsp_* (no code analysis)]
+eval_set: evals/evals.json
+```
+
 ## Step 1: Resolve Target Project Root
+<!-- validation_step -->
 
 Resolve the repository that owns this issue before doing anything else.
 
@@ -31,7 +49,8 @@ Rules:
 - After resolving `PROJECT_ROOT`, use absolute paths rooted at `PROJECT_ROOT` for the rest of this skill, or run later shell commands from `PROJECT_ROOT` explicitly.
 - Do not inline `git rev-parse --show-toplevel` again in later commands; reuse the already-resolved absolute `PROJECT_ROOT`.
 
-## Step 2: Determine Case ID
+## Step 2: Derive Case ID
+<!-- transform_step -->
 
 Priority order:
 1. Bug tracker ID if provided: `BUG-1234`, `ISSUE-567`
@@ -39,6 +58,7 @@ Priority order:
 3. Add date suffix only if collision: `audio-focus-not-restored-20260407`
 
 ## Step 3: Create or Update Case Workspace
+<!-- mutation_step -->
 
 Create this directory structure if it does not already exist:
 
@@ -54,6 +74,7 @@ Later stages add:
 - `resolution.md`
 
 ## Step 4: Initialize or Merge case.yaml
+<!-- mutation_step -->
 
 If `case.yaml` does not exist, create it with this structure:
 
@@ -80,6 +101,7 @@ If `case.yaml` already exists, read it first and update it in place:
 - Only fill in missing keys; do not recreate the file from scratch
 
 ## Step 5: Register Evidence References
+<!-- transform_step + mutation_step -->
 
 For each user-provided material, record it in `evidence_sources` instead of copying it into the case workspace:
 
@@ -124,6 +146,7 @@ evidence_sources:
 ```
 
 ## Step 6: Write collect.md
+<!-- mutation_step -->
 
 Create `collect.md` summarizing what was registered:
 
@@ -150,6 +173,7 @@ Evidence references registered. Ready for investigation.
 ```
 
 ## Step 7: Update case.yaml Status
+<!-- mutation_step -->
 
 ```yaml
 updated: "<ISO-8601 timestamp>"

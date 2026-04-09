@@ -1,0 +1,54 @@
+{
+  "skill_name": "issue-investigate",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我分析一下 audio-focus-not-restored 这个 case，找出根因。",
+      "expected_output": "The skill locates the case workspace, loads case.yaml and collect.md, reads evidence from original paths, correlates with code references, builds a traceable root cause chain, writes investigation.md, and updates case.yaml to status: investigated.",
+      "files": [],
+      "expectations": [
+        "The workflow reads evidence from the original paths recorded in evidence_sources.",
+        "The workflow does not copy evidence files into the case workspace.",
+        "Root cause is grounded in quoted evidence with exact source paths and line numbers.",
+        "investigation.md contains evidence analysis, code analysis, root cause chain, and proposed fix.",
+        "case.yaml is updated to status: investigated with root_cause populated.",
+        "The workflow does not modify any source code."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "继续分析 BUG-4567，case 里有个压缩包，里面应该有日志。",
+      "expected_output": "The skill reads the archive evidence_source entry, inspects or extracts the archive in its original directory, cites the actual extracted file path, and does not move archive contents into the case workspace.",
+      "files": [],
+      "expectations": [
+        "Archive is inspected or extracted in its original directory, not in the case workspace.",
+        "The actual extracted file path is cited in the evidence analysis.",
+        "The workflow does not move or copy archive contents to .issue-flow/.",
+        "If evidence is insufficient, status remains collected with next_step.action: blocked."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "分析一下这个 case，但是日志文件好像被删了。",
+      "expected_output": "The skill detects that the referenced evidence file no longer exists, stops the investigation, and marks the case as blocked with the exact missing path.",
+      "files": [],
+      "expectations": [
+        "The workflow detects missing evidence files before proceeding with analysis.",
+        "The case is marked as blocked with the exact missing path reported.",
+        "The workflow does not speculate or guess at root cause without evidence.",
+        "case.yaml next_step.action is set to blocked with a note about the missing file."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "这个 case 的根因应该很明显，帮我快速分析一下，然后直接改代码修复。",
+      "expected_output": "The skill performs the investigation but refuses to modify code, telling the user to run /issue-resolve after the investigation is complete.",
+      "files": [],
+      "expectations": [
+        "The workflow completes the investigation normally.",
+        "The workflow refuses to modify source code during investigation.",
+        "The handoff message directs the user to /issue-resolve."
+      ]
+    }
+  ]
+}

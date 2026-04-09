@@ -7,6 +7,23 @@ description: Sync resolve artifacts to Overmind bug fields via MCP. Use after is
 
 Post-resolve plugin that syncs case artifacts to Overmind bug tracking system via MCP.
 
+## Capability Contract
+
+```yaml
+type: plugin
+owns: Map resolved case artifacts to Overmind bug fields; draft and confirm field values with user; execute Overmind MCP writes; verify write success by rereading
+does_not_own: Evidence collection, root cause investigation, code modification, case lifecycle management
+delegate_to: none (terminal skill in the issue-flow pipeline)
+refuses_when: Case is not resolved; Overmind MCP is unavailable; no explicit issueKey from user
+requires_evidence: case.yaml with status resolved; investigation.md; resolution.md
+primary_outputs:
+  - Overmind fields updated (解决方案, 问题原因, and optionally 备注说明)
+  - Per-field status report (filled, already_set, failed, skipped)
+allowed_tools: [bash (git rev-parse only), read, EFFICIENCY_issue_* MCP tools]
+forbidden_tools: [edit, write (no local artifact creation)]
+eval_set: evals/evals.json
+```
+
 ## When To Use
 
 - Case has `status: resolved` and needs Overmind fields filled
@@ -14,8 +31,9 @@ Post-resolve plugin that syncs case artifacts to Overmind bug tracking system vi
 - Write issue-thread reply to `备注说明`
 
 ## Step 1: Locate Case Workspace
+<!-- validation_step -->
 
-First resolve `PROJECT_ROOT` using the same rules as `/issue-collect`:
+Resolve `PROJECT_ROOT` before doing anything else.
 
 - Prefer an explicit repository path from the user
 - Otherwise derive the repo root from a user-provided code path or evidence path:
@@ -37,7 +55,8 @@ PROJECT_ROOT/.issue-flow/cases/<case-id>/
 **Never** fall back to `$HOME/.issue-flow/` — only use project-local cases.
 **Never** silently switch to another repository if the expected case directory is missing from `PROJECT_ROOT`.
 
-## Step 2: Validate Environment
+## Step 2: Validate MCP Availability
+<!-- validation_step -->
 
 Confirm Overmind MCP is available:
 
@@ -49,6 +68,7 @@ EFFICIENCY_issue_get_issue_detail(issueKey: "<user-provided-key>")
 - If MCP unavailable, **STOP** and report to user
 
 ## Step 3: Read Case Artifacts
+<!-- retrieval_step -->
 
 From the case workspace, read:
 
@@ -65,6 +85,7 @@ From the case workspace, read:
 - `analysis/handoff.xml`
 
 ## Step 4: Fetch Current Issue
+<!-- retrieval_step -->
 
 Call `EFFICIENCY_issue_get_issue_detail` to get:
 - Current field values and placeholders (`请选择`)
@@ -73,7 +94,8 @@ Call `EFFICIENCY_issue_get_issue_detail` to get:
 
 Do **not** treat the current issue detail as the complete writable-field list. Some Overmind custom fields may be absent from the detail response until they have a value.
 
-## Step 5: Fetch Field Config
+## Step 5: Retrieve Field Config
+<!-- retrieval_step -->
 
 Treat these as the target fields for every resolved bug sync, in this priority order:
 
@@ -91,7 +113,8 @@ If `EFFICIENCY_issue_get_issue_editable_fields` does not list a field, do **not*
 
 If a field is absent from both issue detail and field-config discovery, keep it in the plan as `unknown_writability` and report that explicitly. Do not silently drop it.
 
-## Step 6: Prepare Draft
+## Step 6: Map and Draft Field Values
+<!-- transform_step + reasoning_step -->
 
 **Value priority:** User instruction > Artifact value > Safe inference > Skip
 
@@ -152,12 +175,14 @@ Before any Overmind write, show the user a compact confirmation draft:
 - If the user asks for stronger evidence in `问题原因`, revise that field first instead of proceeding to update.
 
 ## Step 7: Confirm With User
+<!-- validation_step -->
 
 - Require explicit confirmation before any write.
 - Accept concise confirmations such as `确认` / `可以更新` / `按这个写`.
 - If the user does not confirm, stop after presenting the draft.
 
 ## Step 8: Execute & Verify
+<!-- mutation_step + validation_step -->
 
 ```
 EFFICIENCY_issue_update → check failedFields → EFFICIENCY_issue_get_issue_detail

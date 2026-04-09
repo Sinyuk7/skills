@@ -1,0 +1,57 @@
+{
+  "skill_name": "issue-collect",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "这个 bug 的日志在 /tmp/player-crash/app.log，截图在 /tmp/player-crash/screenshot.png，帮我建个 case 跟踪一下。",
+      "expected_output": "The skill resolves PROJECT_ROOT, creates a case workspace under .issue-flow/cases/, registers the log and screenshot as evidence_sources with their original paths, writes case.yaml and collect.md, and does not copy files into the case workspace.",
+      "files": [],
+      "expectations": [
+        "The workflow resolves PROJECT_ROOT before creating any files.",
+        "The workflow does not copy logs or screenshots into the case workspace.",
+        "evidence_sources entries preserve the original absolute paths.",
+        "case.yaml has status: collected after completion.",
+        "collect.md lists all registered evidence references.",
+        "The workflow does not read or analyze repository code."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "BUG-4567 的附件在 /Users/dev/Downloads/bug-report.rar，里面有日志和视频。先收集起来。",
+      "expected_output": "The skill creates case BUG-4567, registers the archive as kind: archive with the original path, does not extract the archive, and notes that extraction happens in later stages if needed.",
+      "files": [],
+      "expectations": [
+        "The case ID is derived from the bug tracker ID BUG-4567.",
+        "The archive is registered as kind: archive, not extracted.",
+        "The workflow does not attempt to diagnose the issue.",
+        "case.yaml includes the archive in evidence_sources with the original path.",
+        "collect.md notes the archive and that it should be inspected in place if needed."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "之前那个 audio-focus-not-restored 的 case，我又拿到一份新日志 /tmp/new-repro/logcat.txt，补充进去。",
+      "expected_output": "The skill finds the existing case, reads existing case.yaml, appends the new log to evidence_sources without replacing existing entries, updates the timestamp, and preserves the existing status if it was already investigated.",
+      "files": [],
+      "expectations": [
+        "The workflow reads existing case.yaml before modifying it.",
+        "New evidence is appended to evidence_sources, not replacing existing entries.",
+        "Existing fields like created, summary, root_cause are preserved.",
+        "The updated timestamp reflects the current time.",
+        "If case was already investigated, the status is preserved with a note about supplemental evidence."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "帮我收集一下这个问题的信息。代码可能在 biz/player/src/main/java/com/example/PlayerManager.java 这个文件。",
+      "expected_output": "The skill registers the code path as kind: code_reference in evidence_sources, does not read or analyze the code file, and derives PROJECT_ROOT from the code path if possible.",
+      "files": [],
+      "expectations": [
+        "The code path is registered as kind: code_reference, not read or analyzed.",
+        "The workflow does not open or inspect the code file.",
+        "The path is stored as a repository-relative path when possible.",
+        "The workflow asks for clarification if the target repository is unclear."
+      ]
+    }
+  ]
+}
