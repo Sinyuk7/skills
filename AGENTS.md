@@ -156,6 +156,52 @@ skill-name/
 
 Keep SKILL.md short. Push executable detail outward.
 
+### 8.1 Runtime Entry Safety
+
+When a SKILL needs deterministic local scripts, distinguish between:
+
+- **public execution entry** — what the agent should invoke
+- **implementation detail** — the underlying script or module
+
+Preferred structure:
+
+```text
+skill-name/
+  SKILL.md
+  scripts/
+    implementation.py
+    implementation-wrapper
+```
+
+Rules:
+
+- `SKILL.md` and workflow docs should point to the **skill-local wrapper entry**, not directly to a repo-relative implementation file.
+- The wrapper must resolve its own absolute path, locate the skill root, then invoke the real implementation.
+- Do not treat “relative path belongs to skill root” as a runtime guarantee. It is only a documentation convention.
+- If path correctness matters, guarantee it with:
+  - an explicit absolute path
+  - a skill-local wrapper entry
+  - or a project-level tool
+
+Example pattern:
+
+```text
+skillA/
+├── SKILL.md
+├── scripts/
+│   ├── case_state.py
+│   └── case-state
+└── templates/
+    └── investigation.md
+```
+
+In this pattern:
+
+- `scripts/case-state` is the stable execution surface
+- `scripts/case_state.py` is an implementation detail
+- workflow docs may say `scripts/case-state record-blocked`
+- the wrapper, not the agent's current working directory, guarantees path correctness
+
 ---
 
 ## 9. Anti-Patterns

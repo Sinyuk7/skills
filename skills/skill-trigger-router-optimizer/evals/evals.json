@@ -3,19 +3,19 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Analyze the issue-flow skill system and tell me which parts should actually participate in user-facing routing. Use `skills/issue-flow-core`, `skills/issue-collect`, `skills/issue-handoff`, `skills/issue-resolve`, and `skills/issue-overmind-sync` as the sample set.",
-      "expected_output": "Should classify `issue-flow-core` as a shared core or non-routable component, keep the thin stage skills as the routed surface, identify stage-boundary conflicts, and produce routing audit artifacts rather than treating the core package as a normal skill.",
+      "prompt": "Analyze the issue-flow skill system and tell me which parts should actually participate in user-facing routing. Use `skills/issue-flow-core`, `skills/issue-investigate`, `skills/issue-handoff`, `skills/issue-resolve`, and `skills/issue-overmind-sync` as the sample set.",
+      "expected_output": "Should classify `issue-flow-core` as a shared core or non-routable component, keep the user-facing stage skills as the routed surface, identify boundary conflicts, and produce routing audit artifacts rather than treating the core package as a normal skill.",
       "files": [
         "skills/issue-flow-core/README.md",
         "skills/issue-flow-core/PRD.md",
-        "skills/issue-collect/SKILL.md",
+        "skills/issue-investigate/SKILL.md",
         "skills/issue-handoff/SKILL.md",
         "skills/issue-resolve/SKILL.md",
         "skills/issue-overmind-sync/SKILL.md"
       ],
       "expectations": [
         "The result explicitly classifies `issue-flow-core` as non-routable for user execution.",
-        "The result treats `issue-collect`, `issue-handoff`, and `issue-resolve` as stage entry skills with chain relationships.",
+        "The result treats `issue-investigate`, `issue-handoff`, and `issue-resolve` as stage entry skills with chain relationships.",
         "The result identifies at least one thin-context ambiguity such as \"analyze this bug\" or \"continue this case\".",
         "The result recommends prerequisites or negative triggers as routing fixes rather than execution-step rewrites."
       ]

@@ -3,51 +3,47 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "帮我分析一下 audio-focus-not-restored 这个 case，找出根因。",
-      "expected_output": "The skill locates the case workspace, loads case.yaml and collect.md, reads evidence from original paths, correlates with code references, builds a traceable root cause chain, writes investigation.md, and updates case.yaml to status: investigated.",
+      "prompt": "帮我分析一个新问题。日志在 /tmp/player-crash/app.log，截图在 /tmp/player-crash/ui.png，相关代码可能是 biz/player/src/main/java/com/example/PlayerManager.kt。重点看 04-20 14:05:42.333 附近为什么没恢复播放。",
+      "expected_output": "The skill creates or reuses a case, registers the evidence references in case.yaml, normalizes the primary target, writes investigation.md, and never creates collect.md.",
       "files": [],
       "expectations": [
-        "The workflow reads evidence from the original paths recorded in evidence_sources.",
-        "The workflow does not copy evidence files into the case workspace.",
-        "Root cause is grounded in quoted evidence with exact source paths and line numbers.",
-        "investigation.md contains evidence analysis, code analysis, root cause chain, and proposed fix.",
-        "case.yaml is updated to status: investigated with root_cause populated.",
-        "The workflow does not modify any source code."
+        "The workflow creates or updates case.yaml through the support script.",
+        "Evidence references are recorded without copying raw files into the case workspace.",
+        "primary_question and primary_time_anchor are persisted before deep analysis.",
+        "investigation.md starts from the requested anchor instead of a different nearby timestamp."
       ]
     },
     {
       "id": 2,
-      "prompt": "继续分析 BUG-4567，case 里有个压缩包，里面应该有日志。",
-      "expected_output": "The skill reads the archive evidence_source entry, inspects or extracts the archive in its original directory, cites the actual extracted file path, and does not move archive contents into the case workspace.",
+      "prompt": "继续分析 BUG-4567。用户评论里提到了两个时间点 14:05:42 和 14:05:51，但没有说这轮到底看哪个。",
+      "expected_output": "The skill stops and asks the user to clarify the primary target instead of silently choosing one anchor.",
       "files": [],
       "expectations": [
-        "Archive is inspected or extracted in its original directory, not in the case workspace.",
-        "The actual extracted file path is cited in the evidence analysis.",
-        "The workflow does not move or copy archive contents to .issue-flow/.",
-        "If evidence is insufficient, status remains collected with next_step.action: blocked."
+        "The workflow detects multiple unresolved anchors.",
+        "The skill does not silently promote one timestamp into the main conclusion.",
+        "The case remains in investigating or blocked state until the anchor is clarified."
       ]
     },
     {
       "id": 3,
-      "prompt": "分析一下这个 case，但是日志文件好像被删了。",
-      "expected_output": "The skill detects that the referenced evidence file no longer exists, stops the investigation, and marks the case as blocked with the exact missing path.",
+      "prompt": "分析一下这个 case，但是日志文件 /tmp/missing.log 好像已经删了。",
+      "expected_output": "The skill marks the case as blocked with the exact missing path and does not speculate about root cause.",
       "files": [],
       "expectations": [
-        "The workflow detects missing evidence files before proceeding with analysis.",
-        "The case is marked as blocked with the exact missing path reported.",
-        "The workflow does not speculate or guess at root cause without evidence.",
-        "case.yaml next_step.action is set to blocked with a note about the missing file."
+        "The workflow reports the exact missing evidence path.",
+        "case.yaml is updated to status: blocked with blocked_reason populated.",
+        "The skill does not guess at root cause without the requested evidence."
       ]
     },
     {
       "id": 4,
-      "prompt": "这个 case 的根因应该很明显，帮我快速分析一下，然后直接改代码修复。",
-      "expected_output": "The skill performs the investigation but refuses to modify code, telling the user to run /issue-resolve after the investigation is complete.",
+      "prompt": "这个 case 的根因应该很明显，帮我分析一下然后直接改代码修。",
+      "expected_output": "The skill completes or advances the investigation but refuses to modify code and directs the user to /issue-resolve for implementation.",
       "files": [],
       "expectations": [
-        "The workflow completes the investigation normally.",
-        "The workflow refuses to modify source code during investigation.",
-        "The handoff message directs the user to /issue-resolve."
+        "The workflow does not modify source code.",
+        "The handoff message directs the user to /issue-resolve.",
+        "The investigation result stays grounded in cited evidence."
       ]
     }
   ]

@@ -1,6 +1,6 @@
 ---
 name: issue-resolve
-description: Continue an issue-flow case from investigation into implementation, verification, or a final non-code disposition. Use when a case has `status: investigated` and the user wants to fix, verify, or close it.
+description: Continue an issue-flow case from /issue-investigate into implementation, verification, or a final non-code disposition. Use when a case has `status: investigated` and the user wants to fix, verify, or close it.
 ---
 
 # Issue Resolve
@@ -12,10 +12,10 @@ Implement the fix, verify it works, and document the resolution.
 ```yaml
 type: routable_skill
 owns: Implement investigated fix, verify the fix, document resolution in resolution.md, update case.yaml to resolved; handle non-code dispositions (already_fixed, wont_fix, cannot_reproduce, duplicate)
-does_not_own: Evidence collection, root cause investigation, bug tracker sync
+does_not_own: Intake, evidence registration, root cause investigation, bug tracker sync
 delegate_to: /issue-overmind-sync (optional, after resolution complete)
 refuses_when: Case has no investigation (status != investigated); no user confirmation for code changes
-requires_evidence: case.yaml with status investigated; investigation.md with root cause and proposed fix
+requires_evidence: case.yaml with status investigated from /issue-investigate; investigation.md with root cause and proposed fix
 primary_outputs:
   - resolution.md (fix details, verification results, delivery info)
   - case.yaml updated with resolution and status resolved
@@ -53,6 +53,8 @@ Read these files:
 
 1. `case.yaml` — Verify `status: investigated`
 2. `investigation.md` — Get root cause and proposed fix
+
+If the case is still `investigating` or `blocked`, stop and send the user back to `/issue-investigate`.
 
 Extract from investigation.md:
 - Root cause location (file:line)

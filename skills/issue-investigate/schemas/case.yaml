@@ -1,8 +1,12 @@
+# issue-investigate case.yaml reference
+
+```yaml
 case_id: "OMMUSIC-3397323"
 created: "2026-04-23T09:00:00Z"
 updated: "2026-04-23T09:15:00Z"
 
 status: investigating | blocked | investigated | resolved
+
 summary: "Playback does not recover after audio focus changes"
 user_context: |
   播放过程中切换音频焦点后无法恢复播放。
@@ -33,7 +37,7 @@ evidence_sources:
 evidence_window:
   kind: time_anchor | keyword_search | archive_slice
   anchor: "2026-04-20T14:05:42.333+08:00"
-  notes: "Focused on lines around the primary anchor"
+  notes: "Focused on lines surrounding the primary anchor"
 
 root_cause:
   summary: "Focus recovery callback exits before playback state is restored"
@@ -44,3 +48,11 @@ root_cause:
 blocked_reason:
   kind: missing_evidence | ambiguous_anchor | anchor_mismatch
   detail: "Need the log that covers 14:05:42.333"
+```
+
+Rules:
+
+- `case.yaml` is the only machine-readable state file in the case directory.
+- Unknown keys must be preserved during updates.
+- `evidence_sources` entries must be appended or merged; never dropped silently.
+- Only one of `root_cause` or `blocked_reason` should be the active terminal reason for the current state.

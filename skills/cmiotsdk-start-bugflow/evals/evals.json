@@ -4,206 +4,54 @@
     {
       "id": 1,
       "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n播放过程中切换音频焦点后无法恢复播放。\n日志见 /tmp/audio-focus-bug/player.log\n截图见 /tmp/audio-focus-bug/screenshot.png\n可能相关代码: biz/player/src/main/java/com/netease/music/iot/player/CarAudioFocusManager.kt",
-      "expected_output": "Script creates bugfix/OMMUSIC-3397323 from origin/develop, then automatically chains into /issue-collect with full payload. User sees branch confirmation followed by collect output.",
+      "expected_output": "Script creates bugfix/OMMUSIC-3397323 from origin/develop, then automatically chains into /issue-investigate with the full payload.",
       "files": [],
       "expectations": [
         "Ran start-bugfix.sh with argument OMMUSIC-3397323",
         "Verified current branch is bugfix/OMMUSIC-3397323 after script execution",
-        "Proceeded to /issue-collect without asking for confirmation (auto_enter_collect defaults to true)",
-        "Passed OMMUSIC-3397323 as case_id to /issue-collect",
-        "Forwarded all three materials (player.log, screenshot.png, CarAudioFocusManager.kt) to /issue-collect",
-        "Did NOT create case.yaml, collect.md, or any raw-evidence directories itself"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01/Documents/Workspace/Netease/cmiotsdk",
-        "note": "Happy path: user is in cmiotsdk root"
-      }
+        "Proceeded to /issue-investigate without asking for confirmation",
+        "Passed OMMUSIC-3397323 as case_id to /issue-investigate",
+        "Forwarded all three user-provided materials",
+        "Did NOT create case.yaml or investigation.md itself"
+      ]
     },
     {
       "id": 2,
-      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n音频焦点恢复失败",
-      "expected_output": "Skill recognizes that cwd is a subdirectory of cmiotsdk. Script runs successfully from anywhere within the repo (git rev-parse --show-toplevel resolves to cmiotsdk root). Branch created, auto-chains into /issue-collect.",
-      "files": [],
-      "expectations": [
-        "Correctly resolved repo root to cmiotsdk despite being in a subdirectory",
-        "Ran start-bugfix.sh successfully",
-        "Created bugfix/OMMUSIC-3397323 from origin/develop",
-        "Proceeded to /issue-collect"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01/Documents/Workspace/Netease/cmiotsdk/iot-player/src/main/java",
-        "note": "User is deep inside a cmiotsdk subdirectory"
-      }
-    },
-    {
-      "id": 3,
-      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n帮我修这个 bug",
-      "expected_output": "Skill detects that cwd is NOT cmiotsdk (it's the skills repo). Reports error clearly. Suggests user cd to cmiotsdk or provide the repo path. Does not attempt any git branch operations.",
-      "files": [],
-      "expectations": [
-        "Detected current repo is NOT cmiotsdk (remote URL does not contain cmiotsdk)",
-        "Did NOT run git checkout or create any branch",
-        "Told user this skill is for cmiotsdk only",
-        "Suggested navigating to cmiotsdk or providing the correct repo path",
-        "Did NOT fall back to /issue-collect in the wrong repo"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01/Documents/Workspace/skills",
-        "note": "User is in the skills repo (common mistake: skill repo ≠ target repo)"
-      }
-    },
-    {
-      "id": 4,
-      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n新 bug",
-      "expected_output": "Skill detects that cwd is not inside any git repo. Reports error clearly. Suggests user cd to cmiotsdk.",
-      "files": [],
-      "expectations": [
-        "Detected not inside a git repository",
-        "Did NOT attempt any git operations",
-        "Told user to navigate to cmiotsdk first",
-        "Did NOT proceed to /issue-collect"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01",
-        "note": "User is in home directory, not in any git repo"
-      }
-    },
-    {
-      "id": 5,
-      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n紧急 bug",
-      "expected_output": "Skill detects that cwd (/) is not inside any git repo. Reports error clearly.",
-      "files": [],
-      "expectations": [
-        "Detected not inside a git repository",
-        "Did NOT attempt any git operations",
-        "Did NOT crash or produce confusing output",
-        "Suggested navigating to cmiotsdk"
-      ],
-      "context": {
-        "cwd": "/",
-        "note": "User is at filesystem root"
-      }
-    },
-    {
-      "id": 6,
-      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n这个 bug 在另一个项目里发现的",
-      "expected_output": "Skill detects cwd is a different git repo (not cmiotsdk). Reports which repo was detected and refuses. Suggests /issue-collect for non-cmiotsdk repos.",
-      "files": [],
-      "expectations": [
-        "Detected current repo is not cmiotsdk via remote URL check",
-        "Showed the actual remote URL of the current repo",
-        "Suggested using /issue-collect directly for other repos",
-        "Did NOT create any branch in the wrong repo",
-        "Did NOT proceed to /issue-collect in the wrong repo context"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01/Documents/Workspace/Netease/other-android-project",
-        "note": "User is in a completely different project repo"
-      }
-    },
-    {
-      "id": 7,
-      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323 --no-collect\n\n只帮我建分支就行，不需要进入 collect。",
-      "expected_output": "Script creates the bugfix branch, reports success, and stops. Does not chain into /issue-collect.",
+      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323 --no-investigate\n\n只帮我建分支就行。",
+      "expected_output": "Script creates the bugfix branch, reports success, and stops without chaining into /issue-investigate.",
       "files": [],
       "expectations": [
         "Ran start-bugfix.sh with argument OMMUSIC-3397323",
         "Verified current branch is bugfix/OMMUSIC-3397323",
-        "Did NOT proceed to /issue-collect",
-        "Informed user they can run /issue-collect later when ready",
-        "Output includes branch name and base (origin/develop)"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01/Documents/Workspace/Netease/cmiotsdk",
-        "note": "Explicit opt-out of auto-collect"
-      }
+        "Did NOT proceed to /issue-investigate",
+        "Told the user they can run /issue-investigate later"
+      ]
     },
     {
-      "id": 8,
-      "prompt": "/cmiotsdk-start-bugflow fix-audio-bug\n\n帮我修这个音频焦点的问题",
-      "expected_output": "Rejects the invalid ticket ID format. Shows expected format. Does not run the script.",
+      "id": 3,
+      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n帮我修这个 bug",
+      "expected_output": "Skill detects that the current repository is not cmiotsdk, refuses clearly, and does not attempt branch operations.",
       "files": [],
       "expectations": [
-        "Detected invalid ticket ID format for 'fix-audio-bug'",
-        "Showed expected pattern (e.g. PROJ-12345 or OMMUSIC-3397323)",
-        "Did NOT run start-bugfix.sh",
-        "Did NOT attempt any git operations"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01/Documents/Workspace/Netease/cmiotsdk",
-        "note": "Invalid ticket ID format"
-      }
+        "Detected current repo is not cmiotsdk",
+        "Did NOT run git checkout or create any branch",
+        "Told the user this skill is for cmiotsdk only",
+        "Did NOT fall back to /issue-investigate in the wrong repo"
+      ]
     },
     {
-      "id": 9,
-      "prompt": "/cmiotsdk-start-bugflow\n\n有个播放器 bug 需要修。日志在 /tmp/bug-logs/crash.log",
-      "expected_output": "Notices ticket ID is missing. Asks the user to provide one. Does not run the script. Preserves material reference.",
-      "files": [],
-      "expectations": [
-        "Detected that ticket_id is missing",
-        "Asked user to provide a ticket ID",
-        "Did NOT run start-bugfix.sh",
-        "Did NOT attempt any git operations",
-        "Preserved the user's material reference (crash.log) for later use"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01/Documents/Workspace/Netease/cmiotsdk",
-        "note": "Missing ticket ID"
-      }
-    },
-    {
-      "id": 10,
-      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-8888\n\n这个 bug 之前看过了，继续修",
-      "expected_output": "Script detects bugfix/OMMUSIC-8888 already exists, switches to it non-destructively. Then auto-chains into /issue-collect.",
-      "files": [],
-      "expectations": [
-        "Ran start-bugfix.sh which detected the branch already exists",
-        "Switched to the existing branch without modifying its history",
-        "Reported that this is an existing branch (warning, not error)",
-        "Proceeded to /issue-collect with OMMUSIC-8888 as case_id"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01/Documents/Workspace/Netease/cmiotsdk",
-        "note": "Branch already exists locally — non-destructive reuse",
-        "precondition": "bugfix/OMMUSIC-8888 branch exists locally"
-      }
-    },
-    {
-      "id": 11,
-      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-5555\n\n音频播放中断",
-      "expected_output": "Script detects dirty working tree and aborts. Skill reports error and suggests git stash.",
-      "files": [],
-      "expectations": [
-        "Ran start-bugfix.sh which detected uncommitted changes",
-        "Reported the dirty tree error to the user",
-        "Suggested git stash as a remedy",
-        "Did NOT proceed to /issue-collect",
-        "Did NOT attempt to auto-stash or force any git operation"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01/Documents/Workspace/Netease/cmiotsdk",
-        "note": "Working tree has uncommitted changes",
-        "precondition": "Uncommitted changes in working tree"
-      }
-    },
-    {
-      "id": 12,
+      "id": 4,
       "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n播放暂停后恢复失败。\n日志: /tmp/player-bug/app.log\n设备日志: /tmp/player-bug/device.log\n截图: /tmp/player-bug/ui-state.png\n录屏: /tmp/player-bug/repro.mp4\n相关代码: biz/player/src/main/java/com/netease/music/iot/player/AudioPlayerManager.kt\n相关代码: biz/player/src/main/java/com/netease/music/iot/player/PlaybackStateTracker.kt",
-      "expected_output": "Branch created. All six materials forwarded to /issue-collect. None dropped.",
+      "expected_output": "Branch created. All user-provided materials are forwarded to /issue-investigate. None are dropped.",
       "files": [],
       "expectations": [
         "Ran start-bugfix.sh successfully",
-        "Auto-chained into /issue-collect",
-        "Forwarded both log files (app.log, device.log) as materials",
-        "Forwarded screenshot (ui-state.png) as material",
-        "Forwarded video (repro.mp4) as material",
-        "Forwarded both code references (AudioPlayerManager.kt, PlaybackStateTracker.kt)",
-        "Did NOT drop or ignore any of the six user-provided items"
-      ],
-      "context": {
-        "cwd": "/Users/shenyeke01/Documents/Workspace/Netease/cmiotsdk",
-        "note": "Stress test: many materials, verify nothing is lost in handoff"
-      }
+        "Auto-chained into /issue-investigate",
+        "Forwarded both log files",
+        "Forwarded screenshot and video",
+        "Forwarded both code references",
+        "Did NOT drop any user-provided item"
+      ]
     }
   ]
 }

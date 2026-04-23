@@ -4,91 +4,75 @@ Minimal issue investigation framework.
 
 ## Overview
 
-Issue-flow is a 3-stage workflow for structured bug investigation:
+Issue-flow now uses a single front-door investigation stage:
 
-1. **Collect** → Register evidence references
-2. **Investigate** → Find root cause
-3. **Resolve** → Fix and verify
+1. **Investigate** → create or reuse the case, register evidence, normalize the target, and produce root cause or blocked status
+2. **Resolve** → implement or document the resolution
+3. **Sync** → optionally sync the resolved case to the bug tracker
 
 ## Runtime Location
 
-At runtime, issue-flow operates inside the **current git repository**:
+At runtime, issue-flow operates inside the current git repository:
 
-```
+```text
 <git-repo-root>/.issue-flow/cases/<case-id>/
-├── case.yaml          # State (single source of truth)
-├── collect.md         # Stage 1 output: what was registered
-├── investigation.md   # Stage 2 output: root cause analysis
-└── resolution.md      # Stage 3 output: fix + verification
+├── case.yaml          # machine-readable state
+├── investigation.md   # human-readable investigation report
+└── resolution.md      # fix or disposition record
 ```
 
-User-provided logs, screenshots, videos, and archives stay in their original locations. The case workspace stores references to those paths in `case.yaml` instead of copying raw evidence into the repository.
+User-provided logs, screenshots, videos, and archives stay in their original locations.
+The case workspace stores only references and structured investigation state.
 
-## Skills (Self-Contained)
-
-Each skill is **fully self-contained** with embedded templates and step-by-step instructions:
+## Skills
 
 | Skill | Purpose | Entry Point |
 |-------|---------|-------------|
-| `issue-collect` | Register user-provided materials | `/issue-collect` |
-| `issue-investigate` | Analyze referenced evidence and find root cause | `/issue-investigate` |
-| `issue-resolve` | Implement fix, verify, document | `/issue-resolve` |
+| `issue-investigate` | Intake and investigation | `/issue-investigate` |
+| `issue-resolve` | Fix, verify, or close the case | `/issue-resolve` |
 | `issue-overmind-sync` | Sync resolved case to Overmind bug tracker | `/issue-overmind-sync` |
 
-Skills do NOT depend on loading files from this directory at runtime.
+## Templates
 
-## Templates (Reference Only)
+The `templates/` directory contains reference artifacts:
 
-The `templates/` directory contains **reference templates** for documentation purposes. Skills have their own embedded versions and do not load from here.
-
-- `templates/case.yaml` — State structure reference
-- `templates/collect.md` — Collection documentation reference
-- `templates/investigation.md` — Investigation findings reference
-- `templates/resolution.md` — Resolution documentation reference
+- `templates/case.yaml` — case state reference
+- `templates/investigation.md` — investigation report reference
+- `templates/resolution.md` — resolution reference
 
 ## Design Principles
 
-1. **Self-contained skills**: Each skill embeds all instructions and examples
-2. **Explicit path resolution**: Skills use `git rev-parse --show-toplevel` to find project root
-3. **Minimal artifacts**: 4 files per case (1 state + 3 stage outputs)
-4. **Evidence stays in place**: Logs, screenshots, videos, and archives are referenced, not copied
-5. **Single state file**: `case.yaml` is the only state file
-6. **Progressive workflow**: Each stage adds exactly one file
+1. One public intake skill: `/issue-investigate`
+2. Two long-lived investigation artifacts: `case.yaml` and `investigation.md`
+3. Evidence stays in place and is referenced, not copied
+4. Deterministic case-state updates belong in skill-local scripts
+5. Evidence exploration should rely on generic search and chunked-read capabilities instead of vendor-specific parsers
 
 ## Case Lifecycle
 
-```
-[User reports issue]
+```text
+[User reports issue / adds evidence]
+               ↓
+       /issue-investigate
+               ↓
+   status: investigating
+        ↓ yes         ↓ no / unclear
+status: investigated   status: blocked
+        ↓                    ↓
+    /issue-resolve     [user provides more evidence or clarifies]
         ↓
-   /issue-collect
+   status: resolved
         ↓
-   status: collected ←──────────┐
-        ↓                       │
-  /issue-investigate            │
-        ↓                       │
-   [evidence sufficient?]       │
-        ↓ yes           no ↓    │
-   status: investigated    next_step.action: blocked
-        ↓                       │
-   /issue-resolve          [user provides more evidence]
-        ↓                       │
-   status: resolved ────────────┘
-        ↓
-   /issue-overmind-sync (optional)
+/issue-overmind-sync (optional)
 ```
 
 ## Path Resolution
 
-All skills resolve paths the same way:
+All skills should resolve the owning repository explicitly:
 
 ```bash
-# Get project root
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
-
-# Case workspace
 CASE_DIR="$PROJECT_ROOT/.issue-flow/cases/<case-id>"
 ```
 
-Evidence references recorded in `case.yaml` should point to the original source paths so later stages can inspect the materials in place.
-
-This ensures consistent behavior regardless of where the skill is invoked from.
+This keeps behavior stable regardless of where the skill is invoked from.

@@ -44,7 +44,7 @@ REMOTE_URL="$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null)" \
 if [[ "$REMOTE_URL" != *cmiotsdk* ]]; then
   die "This script is for cmiotsdk only.
    Current repo remote: $REMOTE_URL
-   Use /issue-collect directly for other repos."
+   Use /issue-investigate directly for other repos."
 fi
 
 BRANCH_NAME="bugfix/${TICKET_ID}"

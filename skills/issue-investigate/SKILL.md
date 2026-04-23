@@ -1,262 +1,87 @@
 ---
 name: issue-investigate
-description: Build a traceable investigation from referenced evidence. Use when a case has evidence collected and needs root cause analysis.
+description: Own intake and investigation for issue-flow cases. Use when a user reports a new issue, adds evidence to an existing case, or wants root cause analysis anchored to a specific question or time.
 ---
 
 # Issue Investigate
 
-Analyze referenced evidence to find root cause with traceable evidence chains.
+Single entry point for issue-flow intake and investigation.
 
 ## Capability Contract
 
-```yaml
-type: routable_skill
-owns: Read and correlate evidence from case workspace; identify root cause with traceable evidence chains; produce investigation.md with proposed fixes
-does_not_own: Evidence collection, code modification, fix implementation, bug tracker sync
-delegate_to: /issue-resolve (after investigation complete)
-refuses_when: Case has no collected evidence (status != collected); user asks to fix code during investigation
-requires_evidence: case.yaml with status collected and populated evidence_sources
-primary_outputs:
-  - investigation.md (evidence analysis, root cause chain, proposed fix)
-  - case.yaml updated with root_cause and status investigated
-allowed_tools: [bash (git rev-parse only), read, grep, glob, look_at]
-forbidden_tools: [edit (no code modification), write (only case artifacts)]
-eval_set: evals/evals.json
-```
-
-## Step 1: Locate Case Workspace
-<!-- validation_step -->
-
-Resolve `PROJECT_ROOT` before doing anything else.
-
-- Prefer an explicit repository path from the user
-- Otherwise derive the repo root from a user-provided code path or evidence path:
-  ```bash
-  git -C "<file-directory-or-repo-path>" rev-parse --show-toplevel
-  ```
-- Use plain `git rev-parse --show-toplevel` only when the current working directory is already known to be the target repository
-- If the target repository is ambiguous, stop and ask the user instead of guessing
-
-Never default to the skill repository or any unrelated repo just because the command succeeds there.
-Do not inline `git rev-parse --show-toplevel` again in later commands; reuse the already-resolved absolute `PROJECT_ROOT`.
-
-Then find the case:
-
-```
-PROJECT_ROOT/.issue-flow/cases/<case-id>/
-```
-
-If the user does not specify `case-id`, list available cases:
-
-```bash
-ls "$PROJECT_ROOT/.issue-flow/cases/"
-```
-
-If `"$PROJECT_ROOT/.issue-flow/cases/"` does not exist, report that the target repository has no local issue-flow cases yet. Do not silently switch to a different repository.
-
-## Step 2: Load Case Context
-<!-- retrieval_step -->
-
-Read these files in order:
-
-1. `case.yaml` — Current state, user context, and `evidence_sources`
-2. `collect.md` — What evidence references were registered
-
-Verify `status: collected` before proceeding.
-
-## Step 3: Extract and Classify Evidence
-<!-- retrieval_step + reasoning_step -->
-
-For each entry in `evidence_sources`, read the material directly from its recorded path:
-
-- For `kind: log` or `kind: note`, open the original file at `path`
-- For `kind: screenshot` or `kind: video`, read the original file at `path` and describe visible state
-- For `kind: archive`, extract it in the archive's original directory if needed, then cite the actual extracted file path used
-- For `kind: code_reference`, do not treat it as evidence by itself; use it in Step 4
-
-If a referenced file no longer exists or cannot be read, stop and mark the case as blocked with the exact missing path.
-
-### Log Analysis Pattern
-
-```markdown
-### Evidence: `/tmp/audio-focus-bug/player.log`
-
-**Relevant excerpts:**
-
-Lines 234-236:
-```
-<exact log content>
-```
-
-**Observation:** <what this tells us>
-**Timestamp:** <if available>
-**Severity:** <error/warning/info>
-```
-
-### Media Analysis Pattern
-
-```markdown
-### Evidence: `/tmp/audio-focus-bug/screenshot.png`
-
-**Shows:** <describe what's visible>
-**Relevant UI state:** <what state the app is in>
-**Anomaly:** <what looks wrong>
-```
-
-### Archive Analysis Pattern
-
-```markdown
-### Evidence: `/Users/shenyeke01/Downloads/bug-report.zip`
-
-**Inspected in place:** extracted in the archive's original directory
-**File used:** `/Users/shenyeke01/Downloads/bug-report/logs/app.log`
-**Relevant excerpts:** <quoted lines or summarized visual evidence>
-```
-
-## Step 4: Read Repository Code
-<!-- retrieval_step + reasoning_step -->
-
-Now you MAY read repository code to correlate with evidence.
-
-For each `kind: code_reference` entry from `case.yaml`:
-
-1. Read the file
-2. Map the control flow relevant to the failure
-3. Correlate with evidence timestamps and states
-
-Document findings:
-
-```markdown
-### Code Analysis: `path/to/File.kt`
-
-**Function:** `functionName()` (lines 42-68)
-**Purpose:** <what it does>
-**Relevant logic:**
-```kotlin
-// key code snippet
-```
-**Correlation with evidence:** <how this explains the logs or behavior>
-```
-
-## Step 5: Build Root Cause Chain
-<!-- reasoning_step -->
-
-Connect evidence → code → root cause:
-
-```markdown
-## Root Cause Chain
-
-1. **Trigger:** <what initiated the issue>
-   - Evidence: `/tmp/audio-focus-bug/player.log:123`
-
-2. **Failure point:** <where things went wrong>
-   - Code: `path/to/File.kt:45` in `functionName()`
-   - Evidence: `/tmp/audio-focus-bug/player.log:234-236`
-
-3. **Root cause:** <why it failed>
-   - <technical explanation>
-
-4. **Impact:** <what the user experienced>
-   - Evidence: `/tmp/audio-focus-bug/screenshot.png`
-```
-
-## Step 6: Write investigation.md
-<!-- mutation_step -->
-
-Create `investigation.md` with this structure:
-
-```markdown
-# Investigation: <case-id>
-
-## Summary
-<2-3 sentence description of the issue and root cause>
-
-## Evidence Analysis
-
-### Logs
-<analysis from Step 3>
-
-### Media
-<analysis from Step 3>
-
-### Archives
-<analysis from Step 3 if applicable>
-
-## Code Analysis
-<analysis from Step 4>
-
-## Root Cause Chain
-<chain from Step 5>
-
-## Root Cause Statement
-
-**What:** <one sentence: what is broken>
-**Why:** <one sentence: why it's broken>
-**Where:** <file:line or component name>
-
-## Proposed Fix
-
-### Option A: <name>
-- Change: <what to modify>
-- File: `path/to/file.kt`
-- Risk: <low/medium/high>
-- Effort: <small/medium/large>
-
-### Option B: <name> (if applicable)
-- ...
-
-## Recommendation
-<which option and why>
-
-## Verification Plan
-- [ ] <how to verify the fix works>
-- [ ] <edge cases to test>
-
-## Status
-Ready for resolution.
-```
-
-## Step 7: Update case.yaml
-<!-- mutation_step -->
-
-```yaml
-status: investigated
-updated: "<ISO-8601 timestamp>"
-root_cause:
-  summary: "<one-line root cause>"
-  location: "path/to/file.kt:42"
-  evidence_refs:
-    - "/tmp/audio-focus-bug/player.log:234-236"
-next_step:
-  action: resolve
-  note: "Root cause identified, ready to fix"
-```
-
-## Rules
-
-- **MUST** quote evidence with exact source paths and line numbers when available
-- **MUST** correlate code with evidence and avoid speculation
-- **DO NOT** modify any code during investigation
-- **DO NOT** copy or move evidence into the case workspace
-- If archive contents are needed, inspect or extract them in the archive's original directory and cite the actual file path used
-- If evidence is insufficient, keep status as `collected` but set `next_step` to blocked:
-  ```yaml
-  status: collected
-  next_step:
-    action: blocked
-    note: "Need: <specific missing evidence path or missing source>"
-  ```
-  When the user provides additional evidence, update `next_step.action: investigate` and re-run `/issue-investigate`.
-
-## Done When
-
-- [ ] `investigation.md` created with complete analysis
-- [ ] Root cause grounded in evidence, not guessed
-- [ ] Affected code identified with `file:line` references
-- [ ] Proposed fix documented
-- [ ] `case.yaml` has `status: investigated`
+Kind: routable skill
+
+Owns:
+- create or reuse a case
+- register or merge evidence references
+- normalize the investigation target
+- analyze evidence and relevant code
+- write `investigation.md`
+- update `case.yaml`
+
+Does Not Own:
+- code modification
+- fix implementation
+- final bug-tracker sync
+
+Requires:
+- user context and/or referenced materials
+- existing `case.yaml` when continuing a case
+
+Produces:
+- `case.yaml`
+- `investigation.md`
+
+Needs Capabilities:
+- repository path resolution
+- fuzzy search across evidence
+- chunked file reads
+- archive listing or extraction when safe
+- media inspection when needed
+
+Execution Surface:
+- Workflow: [workflows/investigate.md](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-investigate/workflows/investigate.md)
+- Public execution entry:
+  - [scripts/case-state](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-investigate/scripts/case-state)
+- Support resources:
+  - [schemas/case.yaml](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-investigate/schemas/case.yaml)
+  - [templates/investigation.md](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-investigate/templates/investigation.md)
+- Internal implementation detail:
+  - [scripts/case_state.py](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-investigate/scripts/case_state.py)
+- Evals: [evals/evals.json](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-investigate/evals/evals.json)
+
+Refuses When:
+- repository ownership is ambiguous
+- the primary investigation target remains ambiguous
+- the user asks for code edits during investigation
+
+Hands Off To:
+- `/issue-resolve` after the case reaches `status: investigated`
+
+## Operating Rules
+
+- Use the skill-local wrapper `scripts/case-state` for case creation and state updates; do not hand-maintain `case.yaml`.
+- Use generic search and chunked-read capabilities to explore evidence. Do not assume one vendor log format, one timestamp format, or one archive layout.
+- Normalize the target before deep analysis:
+  - `primary_question`
+  - `primary_time_anchor`
+  - `named_stakeholders`
+- Write a one-line working statement near the top of `investigation.md` before presenting findings.
+- Keep the main conclusion anchored to the primary target. If the evidence points at a different timestamp or question, stop and mark the case blocked instead of drifting to a different conclusion.
+- Do not copy raw evidence into `.issue-flow/`.
+- Do not modify source code during this skill.
+
+## When To Ask The User
+
+Ask instead of guessing when:
+
+- more than one repository could own the case
+- multiple candidate anchors remain unresolved
+- the required evidence path is missing
+- the observed failure does not match the requested anchor
 
 ## Handoff
 
-When complete, tell user:
-> Investigation complete for case `<case-id>`. Root cause: <summary>. Run `/issue-resolve` to implement the fix.
+When the investigation is complete, tell the user:
+
+> Case `<case-id>` is investigated. Root cause: <summary>. Run `/issue-resolve` to implement or document the resolution.
