@@ -1,0 +1,30 @@
+skills/issue-investigate/evals/evals.json
+  42183253f186a769 3-12,15-20,22-26,30-35,37-40,44-49,51-54,58-63,65-333
+.gitignore
+  h_06a7404f25f628 8,10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "aa189fb4549376fac3c8e45919f231061b35984e",
+  "prompts": {
+    "42183253f186a769": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ef208735-934e-4cd7-a9ce-3532fc51ddce",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "sinyuk",
+      "messages": [],
+      "total_additions": 2295,
+      "total_deletions": 424,
+      "accepted_lines": 1805,
+      "overriden_lines": 46
+    }
+  },
+  "humans": {
+    "h_06a7404f25f628": {
+      "author": "sinyuk"
+    }
+  }
+}
