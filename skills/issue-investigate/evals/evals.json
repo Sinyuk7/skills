@@ -1,49 +1,336 @@
 {
   "skill_name": "issue-investigate",
+  "version": "2.0",
+  "groups": [
+    "routing/entry",
+    "target_normalization",
+    "evidence_exploration",
+    "state_mutation",
+    "runtime_safety",
+    "handoff/downstream_contract"
+  ],
+  "priority_order": ["P0", "P1", "P2"],
   "evals": [
     {
-      "id": 1,
-      "prompt": "帮我分析一个新问题。日志在 /tmp/player-crash/app.log，截图在 /tmp/player-crash/ui.png，相关代码可能是 biz/player/src/main/java/com/example/PlayerManager.kt。重点看 04-20 14:05:42.333 附近为什么没恢复播放。",
-      "expected_output": "The skill creates or reuses a case, registers the evidence references in case.yaml, normalizes the primary target, writes investigation.md, and never creates collect.md.",
-      "files": [],
+      "id": "E01",
+      "title": "Fresh issue, direct investigate entry",
+      "group": "routing/entry",
+      "priority": "P1",
+      "prompt": "帮我分析一个新问题，日志在 /tmp/player.log，截图在 /tmp/ui.png，重点看 04-20 14:05:42.333 为什么没恢复播放。",
+      "setup": "仓库下还没有对应 case。",
       "expectations": [
-        "The workflow creates or updates case.yaml through the support script.",
-        "Evidence references are recorded without copying raw files into the case workspace.",
-        "primary_question and primary_time_anchor are persisted before deep analysis.",
-        "investigation.md starts from the requested anchor instead of a different nearby timestamp."
+        "Routes directly to /issue-investigate without passing through /issue-collect.",
+        "Creates case.yaml with status: investigating via scripts/case-state.",
+        "Generates investigation.md.",
+        "Does NOT generate collect.md — any creation is a regression.",
+        "primary_time_anchor in case.yaml is set to 14:05:42.333 before deep analysis."
       ]
     },
     {
-      "id": 2,
-      "prompt": "继续分析 BUG-4567。用户评论里提到了两个时间点 14:05:42 和 14:05:51，但没有说这轮到底看哪个。",
-      "expected_output": "The skill stops and asks the user to clarify the primary target instead of silently choosing one anchor.",
-      "files": [],
+      "id": "E02",
+      "title": "Existing case, append evidence and reopen",
+      "group": "state_mutation",
+      "priority": "P1",
+      "prompt": "给 OMMUSIC-3397323 补一份新日志 /tmp/new.log，继续分析。",
+      "setup": "已有 case.yaml，状态为 blocked 或 investigated。",
       "expectations": [
-        "The workflow detects multiple unresolved anchors.",
-        "The skill does not silently promote one timestamp into the main conclusion.",
-        "The case remains in investigating or blocked state until the anchor is clarified."
+        "evidence_sources has the new entry appended, not overwritten.",
+        "Unknown/extension keys in case.yaml are preserved after the update.",
+        "Status transitions back to investigating.",
+        "Historical root_cause, blocked_reason, and unrelated keys are not discarded."
       ]
     },
     {
-      "id": 3,
-      "prompt": "分析一下这个 case，但是日志文件 /tmp/missing.log 好像已经删了。",
-      "expected_output": "The skill marks the case as blocked with the exact missing path and does not speculate about root cause.",
-      "files": [],
+      "id": "E03",
+      "title": "Single clear anchor must dominate",
+      "group": "target_normalization",
+      "priority": "P0",
+      "prompt": "徐杉和李帅文关注的是 04-20 14:05:42.333~14:05:42.347，请围绕这个时间点分析。",
+      "setup": "日志里同时存在 14:05:42 和 14:05:51 的显眼异常。",
       "expectations": [
-        "The workflow reports the exact missing evidence path.",
-        "case.yaml is updated to status: blocked with blocked_reason populated.",
-        "The skill does not guess at root cause without the requested evidence."
+        "primary_time_anchor is set to 14:05:42.333 in case.yaml before analysis.",
+        "Main conclusion in investigation.md is anchored to 14:05:42.x — not 14:05:51.",
+        "Even if 14:05:51 carries more obvious anomalies, the skill does not drift the conclusion there.",
+        "If 14:05:51 is mentioned, it is treated as a secondary or cross-reference finding only."
       ]
     },
     {
-      "id": 4,
-      "prompt": "这个 case 的根因应该很明显，帮我分析一下然后直接改代码修。",
-      "expected_output": "The skill completes or advances the investigation but refuses to modify code and directs the user to /issue-resolve for implementation.",
-      "files": [],
+      "id": "E04",
+      "title": "Competing anchors require clarification",
+      "group": "target_normalization",
+      "priority": "P0",
+      "prompt": "评论里有人看 14:05:42，也有人看 14:05:51，帮我分析。",
+      "setup": "两个时间点都可能成立，用户未指定主问题。",
       "expectations": [
-        "The workflow does not modify source code.",
-        "The handoff message directs the user to /issue-resolve.",
-        "The investigation result stays grounded in cited evidence."
+        "Skill does not silently choose one anchor.",
+        "Enters clarification request or blocked state.",
+        "blocked_reason.kind is set to ambiguous_anchor in case.yaml.",
+        "No root cause conclusion is emitted until the anchor is resolved."
+      ]
+    },
+    {
+      "id": "E05",
+      "title": "Anchor mismatch must block",
+      "group": "target_normalization",
+      "priority": "P0",
+      "prompt": "重点看 14:05:42。",
+      "setup": "可读到的日志窗口里只找到 14:05:51 的异常，没有 14:05:42 对应事件。",
+      "expectations": [
+        "Skill does not produce a root cause conclusion anchored at 14:05:51.",
+        "Returns blocked with blocked_reason.kind=anchor_mismatch, or requests additional logs covering 14:05:42.",
+        "Does not fabricate events at the requested timestamp.",
+        "case.yaml status is blocked or the skill explicitly asks for more evidence."
+      ]
+    },
+    {
+      "id": "E06",
+      "title": "Missing evidence path",
+      "group": "evidence_exploration",
+      "priority": "P0",
+      "prompt": "继续分析这个 case，日志在 /tmp/missing.log。",
+      "setup": "case.yaml 里有该路径，但文件已不存在。",
+      "expectations": [
+        "Reports the exact missing path /tmp/missing.log — not a generic 'file not found'.",
+        "case.yaml status is updated to blocked.",
+        "blocked_reason references the missing path.",
+        "Skill does not speculate on root cause without the required evidence."
+      ]
+    },
+    {
+      "id": "E07",
+      "title": "Multiple repositories, ownership ambiguous",
+      "group": "routing/entry",
+      "priority": "P2",
+      "prompt": "帮我分析这个问题，日志在 repoA 外，代码路径像是 repoB。",
+      "setup": "当前上下文下存在两个 plausible repo root。",
+      "expectations": [
+        "Skill does not default to cwd or the skill repo as the owning repository.",
+        "Asks the user to confirm which repository owns the case before proceeding.",
+        "No case.yaml is created until ownership is resolved."
+      ]
+    },
+    {
+      "id": "E08",
+      "title": "Deep cwd should not break skill-local script entry",
+      "group": "runtime_safety",
+      "priority": "P0",
+      "prompt": "继续分析 OMMUSIC-3397323。",
+      "setup": "Agent 当前 cwd 在目标仓库深层目录，不在 skill 目录；workflow 通过 scripts/case-state 调状态。",
+      "expectations": [
+        "scripts/case-state wrapper resolves its own skill root independently.",
+        "case_state.py is invoked correctly regardless of agent cwd.",
+        "No path resolution failure or FileNotFoundError surfaces to the agent.",
+        "case.yaml is updated at the correct case workspace path."
+      ]
+    },
+    {
+      "id": "E09",
+      "title": "Wrapper path safety regression",
+      "group": "runtime_safety",
+      "priority": "P2",
+      "prompt": "（任意正常 investigate 请求）",
+      "setup": "scripts/case-state 和 scripts/case_state.py 均存在。",
+      "expectations": [
+        "Workflow and documentation invoke scripts/case-state (the wrapper), not python3 scripts/case_state.py directly.",
+        "No project-relative python3 invocation appears in the workflow instructions.",
+        "The wrapper is the only stable execution surface exposed to the agent."
+      ]
+    },
+    {
+      "id": "E10",
+      "title": "No collect artifact regression",
+      "group": "runtime_safety",
+      "priority": "P0",
+      "prompt": "（新 issue 调查请求）",
+      "setup": "Clean repo — no prior case workspace.",
+      "expectations": [
+        "Only case.yaml and investigation.md are created as long-term artifacts.",
+        "collect.md is NOT created under any circumstance.",
+        "Any creation of collect.md is treated as a regression."
+      ]
+    },
+    {
+      "id": "E11",
+      "title": "Case state flattening",
+      "group": "runtime_safety",
+      "priority": "P0",
+      "prompt": "（新 issue 调查请求）",
+      "setup": "Clean repo.",
+      "expectations": [
+        "Top-level status field in case.yaml uses only: investigating / blocked / investigated / resolved.",
+        "Values collecting and collected must not appear as status values.",
+        "scripts/case-state rejects or ignores any attempt to set a disallowed status."
+      ]
+    },
+    {
+      "id": "E12",
+      "title": "Investigation target persistence",
+      "group": "target_normalization",
+      "priority": "P1",
+      "prompt": "这轮核心问题是'为什么焦点恢复后播放没有继续'，关注人徐杉，时间点 14:05:42.333。",
+      "setup": "正常 case，提供充足上下文。",
+      "expectations": [
+        "primary_question is written to case.yaml before deep analysis.",
+        "primary_time_anchor is set to 14:05:42.333 in case.yaml.",
+        "named_stakeholders includes 徐杉.",
+        "investigation.md starts with a one-line working statement derived from these fields."
+      ]
+    },
+    {
+      "id": "E13",
+      "title": "Large log safety",
+      "group": "evidence_exploration",
+      "priority": "P1",
+      "prompt": "日志在 /tmp/huge.log，帮我分析。",
+      "setup": "日志文件极大，直接全量读取会超出上下文窗口。",
+      "expectations": [
+        "Skill uses fuzzy search and/or chunked read strategy — not a full cat of the file.",
+        "Search is anchored to the primary_time_anchor window first.",
+        "No single tool call attempts to read the entire file without offset/limit."
+      ]
+    },
+    {
+      "id": "E14",
+      "title": "Heterogeneous timestamp format",
+      "group": "target_normalization",
+      "priority": "P2",
+      "prompt": "重点看 1713593142333 附近的问题。",
+      "setup": "一个日志使用 epoch ms 时间戳；另一个文件使用 2026-04-20T14:05:42.333+08:00 格式。",
+      "expectations": [
+        "Skill does not assume a single timestamp format across evidence files.",
+        "Attempts to normalize epoch ms to human-readable time before anchoring.",
+        "If normalization is unreliable across files, skill blocks with explanation rather than making an inference."
+      ]
+    },
+    {
+      "id": "E15",
+      "title": "Heterogeneous archive format",
+      "group": "evidence_exploration",
+      "priority": "P2",
+      "prompt": "压缩包里有日志，帮我查。",
+      "setup": "压缩包为 .zip、.z01、.part1.rar 或未知厂商格式之一。",
+      "expectations": [
+        "Skill does not assume all archives can be parsed with the same extraction logic.",
+        "Uses general exploration capability (e.g., file command, safe listing) before extraction.",
+        "If contents cannot be safely listed or extracted, skill blocks and states the format limitation explicitly."
+      ]
+    },
+    {
+      "id": "E16",
+      "title": "Code correlation only after evidence",
+      "group": "evidence_exploration",
+      "priority": "P1",
+      "prompt": "可能是 CarAudioFocusManager.kt，帮我看。",
+      "setup": "同时给出日志 evidence 和代码文件路径。",
+      "expectations": [
+        "Skill reads and anchors evidence first to establish the problem context.",
+        "Only after evidence is analyzed does it read CarAudioFocusManager.kt for correlation.",
+        "Root cause is not derived from code inspection alone without evidence grounding."
+      ]
+    },
+    {
+      "id": "E17",
+      "title": "Do not modify code during investigate",
+      "group": "handoff/downstream_contract",
+      "priority": "P2",
+      "prompt": "顺手把这个 case 修掉。",
+      "setup": "Evidence 可读，root cause 可确定。",
+      "expectations": [
+        "/issue-investigate refuses to modify source code.",
+        "Skill completes or advances the investigation.",
+        "Handoff message directs the user to /issue-resolve for implementation.",
+        "investigation.md conclusion is grounded in cited evidence, not speculative."
+      ]
+    },
+    {
+      "id": "E18",
+      "title": "Downstream contract with issue-resolve",
+      "group": "handoff/downstream_contract",
+      "priority": "P0",
+      "prompt": "继续修这个 case。",
+      "setup": "case 状态仍为 investigating 或 blocked。",
+      "expectations": [
+        "/issue-resolve explicitly refuses to proceed.",
+        "Refusal message instructs the user to return to /issue-investigate to complete investigation first.",
+        "No code modification or resolution artifact is created while the case is uninvestigated."
+      ]
+    },
+    {
+      "id": "E19",
+      "title": "cmiotsdk wrapper handoff target",
+      "group": "routing/entry",
+      "priority": "P1",
+      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323 ...",
+      "setup": "分支 bootstrap 成功完成。",
+      "expectations": [
+        "Handoff target after branch bootstrap is /issue-investigate.",
+        "/issue-collect is NOT referenced as a handoff target — it has been removed.",
+        "The original user payload is forwarded unchanged to /issue-investigate."
+      ]
+    },
+    {
+      "id": "E20",
+      "title": "Preserve unknown keys in case.yaml",
+      "group": "state_mutation",
+      "priority": "P1",
+      "prompt": "（补证或继续分析已有 case）",
+      "setup": "case.yaml 包含非标准扩展字段（如自定义 metadata）。",
+      "expectations": [
+        "scripts/case-state preserves all unknown/extension keys during update.",
+        "Rewriting case.yaml does not erase extension fields.",
+        "Only explicitly mutated fields are changed; all other keys survive."
+      ]
+    },
+    {
+      "id": "E21",
+      "title": "Deduplicate evidence append",
+      "group": "state_mutation",
+      "priority": "P2",
+      "prompt": "把 /tmp/player.log 再加进去一起看。",
+      "setup": "/tmp/player.log 已存在于 evidence_sources。",
+      "expectations": [
+        "evidence_sources does not gain a duplicate (kind, path) entry.",
+        "The registration operation is idempotent for the same path.",
+        "Existing evidence entry may be updated (e.g., label), but not duplicated."
+      ]
+    },
+    {
+      "id": "E22",
+      "title": "Blocked case recovery",
+      "group": "state_mutation",
+      "priority": "P1",
+      "prompt": "我把缺的日志补上了，继续。",
+      "setup": "当前 case 状态为 blocked，blocked_reason.kind=missing_evidence。",
+      "expectations": [
+        "After new evidence is supplied and verified accessible, status transitions back to investigating.",
+        "blocked_reason that no longer applies is cleared or nulled.",
+        "Investigation resumes from the correct primary_time_anchor and primary_question."
+      ]
+    },
+    {
+      "id": "E23",
+      "title": "Investigation report must cite evidence",
+      "group": "evidence_exploration",
+      "priority": "P2",
+      "prompt": "（常规根因分析请求）",
+      "setup": "Evidence 可读，日志和代码均可访问。",
+      "expectations": [
+        "Every conclusion in investigation.md includes at least one precise evidence reference (file path + line range or timestamp).",
+        "No abstract summary appears without a traceable evidence citation.",
+        "Speculation is explicitly labelled as hypothesis, not stated as fact."
+      ]
+    },
+    {
+      "id": "E24",
+      "title": "Human-readable vs machine-readable split",
+      "group": "handoff/downstream_contract",
+      "priority": "P2",
+      "prompt": "（常规调查请求）",
+      "setup": "正常 case，调查完成。",
+      "expectations": [
+        "case.yaml contains only structured state fields — no narrative analysis.",
+        "investigation.md contains only analysis narrative — no duplicate state fields.",
+        "The two files are not treated as a dual evidence ledger; responsibilities are cleanly separated."
       ]
     }
   ]

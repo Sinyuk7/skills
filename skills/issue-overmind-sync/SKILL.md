@@ -14,10 +14,10 @@ type: plugin
 owns: Map resolved case artifacts to Overmind bug fields; draft and confirm field values with user; execute Overmind MCP writes; verify write success by rereading
 does_not_own: Evidence collection, root cause investigation, code modification, case lifecycle management
 delegate_to: none (terminal skill in the issue-flow pipeline)
-refuses_when: Case is not resolved; Overmind MCP is unavailable; no explicit issueKey from user
-requires_evidence: case.yaml with status resolved; investigation.md; resolution.md
+refuses_when: Overmind MCP is unavailable; no explicit issueKey from user; neither a resolved case nor explicit user-provided primary field text is available
+requires_evidence: Either (a) case.yaml with status resolved + investigation.md + resolution.md, or (b) explicit user-provided `问题原因` and `解决方案` text for update-only mode
 primary_outputs:
-  - Overmind fields updated (解决方案, 问题原因, and optionally 备注说明)
+  - Overmind fields updated (解决方案, 问题原因, and optionally AI分析 / 备注说明)
   - Per-field status report (filled, already_set, failed, skipped)
 allowed_tools: [bash (git rev-parse only), read, EFFICIENCY_issue_* MCP tools]
 forbidden_tools: [edit, write (no local artifact creation)]
@@ -28,12 +28,34 @@ eval_set: evals/evals.json
 
 - Case has `status: resolved` and needs Overmind fields filled
 - Retry a failed Overmind update
-- Write issue-thread reply to `备注说明`
+- Write a supplemental AI-facing or human-facing note to `AI分析` and/or `备注说明`
+- Resubmit or correct final field wording when the user already provides explicit `问题原因` and `解决方案`
 
-## Step 1: Locate Case Workspace
+## Step 1: Choose Evidence Mode
 <!-- validation_step -->
 
-Resolve `PROJECT_ROOT` before doing anything else.
+Choose exactly one evidence mode before doing anything else:
+
+- `case_backed`: use project-local resolved case artifacts as the source of truth
+- `direct_text`: use explicit user-provided primary field text as the source of truth for an update-only run
+
+Enter `case_backed` mode when the user provides a case path / case id, or asks to sync the resolved case output.
+
+Enter `direct_text` mode only when all of the following are true:
+
+- the user provides explicit `issueKey`
+- the user provides explicit `问题原因` text
+- the user provides explicit `解决方案` text
+- the task is retrying, correcting, or resubmitting final wording rather than asking this skill to investigate from scratch
+
+If neither mode can be entered safely, stop and ask the user for either:
+
+- the resolved case location
+- or the exact `问题原因` and `解决方案` wording to use
+
+If the selected mode is `direct_text`, skip case workspace resolution and move to MCP validation.
+
+If the selected mode is `case_backed`, resolve `PROJECT_ROOT` before doing anything else.
 
 - Prefer an explicit repository path from the user
 - Otherwise derive the repo root from a user-provided code path or evidence path:
@@ -67,10 +89,10 @@ EFFICIENCY_issue_get_issue_detail(issueKey: "<user-provided-key>")
 - **REQUIRE** explicit `issueKey` from user before any write
 - If MCP unavailable, **STOP** and report to user
 
-## Step 3: Read Case Artifacts
+## Step 3: Read Evidence Inputs
 <!-- retrieval_step -->
 
-From the case workspace, read:
+If mode is `case_backed`, from the case workspace read:
 
 | File | Purpose |
 |------|---------|
@@ -83,6 +105,13 @@ From the case workspace, read:
 - `resolve/resolution.xml`
 - `resolve/verification.md`
 - `analysis/handoff.xml`
+
+If mode is `direct_text`:
+
+- Treat the user-provided `问题原因` and `解决方案` wording as the source of truth for those primary fields
+- Treat user-provided `AI分析` / `备注说明` as optional supplemental inputs
+- Do not invent additional evidence, logs, or code references that the user did not provide
+- Do not strengthen the user's wording into a higher-confidence root-cause claim than they explicitly gave you
 
 ## Step 4: Fetch Current Issue
 <!-- retrieval_step -->
@@ -101,13 +130,34 @@ Treat these as the target fields for every resolved bug sync, in this priority o
 
 1. `解决方案`
 2. `问题原因`
-3. `备注说明` (optional)
-4. `问题单解决时间`
-5. `测试方法`
-6. `测试环境`
-7. `问题类型`
+3. `AI分析` (optional, preferred supplemental field)
+4. `备注说明` (optional fallback)
+5. `问题单解决时间`
+6. `测试方法`
+7. `测试环境`
+8. `问题类型`
 
-Call `EFFICIENCY_issue_get_issue_field_config` with both `name` and `issueType` for every target field you intend to write, not just enum fields.
+Read the skill-local field contract first:
+
+- `schemas/iot-bug-target-fields.yaml`
+- `knowledge/field-discovery-policy.md`
+
+If the current issue `类型` is `IOT_BUG`, use the cached contract directly for:
+
+- `解决方案`
+- `问题原因`
+- `AI分析`
+- `备注说明`
+- `问题单解决时间`
+- `测试方法`
+- `测试环境`
+
+Only call `EFFICIENCY_issue_get_issue_field_config` with both `name` and `issueType` when:
+
+- issue type is not `IOT_BUG`
+- the target field is missing from the cached contract
+- the target field is `问题类型`
+- a write failed and you need live revalidation before retrying
 
 If `EFFICIENCY_issue_get_issue_editable_fields` does not list a field, do **not** treat the absence as proof that the field is not writable. Use `EFFICIENCY_issue_get_issue_field_config` as the authoritative writability check. A field absent from `editable_fields` may still accept writes via `EFFICIENCY_issue_update`.
 
@@ -126,11 +176,12 @@ If the user explicitly tells you the root cause and solution, those statements o
 |-------|--------|
 | `解决方案` | resolution.md fix applied + fix details |
 | `问题原因` | investigation.md root cause |
-| `问题单解决时间` | Resolution date or sync date (`YYYY-MM-DD` only) |
+| `AI分析` | Human-facing AI summary of cause + action, only as supplemental context |
+| `问题单解决时间` | Resolution timestamp or sync timestamp in Overmind display format when clearly known |
 | `测试方法` | resolution.md verification context → `开发自测` / `QA测试` |
 | `测试环境` | resolution.md verification context when clearly stated |
 | `问题类型` | Only with confident mapping |
-| `备注说明` | Issue reply (if field is writable) |
+| `备注说明` | Supplemental note only when `AI分析` is unavailable or extra context is still needed |
 
 **Required behavior:**
 
@@ -139,14 +190,21 @@ If the user explicitly tells you the root cause and solution, those statements o
 - Never skip `问题原因` or `解决方案` only because they were missing from `EFFICIENCY_issue_get_issue_detail`.
 - `问题原因` must include direct supporting evidence when the case relies on logs, such as timestamps, log snippets, or file/line references that let the reader locate the proof quickly. **If case artifacts contain timestamped log evidence, always include the strongest 2–3 items in the first draft — do not wait for the user to ask for more detail.**
 - If direct evidence is insufficient, do not write a precise root cause as confirmed fact. Either downgrade it to a cautious statement or stop and ask the user to clarify the wording in the draft.
+- In `direct_text` mode, do not infer missing primary fields from memory. Use the user-provided wording, lightly normalize it if needed, and ask for clarification instead of filling gaps yourself.
 - `解决方案` and `问题原因` are the primary success criteria for this skill.
+- `AI分析` and `备注说明` are optional supplemental fields. Prefer `AI分析` when choosing only one of them.
+- It is valid to write `AI分析`, to write `备注说明`, to write both, or to write neither.
 - `备注说明` is optional supplemental context. It must not be the only successful write when `问题原因` / `解决方案` were the main user request, and it must not affect overall success classification.
 - `备注说明` should be omitted by default when it adds no extra value beyond the structured fields.
+- `AI分析` should be omitted by default when it adds no value beyond the structured fields, but when a supplemental field is useful it is the preferred landing field.
+- For `IOT_BUG`, do not spend extra round-trips probing the stable target-field contract on every run. Use the cached contract first and fall back to live discovery only when needed.
+- `问题类型` is the expensive field. It has a large option set and duplicate labels, so only probe and write it when you already have a confident mapping.
 
 **Formatting guidance:**
 
 - `问题原因`: root-cause conclusion first, then the strongest direct evidence in the same field; prefer 1-2 timestamped log facts or exact evidence refs
 - `解决方案`: responsible layer + concrete action, without mixing in investigation-only evidence
+- `AI分析`: short human-facing summary that explains what happened and what should be done, without replacing the structured root-cause/solution fields
 - `备注说明`: short human-facing summary, not a replacement for the structured fields
 - Use real timestamps and evidence refs from the case artifacts. Do not invent or mix evidence from a different root cause.
 
@@ -154,20 +212,14 @@ If the user explicitly tells you the root cause and solution, those statements o
 
 - `问题原因`: `系统原因。应用进入后台后受到 Android 后台资源限制，导致 AudioTrack 写入阻塞并最终触发 BUFFER TIMEOUT。证据：<时间戳1> 应用进入后台/onPause；<时间戳2> gap_time 持续增长；<时间戳3> BUFFER TIMEOUT；对应 <日志文件>:<行号1>,<行号2>,<行号3>。`
 - `解决方案`: `App 层面自行处理。应用进入后台时启动前台服务（Foreground Service），保持音频播放不被系统限制。`
+- `AI分析`: `已定位为系统限制场景。应用退到后台后被 Android 后台策略限制，最终触发播放超时；建议由 App 在后台播放场景启动前台服务保活，非 SDK 内部修复项。`
 - `备注说明`: `已定位为系统限制场景，需应用侧通过前台服务保活处理，非 SDK 内部修复。`
 
 **Never write:** `状态`, `所属迭代`
 
-Before any Overmind write, show the user a compact confirmation draft:
+Before any Overmind write, show the user the compact confirmation draft from:
 
-```text
-准备写入 Overmind 的字段草案：
-- 解决方案：{draft_solution}
-- 问题原因：{draft_root_cause}
-- 备注说明：{draft_note or "不写"}
-
-请确认是否按以上内容更新 Overmind。
-```
+- `templates/confirmation-draft.txt`
 
 - Do not call `EFFICIENCY_issue_update` before explicit user confirmation.
 - If the user edits the wording, rebuild the draft and ask again.
@@ -190,9 +242,11 @@ EFFICIENCY_issue_update → check failedFields → EFFICIENCY_issue_get_issue_de
 
 Execute the first write with confirmed `解决方案` and confirmed `问题原因`.
 
+- Include `AI分析` only if the user confirmed that draft too.
 - Include `备注说明` only if the user confirmed that draft too.
 - If writability is uncertain but the confirmed value is clear, prefer a real write attempt and let `failedFields` plus reread determine the outcome.
 - If field fails, record it and continue with remaining fields.
+- If the run used cached field contract data and a cached field fails unexpectedly, perform one live `EFFICIENCY_issue_get_issue_field_config` revalidation for that field before deciding whether manual follow-up is required.
 
 After rereading, classify each target field as exactly one of:
 
@@ -203,11 +257,20 @@ After rereading, classify each target field as exactly one of:
 - `skipped_not_writable`
 - `unknown_writability`
 
-If only `备注说明` changed but `问题原因` and `解决方案` were not verified as `filled` or `already_set`, the run is `partial`, not `succeeded`.
+If only `AI分析` and/or `备注说明` changed but `问题原因` and `解决方案` were not verified as `filled` or `already_set`, the run is `partial`, not `succeeded`.
 
-## Step 9: 备注说明模板 (Optional)
+## Step 9: AI分析 / 备注说明模板 (Optional)
 
-Only write to `备注说明` if the field is writable:
+Prefer writing to `AI分析` when a supplemental field is useful and writable.
+Use `备注说明` as a fallback or as extra context only when it adds value.
+
+`AI分析`:
+
+```text
+{surface_cause_and_action — one short paragraph, human-facing, no code paths}
+```
+
+`备注说明`:
 
 ```text
 【AI分析】
@@ -222,7 +285,7 @@ Only write to `备注说明` if the field is writable:
 Report directly to user:
 - Target issue ID and URL
 - Fields: filled, skipped, already_set, failed
-- Explicit status for `问题原因`, `解决方案`, `备注说明`
+- Explicit status for `问题原因`, `解决方案`, `AI分析`, `备注说明`
 - Reply handling result
 - Manual follow-up needed
 
@@ -233,11 +296,13 @@ Report directly to user:
 - Do not write to Overmind before explicit user confirmation of the draft
 - Do not retry `问题单解决时间` with alternate formats
 - Verify every write by rereading — success message alone is not evidence
-- Do not report "同步完成" or "解决完成" if only `备注说明` was updated
-- Do not use `备注说明` as a fallback sink for missing `问题原因` / `解决方案`
+- Do not report "同步完成" or "解决完成" if only `AI分析` / `备注说明` was updated
+- Do not use `AI分析` or `备注说明` as a fallback sink for missing `问题原因` / `解决方案`
 - Do not write a high-confidence `问题原因` without direct supporting evidence
 - When user-provided root cause / solution text is explicit, preserve that intent instead of replacing it with a weaker generic summary
 - If MCP unavailable, stop immediately and report
+- Do not re-probe every stable `IOT_BUG` target field on every run; use the cached contract first
+- If cached contract write fails unexpectedly, revalidate that field live before declaring the cache stale or the field not writable
 
 ## Exit States
 

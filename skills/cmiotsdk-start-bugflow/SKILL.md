@@ -25,7 +25,7 @@ Preserve every user-provided material for transparent forwarding.
 
 ## Step 1: Validate Repository
 
-The script `scripts/start-bugfix.sh` is authoritative for repo identity. If it reports that the current repo is not `cmiotsdk`, stop and tell the user to run the workflow from the correct repository.
+Validate that the current repository is `cmiotsdk`. Run the skill-local wrapper entry; if it reports that the current repo is not `cmiotsdk`, stop and tell the user to run the workflow from the correct repository.
 
 ## Step 2: Validate Ticket ID
 
@@ -42,7 +42,7 @@ Run:
 bash "$SKILL_DIR/scripts/start-bugfix.sh" "<TICKET-ID>"
 ```
 
-The script owns all deterministic git safety checks.
+The wrapper entry resolves the skill-local implementation and runs the deterministic git safety checks and branch creation flow.
 
 ## Step 4: Optional handoff to /issue-investigate
 
@@ -50,17 +50,28 @@ The script owns all deterministic git safety checks.
 
 | Wrapper field | `/issue-investigate` usage |
 |---------------|----------------------------|
-| `ticket_id` | `case_id` |
-| `summary` | `case.yaml.summary` |
-| `user_context` | `case.yaml.user_context` |
-| `materials` | `case.yaml.evidence_sources` |
-| `code_references` | `case.yaml.evidence_sources` as `kind: code_reference` |
+| `ticket_id` | Investigation case identifier |
+| `summary` | Case summary |
+| `user_context` | Original issue description |
+| `materials` | Evidence inputs |
+| `code_references` | Code pointers forwarded with the evidence inputs |
 
 If `auto_enter_investigate` is `true`:
 
 ```text
 Branch bugfix/<TICKET-ID> ready (from origin/develop).
+Load knowledge/TROUBLESHOOTING.md.
 Entering /issue-investigate...
+```
+
+Before handing off, load the skill-local knowledge file `knowledge/TROUBLESHOOTING.md` so the investigation starts with cmiotsdk-specific log tags, module paths, and search hints.
+
+Emit one minimal evidence chain before the handoff:
+
+```text
+source: knowledge/TROUBLESHOOTING.md
+finding: cmiotsdk has repo-specific troubleshooting tags, module ownership hints, and log search order
+conclusion: preload this guide before /issue-investigate so evidence exploration starts from the repo-specific diagnostic context
 ```
 
 `/issue-investigate` takes over and owns case creation, evidence registration, and investigation.
@@ -69,15 +80,14 @@ If `auto_enter_investigate` is `false`, stop after reporting the branch and tell
 
 ## Rules
 
-- Do not create `case.yaml`, `investigation.md`, or any raw-evidence directories in this wrapper
-- Do not read, analyze, or modify source code
-- Do not duplicate `/issue-investigate` case-writing logic
-- Do not run on repositories other than `cmiotsdk`
+- Scope: validate repository context, validate ticket ID, bootstrap or reuse `bugfix/<TICKET-ID>`, and optionally forward the original payload to `/issue-investigate`
+- Non-goals: evidence collection, case workspace creation, and source-code analysis
+- Refuse when the current repository is not `cmiotsdk`
 - Preserve all user-provided materials for transparent forwarding
 
 ## Done When
 
 - Repository confirmed as `cmiotsdk`
 - Branch `bugfix/<TICKET-ID>` is active
-- If `auto_enter_investigate=true`, the payload is handed to `/issue-investigate`
+- If `auto_enter_investigate=true`, `knowledge/TROUBLESHOOTING.md` is loaded, one minimal evidence chain is emitted, and the payload is handed to `/issue-investigate`
 - If `auto_enter_investigate=false`, the user is told how to continue

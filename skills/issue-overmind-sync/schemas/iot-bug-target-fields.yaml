@@ -1,0 +1,81 @@
+# Live snapshot captured from Overmind MCP on 2026-04-23.
+# Evidence source:
+# - EFFICIENCY_issue_get_issue_detail(issueKey="OMMUSIC-3186552")
+# - EFFICIENCY_issue_get_issue_field_config(name=..., issueType="IOT_BUG")
+
+issue_type: "IOT_BUG"
+verified_on: "2026-04-23"
+verified_against_issue: "OMMUSIC-3186552"
+
+target_fields:
+  解决方案:
+    id: 392
+    key: "customfield_20230613145220"
+    type: "TEXT"
+    write_as: "plain_text"
+
+  问题原因:
+    id: 269
+    key: "customfield_20220519180331"
+    type: "MULTILINE_TEXT"
+    write_as: "plain_text"
+
+  AI分析:
+    id: 1191
+    key: "customfield_20250612210457"
+    type: "MULTILINE_TEXT"
+    write_as: "plain_text"
+
+  备注说明:
+    id: 388
+    key: "customfield_20230525152424"
+    type: "TEXT"
+    write_as: "plain_text"
+
+  问题单解决时间:
+    id: 1043
+    key: "customfield_20240814142417"
+    type: "DATETIME"
+    write_as: "datetime_string"
+    display_format: "YYYY-MM-DD HH:mm:ss"
+    notes:
+      - "Field config reports DATETIME."
+      - "Issue detail displays a full timestamp rather than date-only."
+
+  测试方法:
+    id: 1095
+    key: "customfield_20241011115255"
+    type: "SINGLE"
+    write_as: "option_label"
+    options:
+      - label: "开发自测"
+        value: "5af6ca18-75d3-4bd1-b6ca-1875d30bd1c3"
+      - label: "QA测试"
+        value: "1cb87159-8798-47be-b871-59879847bee0"
+      - label: "无需测试"
+        value: "14eb6ee1-6a1d-460a-ab6e-e16a1d760a34"
+
+  测试环境:
+    id: 1093
+    key: "customfield_20241010164204"
+    type: "SINGLE"
+    write_as: "option_label"
+    options:
+      - label: "台架"
+        value: "7f783eba-f51d-46bc-b83e-baf51dc6bcab"
+      - label: "模拟器"
+        value: "09070b53-e90d-4a66-870b-53e90d6a664e"
+      - label: "平板/手机"
+        value: "12f8551d-d1d9-4931-b855-1dd1d979315c"
+      - label: "无"
+        value: "9bdcab8f-9308-4130-9cab-8f930891308d"
+
+  问题类型:
+    id: 1028
+    key: "customfield_20240801134544"
+    type: "SINGLE"
+    requires_live_lookup: true
+    notes:
+      - "High-cardinality option set."
+      - "Contains duplicate labels such as 网络问题."
+      - "Only write when the mapping is confident."

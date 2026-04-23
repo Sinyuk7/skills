@@ -55,12 +55,13 @@
     {
       "id": 5,
       "prompt": "直接解决该问题并同步到 Overmind。原因和方案都已经清晰：根因是系统原因；解决方案应该是 app 层面自己解决，而不是我们 SDK 处理；比如应用进入后台时启动前台服务（Foreground Service），保持音频播放不被系统限制。",
-      "expected_output": "The skill prioritizes `解决方案` and `问题原因` as the primary sync targets, uses the user-provided root cause and solution text with higher priority than artifact inference, shows a confirmation draft first, and treats `备注说明` as optional only.",
-      "note": "Live-environment eval: user explicitly provides root cause and solution inline. No case artifact is needed — the point is that user-provided text must outrank artifact inference. Run manually against a real Overmind issue; not suitable for offline CI.",
+      "expected_output": "The skill prioritizes `解决方案` and `问题原因` as the primary sync targets, uses the user-provided root cause and solution text with higher priority than artifact inference, can enter a narrow direct-text update mode without a case when the primary wording is already provided, shows a confirmation draft first, and treats `AI分析` / `备注说明` as optional supplemental fields only.",
+      "note": "Live-environment eval: user explicitly provides root cause and solution inline. This should use the update-only direct-text mode rather than requiring a case workspace. Run manually against a real Overmind issue; not suitable for offline CI.",
       "files": [],
       "expectations": [
         "The workflow treats `解决方案` and `问题原因` as required primary fields for a resolved-case sync.",
         "The workflow shows the drafted values and waits for explicit confirmation before updating Overmind.",
+        "The workflow may proceed without a case only when the user already supplied the exact primary field wording.",
         "The workflow does not collapse the structured cause / solution into `备注说明` only.",
         "The workflow reports `partial` or manual follow-up when the primary fields are not verified by reread.",
         "The workflow may still write `备注说明`, but never treats that as sufficient evidence of a successful sync."
@@ -69,11 +70,11 @@
     {
       "id": 6,
       "prompt": "先把 overmind 要写的内容整理给我确认，只需要准备解决方案、问题原因，备注说明可选。确认后你再更新。",
-      "expected_output": "The skill prepares a concise draft for `解决方案`, `问题原因`, and optional `备注说明`, stops in an awaiting-confirmation state, and does not write anything to Overmind before the user approves.",
+      "expected_output": "The skill prepares a concise draft for `解决方案`, `问题原因`, optional `AI分析`, and optional `备注说明`, stops in an awaiting-confirmation state, and does not write anything to Overmind before the user approves.",
       "files": [],
       "expectations": [
-        "The workflow keeps the confirmation prompt focused on the three fields only.",
-        "The workflow treats `备注说明` as optional and may omit it from the write plan.",
+        "The workflow keeps the confirmation prompt focused on the primary fields plus optional supplemental fields only.",
+        "The workflow treats `AI分析` and `备注说明` as optional and may omit either from the write plan.",
         "The workflow does not call `EFFICIENCY_issue_update` before the user confirms."
       ]
     },
@@ -86,6 +87,58 @@
         "The workflow treats direct evidence as required for a high-confidence `问题原因` field.",
         "The workflow keeps the confirmation loop open when the user asks for stronger evidence.",
         "The workflow does not proceed to the write step until the evidence-bearing draft is confirmed."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "同步这个 IOT_BUG 到 overmind，别每个字段都重新探一遍配置，能用固定 schema 的就直接用。",
+      "expected_output": "The skill reads its cached IOT_BUG field contract first, uses it for the stable target fields, and only falls back to live field-config discovery for uncovered or high-variance fields such as `问题类型`.",
+      "files": [
+        "schemas/iot-bug-target-fields.yaml",
+        "knowledge/field-discovery-policy.md"
+      ],
+      "expectations": [
+        "The workflow uses cached contract data for `解决方案`, `问题原因`, `AI分析`, `备注说明`, `问题单解决时间`, `测试方法`, and `测试环境` when issue type is `IOT_BUG`.",
+        "The workflow does not treat `editable_fields` as authoritative for IOT_BUG custom fields.",
+        "The workflow still preserves a live fallback for missing fields, unknown issue types, and write failures.",
+        "The workflow only probes `问题类型` when the mapping is confident and the field is actually needed."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "补充说明类字段优先写 AI分析，备注说明能不写就不写；如果 AI分析 不可写，再考虑备注说明。",
+      "expected_output": "The skill prefers `AI分析` as the optional supplemental field, uses `备注说明` only as a fallback or extra context, and treats both as optional rather than required success targets.",
+      "files": [],
+      "expectations": [
+        "The workflow prefers `AI分析` over `备注说明` when choosing one supplemental field.",
+        "The workflow may skip both supplemental fields when they add no value.",
+        "The workflow does not treat `AI分析` or `备注说明` as substitutes for `问题原因` and `解决方案`."
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "没有 case 目录，直接按我给的 wording 重试更新 Overmind。issueKey 是 OMMUSIC-3186552。问题原因写成“系统原因，应用退后台后被系统后台策略限制导致播放超时”。解决方案写成“App 侧在后台播放场景启动前台服务保活”。",
+      "expected_output": "The skill enters a narrow direct-text update mode, skips case workspace resolution, uses the user-provided `问题原因` and `解决方案` wording as the source of truth, asks for confirmation, and does not try to investigate or invent missing evidence.",
+      "files": [],
+      "expectations": [
+        "The workflow requires explicit `issueKey`, `问题原因`, and `解决方案` before allowing a no-case update-only run.",
+        "The workflow does not try to resolve `.issue-flow/cases/...` when the direct-text mode prerequisites are satisfied.",
+        "The workflow does not strengthen or embellish the user-provided wording before confirmation."
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "这个 IOT_BUG 先按缓存 schema 走；如果某个缓存字段更新失败，再现场查一次 field config 重新判断，不要直接把字段标成不可写。",
+      "expected_output": "The skill uses the cached IOT_BUG contract first, but if a cached field write fails unexpectedly it performs live field-config revalidation for that field before concluding the field is stale, failed, or not writable.",
+      "files": [
+        "schemas/iot-bug-target-fields.yaml",
+        "knowledge/field-discovery-policy.md"
+      ],
+      "expectations": [
+        "The workflow uses cached contract data first for stable IOT_BUG fields.",
+        "The workflow performs live `EFFICIENCY_issue_get_issue_field_config` revalidation after an unexpected cached-field write failure.",
+        "The workflow does not treat one cached write failure as proof that every cached field must be reprobed.",
+        "The workflow reports whether the failure came from stale cache, field writability, or another write-time problem."
       ]
     }
   ]

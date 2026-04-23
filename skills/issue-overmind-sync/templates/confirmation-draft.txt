@@ -1,0 +1,7 @@
+准备写入 Overmind 的字段草案：
+- 解决方案：{draft_solution}
+- 问题原因：{draft_root_cause}
+- AI分析：{draft_ai_analysis_or_skip}
+- 备注说明：{draft_note_or_skip}
+
+请确认是否按以上内容更新 Overmind。
