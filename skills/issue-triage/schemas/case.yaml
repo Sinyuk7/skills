@@ -1,0 +1,134 @@
+# issue-triage `case.yaml` reference
+
+Machine-readable case state. Updated only via `scripts/case-state`.
+
+## Status
+
+Top-level `status` uses ONLY these three values:
+
+- `investigating` — Phase 1 / 2 in progress
+- `blocked` — Phase 3 concluded with `disposition.type=blocked`
+- `investigated` — Phase 3 concluded with any non-blocked disposition
+
+Legacy values (`collecting`, `collected`, `resolved`) are not valid in the new triage model.
+
+## Disposition
+
+Exactly one `disposition` is recorded when triage terminates. `disposition.type` is one of:
+
+| type | set by | extra fields |
+|------|--------|--------------|
+| `root_caused` | `case-state close --type root_caused` | `root_cause_location`, `evidence_refs[]` |
+| `direction_only` | `case-state set-direction` | `investigation_directions[]` (ranked) |
+| `blocked` | `case-state record-blocked` | `blocked_reason{kind,detail}` |
+| `wont_fix` | `case-state close --type wont_fix` | — |
+| `duplicate` | `case-state close --type duplicate` | `duplicate_of` |
+| `already_fixed` | `case-state close --type already_fixed` | `reference` |
+| `cannot_reproduce` | `case-state close --type cannot_reproduce` | — |
+
+## Full example
+
+```yaml
+case_id: "OMMUSIC-3397323"
+created: "2026-04-23T09:00:00Z"
+updated: "2026-04-23T09:15:00Z"
+
+status: investigated    # one of: investigating | blocked | investigated
+
+summary: "Playback does not recover after audio focus changes"
+user_context: |
+  播放过程中切换音频焦点后无法恢复播放。
+
+primary_question: "Why did playback fail to recover after the focus change?"
+primary_time_anchor: "2026-04-20T14:05:42.333+08:00"
+secondary_anchors:
+  - "2026-04-20T14:05:42.347+08:00"
+named_stakeholders:
+  - "徐杉"
+  - "李帅文"
+
+evidence_sources:
+  - kind: log
+    path: "/tmp/audio-focus-bug/player.log"
+    note: "App log from failed repro"
+  - kind: screenshot
+    path: "/tmp/audio-focus-bug/ui.png"
+    note: "UI state at failure"
+  - kind: code_reference
+    path: "biz/player/src/main/java/com/example/PlayerManager.kt"
+    note: "User suspects this area"
+
+troubleshooting_guide:
+  status: preloaded_from_upstream   # or: loaded_from_repo | none
+  source: "cmiotsdk-start-bugflow"
+  note: ""
+
+evidence_window:
+  kind: time_anchor                 # or: keyword_search | archive_slice
+  anchor: "2026-04-20T14:05:42.333+08:00"
+  notes: "Focused on lines surrounding the primary anchor"
+
+# --- Terminal state (exactly one disposition) ---
+
+disposition:
+  type: root_caused
+  summary: "Focus recovery callback exits before playback state is restored"
+  root_cause_location: "biz/player/.../CarAudioFocusManager.kt:142"
+  evidence_refs:
+    - "/tmp/audio-focus-bug/player.log:76620"
+
+next_step:
+  action: sync_overmind              # or: close | resume_in_new_session | await_evidence | investigate
+  note: "Ready for /issue-overmind-sync or new session to fix"
+
+closed: "2026-04-23T09:15:00Z"
+```
+
+## direction_only example
+
+```yaml
+disposition:
+  type: direction_only
+  summary: "No confirmed root cause; two ranked hypotheses remain"
+  investigation_directions:
+    - rank: 1
+      hypothesis: "Token refresh races with playback init"
+      next_experiment: "Capture logs with LF-AccessTokenRefreshInterceptor DEBUG on"
+    - rank: 2
+      hypothesis: "Native layer onPrepared dropped under CPU pressure"
+      next_experiment: "Reproduce with CPU stress + capture AUDIO_PLAYER trace"
+
+next_step:
+  action: resume_in_new_session
+  note: "Open a new session to pursue the rank-1 direction"
+```
+
+## blocked example
+
+```yaml
+status: blocked
+
+disposition:
+  type: blocked
+  summary: "need log covering 14:05:42"
+  blocked_reason:
+    kind: anchor_mismatch
+    detail: "Provided log only covers 14:05:51 onwards; requested anchor is 14:05:42.333"
+
+blocked_reason:               # kept at top-level for readers that don't know disposition
+  kind: anchor_mismatch
+  detail: "Provided log only covers 14:05:51 onwards; requested anchor is 14:05:42.333"
+
+next_step:
+  action: await_evidence
+  note: "Supply a log that covers 14:05:42"
+```
+
+## Rules
+
+- `case.yaml` is the only machine-readable state file in the case directory.
+- Unknown / extension keys MUST be preserved across updates.
+- `evidence_sources` entries are appended or merged; never dropped silently.
+- Exactly one `disposition` is active at a time. A re-opened case clears the previous disposition.
+- `status: blocked` implies `disposition.type=blocked`; `status: investigated` implies any non-blocked disposition.
+- Narrative analysis belongs in `investigation.md`, not in `case.yaml`.

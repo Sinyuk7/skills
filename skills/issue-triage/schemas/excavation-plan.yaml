@@ -1,0 +1,50 @@
+# Excavation Plan Schema
+
+Produced by the main agent in Phase 2a. Lives in working memory, not on disk, unless the user asks for it.
+
+```yaml
+excavation_plan:
+  hypothesis: "<one-sentence working hypothesis the tasks will confirm or falsify>"
+  tasks:
+    - id: T1
+      kind: tag_search | time_anchor_slice | keyword_search | archive_inventory | media_inspect | code_correlate
+      target_source: "<absolute path to ONE evidence source OR repo-relative code path>"
+      query:
+        tags: ["..."]                  # required for tag_search
+        keywords: ["..."]              # optional refinement
+        time_window:                    # required for tag_search / time_anchor_slice
+          anchor: "<ISO-8601 or 'none'>"
+          radius_seconds: 30
+      why: "<one sentence: why this task matters for the hypothesis; cite the guide if used>"
+      expected_signals:
+        - "<concrete signal shape, not a vague 'look for errors'>"
+```
+
+## Task kinds
+
+| kind | when to use | typical target_source | expected_signal shape |
+|------|-------------|-----------------------|-----------------------|
+| `tag_search` | Project troubleshooting guide names TAGs for symptoms | log file | "TAG appears at or near anchor; state value / callback presence" |
+| `time_anchor_slice` | User gave a precise timestamp; need surrounding context | log file | "events N seconds before/after anchor" |
+| `keyword_search` | No TAG map; fall back to error/exception/stack keywords | log file | "exception class X observed" |
+| `archive_inventory` | An evidence source is `.tar.gz / .zip / .rar / unknown compressed` | archive | "inventory entries, covers_anchor: true/false" |
+| `media_inspect` | Evidence includes screenshot / video / audio | image/video | "UI state / frame count / metadata" |
+| `code_correlate` | Only in Phase 3, after evidence findings name a code area | repo-relative path | "method X at line L handles condition Y" |
+
+## Validation rules
+
+A task is well-formed only when ALL of these hold:
+
+- [ ] Exactly one `kind` from the table above
+- [ ] Exactly one `target_source` (do NOT bundle multiple sources)
+- [ ] `query` has the kind-required fields (`tags` for tag_search, `time_window` for tag_search/time_anchor_slice)
+- [ ] `why` is present and non-generic
+- [ ] `expected_signals` has at least one concrete entry
+
+## Plan-level rules
+
+- At most 5 tasks in the initial batch.
+- If the hypothesis cannot be narrowed enough to produce ≤5 concrete tasks, the hypothesis is too broad — refine it or ask the user.
+- Archive inventory tasks dispatch in wave 0; other tasks dispatch in wave 1.
+- At most 2 total planning rounds per triage session.
+- Initial batch MUST NOT contain `code_correlate` unless the user explicitly named a code path and it is small (<500 lines).

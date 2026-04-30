@@ -1,21 +1,21 @@
 ---
 name: issue-overmind-sync
-description: Sync resolve artifacts to Overmind bug fields via MCP. Use after issue-resolve completes, when retrying a failed Overmind update, or when filling remaining bug fields from case artifacts. This is a post-resolve plugin only - do not use for investigation, fixing, or building handoffs.
+description: Sync triage artifacts to Overmind bug fields via MCP. Use after /issue-triage terminates with a concrete disposition (root_caused, wont_fix, duplicate, already_fixed, or cannot_reproduce), when retrying a failed Overmind update, or when filling remaining bug fields from case artifacts. This is a post-triage plugin only — do not use for investigation, fixing, or building handoffs.
 ---
 
 # Issue Overmind Sync
 
-Post-resolve plugin that syncs case artifacts to Overmind bug tracking system via MCP.
+Post-triage plugin that syncs case artifacts to Overmind bug tracking system via MCP.
 
 ## Capability Contract
 
 ```yaml
 type: plugin
-owns: Map resolved case artifacts to Overmind bug fields; draft and confirm field values with user; execute Overmind MCP writes; verify write success by rereading
+owns: Map triaged case artifacts to Overmind bug fields; draft and confirm field values with user; execute Overmind MCP writes; verify write success by rereading
 does_not_own: Evidence collection, root cause investigation, code modification, case lifecycle management
 delegate_to: none (terminal skill in the issue-flow pipeline)
-refuses_when: Overmind MCP is unavailable; no explicit issueKey from user; neither a resolved case nor explicit user-provided primary field text is available
-requires_evidence: Either (a) case.yaml with status resolved + investigation.md + resolution.md, or (b) explicit user-provided `问题原因` and `解决方案` text for update-only mode
+refuses_when: Overmind MCP is unavailable; no explicit issueKey from user; neither a triaged case nor explicit user-provided primary field text is available
+requires_evidence: Either (a) case.yaml with status=investigated (disposition.type in {root_caused, wont_fix, duplicate, already_fixed, cannot_reproduce}) + investigation.md, or (b) explicit user-provided `问题原因` and `解决方案` text for update-only mode
 primary_outputs:
   - Overmind fields updated (解决方案, 问题原因, and optionally AI分析 / 备注说明)
   - Per-field status report (filled, already_set, failed, skipped)
@@ -26,20 +26,24 @@ eval_set: evals/evals.json
 
 ## When To Use
 
-- Case has `status: resolved` and needs Overmind fields filled
+- Case has `status: investigated` with a non-blocked `disposition.type` and needs Overmind fields filled
 - Retry a failed Overmind update
 - Write a supplemental AI-facing or human-facing note to `AI分析` and/or `备注说明`
 - Resubmit or correct final field wording when the user already provides explicit `问题原因` and `解决方案`
+
+Do NOT use when:
+- `status: investigating` or `status: blocked` — triage is not done yet
+- `disposition.type: direction_only` — no confirmed root cause to sync yet; user should open a new session to deepen investigation first
 
 ## Step 1: Choose Evidence Mode
 <!-- validation_step -->
 
 Choose exactly one evidence mode before doing anything else:
 
-- `case_backed`: use project-local resolved case artifacts as the source of truth
+- `case_backed`: use project-local triaged case artifacts as the source of truth
 - `direct_text`: use explicit user-provided primary field text as the source of truth for an update-only run
 
-Enter `case_backed` mode when the user provides a case path / case id, or asks to sync the resolved case output.
+Enter `case_backed` mode when the user provides a case path / case id, or asks to sync the triaged case output.
 
 Enter `direct_text` mode only when all of the following are true:
 
@@ -50,7 +54,7 @@ Enter `direct_text` mode only when all of the following are true:
 
 If neither mode can be entered safely, stop and ask the user for either:
 
-- the resolved case location
+- the triaged case location
 - or the exact `问题原因` and `解决方案` wording to use
 
 If the selected mode is `direct_text`, skip case workspace resolution and move to MCP validation.
@@ -96,15 +100,26 @@ If mode is `case_backed`, from the case workspace read:
 
 | File | Purpose |
 |------|---------|
-| `case.yaml` | Verify `status: resolved` |
-| `resolution.md` | Fix details, verification context |
-| `investigation.md` | Root cause and affected code |
+| `case.yaml` | Verify `status: investigated` and read `disposition` |
+| `investigation.md` | Root cause summary, cited findings, and (when `disposition.type=already_fixed`) the fix reference |
 
-**Legacy fallback** (only for older cases):
+From `case.yaml.disposition`, extract:
+
+- `type` — must be one of `root_caused`, `wont_fix`, `duplicate`, `already_fixed`, `cannot_reproduce`. If it is `blocked` or `direction_only`, stop — there is nothing final to sync yet.
+- `summary`
+- type-specific fields:
+  - `root_caused` → `root_cause_location`, `evidence_refs`
+  - `already_fixed` → `reference` (commit SHA or PR link)
+  - `duplicate` → `duplicate_of`
+
+**Legacy fallback** (only for pre-triage-era cases that still have these files):
+- `resolution.md`
 - `resolve/resolution.md`
 - `resolve/resolution.xml`
 - `resolve/verification.md`
 - `analysis/handoff.xml`
+
+These legacy files are optional. In the current triage model, no `resolution.md` is produced — the information comes from `case.yaml.disposition` + `investigation.md`.
 
 If mode is `direct_text`:
 
@@ -174,18 +189,18 @@ If the user explicitly tells you the root cause and solution, those statements o
 
 | Field | Source |
 |-------|--------|
-| `解决方案` | resolution.md fix applied + fix details |
-| `问题原因` | investigation.md root cause |
+| `解决方案` | For `root_caused`: responsible layer + concrete action derived from investigation.md's disposition + root_cause_location. For `already_fixed`: describe the reference fix (commit/PR). For `wont_fix`/`duplicate`/`cannot_reproduce`: state the disposition and rationale. |
+| `问题原因` | investigation.md root cause + cited evidence; `case.yaml.disposition.summary` and `disposition.evidence_refs` when applicable |
 | `AI分析` | Human-facing AI summary of cause + action, only as supplemental context |
-| `问题单解决时间` | Resolution timestamp or sync timestamp in Overmind display format when clearly known |
-| `测试方法` | resolution.md verification context → `开发自测` / `QA测试` |
-| `测试环境` | resolution.md verification context when clearly stated |
+| `问题单解决时间` | `case.yaml.closed` timestamp (or sync timestamp) in Overmind display format when clearly known |
+| `测试方法` | Verification context from investigation.md if present → `开发自测` / `QA测试`; leave unset when triage alone cannot support a testing statement |
+| `测试环境` | Verification context from investigation.md when clearly stated |
 | `问题类型` | Only with confident mapping |
 | `备注说明` | Supplemental note only when `AI分析` is unavailable or extra context is still needed |
 
 **Required behavior:**
 
-- Always build candidate values for `解决方案` and `问题原因` when the case is resolved and the information is clear.
+- Always build candidate values for `解决方案` and `问题原因` when the case has a concrete disposition and the information is clear.
 - Never collapse `问题原因` and `解决方案` into `备注说明` as a substitute.
 - Never skip `问题原因` or `解决方案` only because they were missing from `EFFICIENCY_issue_get_issue_detail`.
 - `问题原因` must include direct supporting evidence when the case relies on logs, such as timestamps, log snippets, or file/line references that let the reader locate the proof quickly. **If case artifacts contain timestamped log evidence, always include the strongest 2–3 items in the first draft — do not wait for the user to ask for more detail.**

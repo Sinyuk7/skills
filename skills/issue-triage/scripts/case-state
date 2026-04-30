@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Skill-local wrapper for issue-triage case-state helpers.
+# Resolves the skill root independently so it works regardless of
+# the agent's current working directory.
 set -euo pipefail
 
 SCRIPT_PATH="${BASH_SOURCE[0]}"

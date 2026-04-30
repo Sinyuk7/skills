@@ -4,13 +4,13 @@
     {
       "id": 1,
       "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n播放过程中切换音频焦点后无法恢复播放。\n日志见 /tmp/audio-focus-bug/player.log\n截图见 /tmp/audio-focus-bug/screenshot.png\n可能相关代码: biz/player/src/main/java/com/netease/music/iot/player/CarAudioFocusManager.kt",
-      "expected_output": "Script creates bugfix/OMMUSIC-3397323 from origin/develop, then automatically chains into /issue-investigate with the full payload.",
+      "expected_output": "Script creates bugfix/OMMUSIC-3397323 from origin/develop, then automatically chains into /issue-triage with the full payload.",
       "files": [],
       "expectations": [
         "Ran start-bugfix.sh with argument OMMUSIC-3397323",
         "Verified current branch is bugfix/OMMUSIC-3397323 after script execution",
-        "Proceeded to /issue-investigate without asking for confirmation",
-        "Passed OMMUSIC-3397323 as case_id to /issue-investigate",
+        "Proceeded to /issue-triage without asking for confirmation",
+        "Passed OMMUSIC-3397323 as case_id to /issue-triage",
         "Forwarded all three user-provided materials",
         "Did NOT create case.yaml or investigation.md itself"
       ]
@@ -18,13 +18,13 @@
     {
       "id": 2,
       "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323 --no-investigate\n\n只帮我建分支就行。",
-      "expected_output": "Script creates the bugfix branch, reports success, and stops without chaining into /issue-investigate.",
+      "expected_output": "Script creates the bugfix branch, reports success, and stops without chaining into /issue-triage.",
       "files": [],
       "expectations": [
         "Ran start-bugfix.sh with argument OMMUSIC-3397323",
         "Verified current branch is bugfix/OMMUSIC-3397323",
-        "Did NOT proceed to /issue-investigate",
-        "Told the user they can run /issue-investigate later"
+        "Did NOT proceed to /issue-triage",
+        "Told the user they can run /issue-triage later"
       ]
     },
     {
@@ -36,17 +36,17 @@
         "Detected current repo is not cmiotsdk",
         "Did NOT run git checkout or create any branch",
         "Told the user this skill is for cmiotsdk only",
-        "Did NOT fall back to /issue-investigate in the wrong repo"
+        "Did NOT fall back to /issue-triage in the wrong repo"
       ]
     },
     {
       "id": 4,
       "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n播放暂停后恢复失败。\n日志: /tmp/player-bug/app.log\n设备日志: /tmp/player-bug/device.log\n截图: /tmp/player-bug/ui-state.png\n录屏: /tmp/player-bug/repro.mp4\n相关代码: biz/player/src/main/java/com/netease/music/iot/player/AudioPlayerManager.kt\n相关代码: biz/player/src/main/java/com/netease/music/iot/player/PlaybackStateTracker.kt",
-      "expected_output": "Branch created. All user-provided materials are forwarded to /issue-investigate. None are dropped.",
+      "expected_output": "Branch created. All user-provided materials are forwarded to /issue-triage. None are dropped.",
       "files": [],
       "expectations": [
         "Ran start-bugfix.sh successfully",
-        "Auto-chained into /issue-investigate",
+        "Auto-chained into /issue-triage",
         "Forwarded both log files",
         "Forwarded screenshot and video",
         "Forwarded both code references",

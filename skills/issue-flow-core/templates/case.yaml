@@ -2,7 +2,8 @@ case_id: "OMMUSIC-3397323"
 created: "2026-04-23T09:00:00Z"
 updated: "2026-04-23T09:15:00Z"
 
-status: investigating | blocked | investigated | resolved
+status: investigated    # one of: investigating | blocked | investigated
+
 summary: "Playback does not recover after audio focus changes"
 user_context: |
   播放过程中切换音频焦点后无法恢复播放。
@@ -15,10 +16,6 @@ named_stakeholders:
   - "徐杉"
   - "李帅文"
 
-next_step:
-  action: investigate | blocked | resolve | complete
-  note: "Short operator-facing note"
-
 evidence_sources:
   - kind: log
     path: "/tmp/audio-focus-bug/player.log"
@@ -30,17 +27,26 @@ evidence_sources:
     path: "biz/player/src/main/java/com/example/PlayerManager.kt"
     note: "User suspects this area"
 
+troubleshooting_guide:
+  status: preloaded_from_upstream   # or: loaded_from_repo | none
+  source: "cmiotsdk-start-bugflow"
+
 evidence_window:
-  kind: time_anchor | keyword_search | archive_slice
+  kind: time_anchor
   anchor: "2026-04-20T14:05:42.333+08:00"
   notes: "Focused on lines around the primary anchor"
 
-root_cause:
+# --- Terminal state (exactly one disposition) ---
+
+disposition:
+  type: root_caused              # root_caused | direction_only | blocked | wont_fix | duplicate | already_fixed | cannot_reproduce
   summary: "Focus recovery callback exits before playback state is restored"
-  location: "biz/player/.../CarAudioFocusManager.kt:142"
+  root_cause_location: "biz/player/.../CarAudioFocusManager.kt:142"
   evidence_refs:
     - "/tmp/audio-focus-bug/player.log:76620"
 
-blocked_reason:
-  kind: missing_evidence | ambiguous_anchor | anchor_mismatch
-  detail: "Need the log that covers 14:05:42.333"
+next_step:
+  action: sync_overmind           # sync_overmind | close | resume_in_new_session | await_evidence | investigate
+  note: "Ready for /issue-overmind-sync or new session to fix"
+
+closed: "2026-04-23T09:15:00Z"

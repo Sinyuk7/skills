@@ -1,0 +1,399 @@
+{
+  "skill_name": "issue-triage",
+  "version": "3.0",
+  "groups": [
+    "routing/entry",
+    "target_normalization",
+    "troubleshooting_knowledge",
+    "excavation_planning",
+    "subagent_dispatch",
+    "synthesis_and_disposition",
+    "state_mutation",
+    "runtime_safety",
+    "handoff/downstream_contract"
+  ],
+  "priority_order": ["P0", "P1", "P2"],
+  "evals": [
+    {
+      "id": "E01",
+      "title": "Fresh issue, direct triage entry",
+      "group": "routing/entry",
+      "priority": "P1",
+      "prompt": "帮我分析一个新问题，日志在 /tmp/player.log，截图在 /tmp/ui.png，重点看 04-20 14:05:42.333 为什么没恢复播放。",
+      "setup": "仓库下还没有对应 case。",
+      "expectations": [
+        "Routes directly to /issue-triage.",
+        "Creates case.yaml with status: investigating via scripts/case-state.",
+        "Phase 1 records primary_time_anchor=14:05:42.333 before planning excavation.",
+        "Phase 2b dispatches sub-agents via the task tool; main agent does not grep raw logs itself.",
+        "Phase 3 writes investigation.md with a disposition and updates case.yaml accordingly.",
+        "Does NOT generate collect.md or resolution.md — either is a regression."
+      ]
+    },
+    {
+      "id": "E02",
+      "title": "Existing case, append evidence and reopen",
+      "group": "state_mutation",
+      "priority": "P1",
+      "prompt": "给 OMMUSIC-3397323 补一份新日志 /tmp/new.log，继续分析。",
+      "setup": "已有 case.yaml，状态为 blocked 或 investigated。",
+      "expectations": [
+        "evidence_sources has the new entry appended, not overwritten.",
+        "Unknown/extension keys in case.yaml are preserved after the update.",
+        "Status transitions back to investigating before re-planning excavation.",
+        "Historical disposition and unrelated keys are not discarded; a new disposition replaces the old one only when triage re-terminates."
+      ]
+    },
+    {
+      "id": "E03",
+      "title": "Single clear anchor must dominate",
+      "group": "target_normalization",
+      "priority": "P0",
+      "prompt": "徐杉和李帅文关注的是 04-20 14:05:42.333~14:05:42.347，请围绕这个时间点分析。",
+      "setup": "日志里同时存在 14:05:42 和 14:05:51 的显眼异常。",
+      "expectations": [
+        "primary_time_anchor is 14:05:42.333 in case.yaml before Phase 2a.",
+        "Sub-agent tasks target the 14:05:42 window, not 14:05:51.",
+        "Main conclusion in investigation.md is anchored to 14:05:42.x — not 14:05:51.",
+        "If 14:05:51 appears, it is treated as a secondary cross-reference only."
+      ]
+    },
+    {
+      "id": "E04",
+      "title": "Competing anchors require clarification",
+      "group": "target_normalization",
+      "priority": "P0",
+      "prompt": "评论里有人看 14:05:42，也有人看 14:05:51，帮我分析。",
+      "setup": "两个时间点都可能成立，用户未指定主问题。",
+      "expectations": [
+        "Phase 1 does not silently choose one anchor.",
+        "Skill asks the user to disambiguate, OR records disposition.type=blocked with blocked_reason.kind=ambiguous_anchor.",
+        "No excavation plan is dispatched until the anchor is resolved."
+      ]
+    },
+    {
+      "id": "E05",
+      "title": "Anchor mismatch must block",
+      "group": "synthesis_and_disposition",
+      "priority": "P0",
+      "prompt": "重点看 14:05:42。",
+      "setup": "可读到的日志窗口里只找到 14:05:51 的异常，没有 14:05:42 对应事件。",
+      "expectations": [
+        "Phase 2b sub-agent returns status=miss with gaps.kind=anchor_not_found.",
+        "Phase 3 does NOT produce a root cause anchored at 14:05:51.",
+        "Final disposition.type is blocked with blocked_reason.kind=anchor_mismatch, or requests additional logs covering 14:05:42.",
+        "case.yaml status is blocked."
+      ]
+    },
+    {
+      "id": "E06",
+      "title": "Missing evidence path",
+      "group": "excavation_planning",
+      "priority": "P0",
+      "prompt": "继续分析这个 case，日志在 /tmp/missing.log。",
+      "setup": "case.yaml 里有该路径，但文件已不存在。",
+      "expectations": [
+        "Sub-agent returns status=miss with gaps.kind=file_missing and cites the exact path.",
+        "Phase 3 sets disposition.type=blocked with blocked_reason referencing the missing path.",
+        "Triage does not speculate on root cause without the required evidence."
+      ]
+    },
+    {
+      "id": "E07",
+      "title": "Multiple repositories, ownership ambiguous",
+      "group": "routing/entry",
+      "priority": "P2",
+      "prompt": "帮我分析这个问题，日志在 repoA 外，代码路径像是 repoB。",
+      "setup": "当前上下文下存在两个 plausible repo root。",
+      "expectations": [
+        "Skill does not default to cwd or the skill repo as the owning repository.",
+        "Asks the user to confirm which repository owns the case before proceeding.",
+        "No case.yaml is created until ownership is resolved."
+      ]
+    },
+    {
+      "id": "E08",
+      "title": "Deep cwd should not break skill-local script entry",
+      "group": "runtime_safety",
+      "priority": "P0",
+      "prompt": "继续分析 OMMUSIC-3397323。",
+      "setup": "Agent 当前 cwd 在目标仓库深层目录，不在 skill 目录；workflow 通过 scripts/case-state 调状态。",
+      "expectations": [
+        "scripts/case-state wrapper resolves its own skill root independently.",
+        "case_state.py is invoked correctly regardless of agent cwd.",
+        "No path resolution failure or FileNotFoundError surfaces to the agent.",
+        "case.yaml is updated at the correct case workspace path."
+      ]
+    },
+    {
+      "id": "E09",
+      "title": "Wrapper is the stable execution surface",
+      "group": "runtime_safety",
+      "priority": "P2",
+      "prompt": "（任意正常 triage 请求）",
+      "setup": "scripts/case-state 和 scripts/case_state.py 均存在。",
+      "expectations": [
+        "Workflow and documentation invoke scripts/case-state (the wrapper), not python3 scripts/case_state.py directly.",
+        "No project-relative python3 invocation appears in the workflow instructions."
+      ]
+    },
+    {
+      "id": "E10",
+      "title": "Only two long-term artifacts",
+      "group": "runtime_safety",
+      "priority": "P0",
+      "prompt": "（新 issue 调查请求）",
+      "setup": "Clean repo — no prior case workspace.",
+      "expectations": [
+        "Only case.yaml and investigation.md are created as long-term artifacts in the case directory.",
+        "collect.md, resolution.md, disposition.md are NOT created under any circumstance.",
+        "Any creation of those files is a regression."
+      ]
+    },
+    {
+      "id": "E11",
+      "title": "Case status limited to three values",
+      "group": "runtime_safety",
+      "priority": "P0",
+      "prompt": "（新 issue 调查请求）",
+      "setup": "Clean repo.",
+      "expectations": [
+        "Top-level status field in case.yaml uses only: investigating / blocked / investigated.",
+        "Values collecting, collected, resolved must not appear as status values.",
+        "scripts/case-state rejects any attempt to set a disallowed status."
+      ]
+    },
+    {
+      "id": "E12",
+      "title": "Investigation target persistence",
+      "group": "target_normalization",
+      "priority": "P1",
+      "prompt": "这轮核心问题是'为什么焦点恢复后播放没有继续'，关注人徐杉，时间点 14:05:42.333。",
+      "setup": "正常 case，提供充足上下文。",
+      "expectations": [
+        "primary_question is written to case.yaml before Phase 2a planning.",
+        "primary_time_anchor is set to 14:05:42.333 in case.yaml.",
+        "named_stakeholders includes 徐杉.",
+        "investigation.md starts with a one-line working statement derived from these fields."
+      ]
+    },
+    {
+      "id": "E13",
+      "title": "Large logs go through sub-agent, not main agent",
+      "group": "subagent_dispatch",
+      "priority": "P0",
+      "prompt": "日志在 /tmp/huge.log，帮我分析。",
+      "setup": "日志文件极大，直接全量读取会超出上下文窗口。",
+      "expectations": [
+        "Main agent does NOT call read_file / grep_search on /tmp/huge.log directly in Phase 2b.",
+        "Main agent dispatches a sub-agent via the task tool with a tag_search or time_anchor_slice task.",
+        "Sub-agent returns structured findings with excerpts ≤200 chars; no raw dump reaches the main agent.",
+        "No single tool call in the main session attempts to read the entire file."
+      ]
+    },
+    {
+      "id": "E14",
+      "title": "Heterogeneous timestamp format",
+      "group": "excavation_planning",
+      "priority": "P2",
+      "prompt": "重点看 1713593142333 附近的问题。",
+      "setup": "一个日志使用 epoch ms 时间戳；另一个文件使用 2026-04-20T14:05:42.333+08:00 格式。",
+      "expectations": [
+        "Main agent normalizes epoch ms to human-readable time before planning tasks.",
+        "Phase 2a tasks use normalized anchors consistently.",
+        "If normalization is unreliable across files, triage blocks with an explanation rather than inferring."
+      ]
+    },
+    {
+      "id": "E15",
+      "title": "Archive present → inventory task dispatches first",
+      "group": "excavation_planning",
+      "priority": "P1",
+      "prompt": "压缩包 /tmp/bundle.tar.gz 里有日志，帮我查。",
+      "setup": "压缩包未解压。",
+      "expectations": [
+        "Phase 2a includes a task with kind=archive_inventory targeting the archive.",
+        "Phase 2b dispatches archive_inventory in wave 0, before content-dependent tasks.",
+        "If the archive cannot be safely listed, disposition.type=blocked with a format/corruption reason."
+      ]
+    },
+    {
+      "id": "E16",
+      "title": "Code correlation only in Phase 3",
+      "group": "excavation_planning",
+      "priority": "P1",
+      "prompt": "可能是 CarAudioFocusManager.kt，帮我看。",
+      "setup": "同时给出日志 evidence 和代码文件路径。",
+      "expectations": [
+        "Phase 2a's initial batch does NOT contain a code_correlate task unless the user explicitly named a small code path.",
+        "Evidence findings from sub-agents are consolidated first.",
+        "Only in Phase 3.2 does the main agent read CarAudioFocusManager.kt, with offset/limit and ≤3 locations.",
+        "Root cause is not derived from code inspection alone without evidence grounding."
+      ]
+    },
+    {
+      "id": "E17",
+      "title": "Do not modify code during triage",
+      "group": "handoff/downstream_contract",
+      "priority": "P1",
+      "prompt": "顺手把这个 case 修掉。",
+      "setup": "Evidence 可读，root cause 可确定。",
+      "expectations": [
+        "/issue-triage refuses to modify source code.",
+        "Triage completes with disposition.type=root_caused.",
+        "Handoff message offers /issue-overmind-sync or suggests opening a new session for the fix.",
+        "investigation.md conclusion is grounded in cited evidence, not speculative."
+      ]
+    },
+    {
+      "id": "E18",
+      "title": "Upstream bootstrap preloads troubleshooting guide",
+      "group": "troubleshooting_knowledge",
+      "priority": "P0",
+      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323 ...",
+      "setup": "cmiotsdk-start-bugflow 预先加载了 knowledge/TROUBLESHOOTING.md 并 handoff 给 /issue-triage。",
+      "expectations": [
+        "Phase 2a detects the preloaded guide and records troubleshooting_guide.status=preloaded_from_upstream in case.yaml.",
+        "Excavation tasks cite TAGs from the guide (e.g. LocalPlayback, NCMAudioPlayer) where relevant.",
+        "case.yaml's troubleshooting_guide.source references cmiotsdk-start-bugflow."
+      ]
+    },
+    {
+      "id": "E19",
+      "title": "Repo-local troubleshooting guide fallback",
+      "group": "troubleshooting_knowledge",
+      "priority": "P1",
+      "prompt": "/issue-triage 分析 /tmp/x.log 里 14:05 的问题。",
+      "setup": "上下文未预加载 guide；但 $PROJECT_ROOT/.issue-flow/TROUBLESHOOTING.md 存在。",
+      "expectations": [
+        "Phase 2a.1 Check 2 finds and reads $PROJECT_ROOT/.issue-flow/TROUBLESHOOTING.md.",
+        "case.yaml has troubleshooting_guide.status=loaded_from_repo.",
+        "Excavation tasks use guide-derived TAGs or patterns."
+      ]
+    },
+    {
+      "id": "E20",
+      "title": "No guide → generic planning",
+      "group": "troubleshooting_knowledge",
+      "priority": "P2",
+      "prompt": "/issue-triage 分析 /tmp/x.log。",
+      "setup": "无预加载 guide，无仓库级 guide。",
+      "expectations": [
+        "Phase 2a.1 records troubleshooting_guide.status=none with an explanatory note.",
+        "Triage proceeds with generic keyword_search / time_anchor_slice tasks.",
+        "investigation.md notes the absence of a guide in the Troubleshooting Guide section."
+      ]
+    },
+    {
+      "id": "E21",
+      "title": "Disposition direction_only when no single cause",
+      "group": "synthesis_and_disposition",
+      "priority": "P0",
+      "prompt": "分析一下为什么播放偶尔卡顿。",
+      "setup": "Sub-agent findings show 2–3 plausible paths, none high-confidence.",
+      "expectations": [
+        "Phase 3 chooses disposition.type=direction_only, not root_caused.",
+        "case.yaml has disposition.investigation_directions with at least 2 ranked entries.",
+        "Each direction has hypothesis and next_experiment fields.",
+        "next_step.action is resume_in_new_session.",
+        "Handoff message tells the user to open a new session to pursue rank-1."
+      ]
+    },
+    {
+      "id": "E22",
+      "title": "Disposition root_caused hands off to overmind-sync",
+      "group": "handoff/downstream_contract",
+      "priority": "P0",
+      "prompt": "分析这个 case。",
+      "setup": "Evidence is clear, sub-agents return high-confidence findings pointing at a single location.",
+      "expectations": [
+        "Phase 3 chooses disposition.type=root_caused.",
+        "case.yaml has disposition.root_cause_location and evidence_refs populated.",
+        "next_step.action is sync_overmind.",
+        "Handoff message mentions /issue-overmind-sync and also offers opening a new session to fix.",
+        "issue-triage itself does NOT modify code."
+      ]
+    },
+    {
+      "id": "E23",
+      "title": "Disposition duplicate / already_fixed / wont_fix / cannot_reproduce",
+      "group": "synthesis_and_disposition",
+      "priority": "P1",
+      "prompt": "这个 issue 其实已经在 PR #123 修掉了。",
+      "setup": "User explicitly indicates a close-out disposition.",
+      "expectations": [
+        "Phase 3 chooses the matching disposition.type from {already_fixed, duplicate, wont_fix, cannot_reproduce}.",
+        "For already_fixed: disposition.reference is set to PR link or commit SHA.",
+        "For duplicate: disposition.duplicate_of is set to the other case id.",
+        "case.yaml status is investigated; closed timestamp is set.",
+        "No source code is modified."
+      ]
+    },
+    {
+      "id": "E24",
+      "title": "Main agent does not read raw logs in Phase 2b",
+      "group": "subagent_dispatch",
+      "priority": "P0",
+      "prompt": "分析 /tmp/player.log 里 14:05 为什么播放失败。",
+      "setup": "Standard triage request.",
+      "expectations": [
+        "Phase 2b invocations of read_file/grep_search/bash on raw logs happen inside sub-agents, not the main session.",
+        "Main agent's own tool log in Phase 2b contains only 'task' calls for excavation.",
+        "Excerpts that reach the main agent are ≤200 chars per finding."
+      ]
+    },
+    {
+      "id": "E25",
+      "title": "Sub-agent does not invoke further sub-agents",
+      "group": "subagent_dispatch",
+      "priority": "P1",
+      "prompt": "（任意正常 triage 请求）",
+      "setup": "Standard triage with multiple tasks.",
+      "expectations": [
+        "No sub-agent invokes the task tool itself.",
+        "Follow-up tasks suggested by a sub-agent appear in its recommend_followup output, and are re-planned by the main agent through Phase 2a.",
+        "Max 2 planning rounds total per triage session."
+      ]
+    },
+    {
+      "id": "E26",
+      "title": "Investigation report must cite evidence",
+      "group": "synthesis_and_disposition",
+      "priority": "P1",
+      "prompt": "（常规根因分析请求）",
+      "setup": "Evidence 可读，日志和代码均可访问。",
+      "expectations": [
+        "Every conclusion in investigation.md includes at least one precise evidence reference (file path + line range or timestamp).",
+        "No abstract summary appears without a traceable evidence citation.",
+        "Speculation is explicitly labelled as hypothesis, not stated as fact."
+      ]
+    },
+    {
+      "id": "E27",
+      "title": "Human-readable vs machine-readable split",
+      "group": "handoff/downstream_contract",
+      "priority": "P2",
+      "prompt": "（常规调查请求）",
+      "setup": "正常 case，调查完成。",
+      "expectations": [
+        "case.yaml contains only structured state fields — no narrative analysis.",
+        "investigation.md contains narrative and cited excerpts — no duplicate state fields beyond the summary header.",
+        "The two files are not treated as a dual evidence ledger; responsibilities are cleanly separated."
+      ]
+    },
+    {
+      "id": "E28",
+      "title": "cmiotsdk-start-bugflow handoff target is /issue-triage",
+      "group": "routing/entry",
+      "priority": "P1",
+      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323 ...",
+      "setup": "分支 bootstrap 成功完成。",
+      "expectations": [
+        "Handoff target after branch bootstrap is /issue-triage.",
+        "/issue-investigate and /issue-resolve are NOT referenced — they have been removed/renamed.",
+        "The original user payload is forwarded unchanged to /issue-triage.",
+        "knowledge/TROUBLESHOOTING.md is loaded before handoff."
+      ]
+    }
+  ]
+}
