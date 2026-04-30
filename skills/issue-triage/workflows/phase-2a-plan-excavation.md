@@ -20,7 +20,7 @@ Indicators:
 If present, record it and skip to 2a.2:
 
 ```bash
-scripts/case-state record-guide \
+./scripts/case-state record-guide \
   --project-root "$PROJECT_ROOT" \
   --case-id "$CASE_ID" \
   --status preloaded_from_upstream \
@@ -38,7 +38,7 @@ $PROJECT_ROOT/.issue-flow/TROUBLESHOOTING.md
 If it exists, read it into context now, then record:
 
 ```bash
-scripts/case-state record-guide \
+./scripts/case-state record-guide \
   --project-root "$PROJECT_ROOT" \
   --case-id "$CASE_ID" \
   --status loaded_from_repo \
@@ -50,7 +50,7 @@ scripts/case-state record-guide \
 Proceed with generic heuristics. Record the gap so it shows up in `investigation.md`:
 
 ```bash
-scripts/case-state record-guide \
+./scripts/case-state record-guide \
   --project-root "$PROJECT_ROOT" \
   --case-id "$CASE_ID" \
   --status none \
@@ -64,7 +64,7 @@ Do NOT fabricate a guide. Do NOT assume TAGs or module boundaries not supported 
 
 Using `primary_question`, `primary_time_anchor`, `evidence_sources`, and the troubleshooting guide (if any), produce an `excavation_plan`.
 
-Shape (see [schemas/excavation-plan.yaml](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/schemas/excavation-plan.yaml) for the full contract):
+Shape (see [schemas/excavation-plan.yaml](../schemas/excavation-plan.yaml) for the full contract):
 
 ```yaml
 excavation_plan:

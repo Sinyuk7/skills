@@ -1,6 +1,25 @@
 ---
 name: issue-triage
-description: Own end-to-end triage for issue-flow cases — intake, evidence excavation via sub-agents, and a final disposition (root cause, investigation directions, blocked, or a close-out type). Use when a user reports a new issue, adds evidence to an existing case, asks for root cause analysis, or wants this issue closed out (wont_fix / duplicate / already_fixed / cannot_reproduce).
+description: Triage issue-flow cases end to end: create or reopen a case, normalize the investigation target, dispatch sub-agents to excavate evidence, and conclude with a cited disposition. Use when a user reports a new issue, continues analysis with more logs or screenshots, asks for root cause analysis, or wants the case closed as wont_fix, duplicate, already_fixed, or cannot_reproduce. Also matches Chinese requests such as 分析问题、根因分析、继续分析、补充日志、关闭问题。
+when_to_use: |
+  - User reports a bug or issue with evidence (logs, screenshots, traces)
+  - User asks for root cause analysis or 根因分析
+  - User continues an existing case with new evidence or 补充日志
+  - User wants to close a case as wont_fix, duplicate, already_fixed, or cannot_reproduce
+  - User asks for investigation directions when evidence is insufficient
+  - NOT for pure code review, branch bootstrap, or post-triage Overmind sync
+disable-model-invocation: false
+user-invocable: true
+arguments:
+  - name: case_id
+    description: Existing case ID (e.g. OMMUSIC-3397323) or a short issue summary for new cases
+    required: false
+  - name: evidence_paths
+    description: One or more absolute paths to evidence files (logs, screenshots, archives)
+    required: false
+argument-hint: "[case-id or issue summary] [evidence paths...]"
+allowed-tools: Bash Read Write Edit Grep Glob Task
+effort: high
 ---
 
 # Issue Triage
@@ -57,35 +76,50 @@ Every terminated triage records exactly one `disposition.type`:
 | `already_fixed` | already fixed in another commit / PR | `close` | `/issue-overmind-sync` optional |
 | `cannot_reproduce` | insufficient evidence to reproduce | `close` | `/issue-overmind-sync` optional |
 
+## Parameters
+
+When invoked with arguments, `$ARGUMENTS` contains the user-provided input. Use it to seed Phase 1 intake:
+
+- `$1` (`case_id`): If it looks like a case ID (e.g. `OMMUSIC-3397323`), use it directly. Otherwise treat it as a new issue summary.
+- `$2+` (`evidence_paths`): Register each path as an evidence source in `case.yaml`.
+
+If the user provides multi-word arguments, they must be quoted: `/issue-triage "playback fails after focus change" /tmp/player.log /tmp/ui.png`.
+
+If no arguments are provided, ask the user for the issue summary and evidence paths before proceeding to Phase 1.
+
 ## Pipeline
 
 `/issue-triage` is a strict 3-phase pipeline. Follow them in order.
 
 | Phase | File | Kind | Agent |
 |-------|------|------|-------|
-| 1. Intake | [workflows/phase-1-intake.md](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/workflows/phase-1-intake.md) | reasoning + mutation | main |
-| 2a. Plan Excavation | [workflows/phase-2a-plan-excavation.md](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/workflows/phase-2a-plan-excavation.md) | reasoning | main |
-| 2b. Dispatch Excavators | [workflows/phase-2b-dispatch-excavators.md](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/workflows/phase-2b-dispatch-excavators.md) | retrieval | **sub-agents (parallel)** |
-| 3. Synthesize & Dispose | [workflows/phase-3-synthesize.md](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/workflows/phase-3-synthesize.md) | reasoning + mutation | main |
+| 1. Intake | [workflows/phase-1-intake.md](./workflows/phase-1-intake.md) | reasoning + mutation | main |
+| 2a. Plan Excavation | [workflows/phase-2a-plan-excavation.md](./workflows/phase-2a-plan-excavation.md) | reasoning | main |
+| 2b. Dispatch Excavators | [workflows/phase-2b-dispatch-excavators.md](./workflows/phase-2b-dispatch-excavators.md) | retrieval | **sub-agents (parallel)** |
+| 3. Synthesize & Dispose | [workflows/phase-3-synthesize.md](./workflows/phase-3-synthesize.md) | reasoning + mutation | main |
 
 ## Execution Surface
 
 - Workflows: see table above
-- Sub-agent contract: [agents/evidence-excavator.md](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/agents/evidence-excavator.md)
+- Sub-agent contract: [agents/evidence-excavator.md](./agents/evidence-excavator.md)
 - Public execution entry:
-  - [scripts/case-state](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/scripts/case-state)
+  - [scripts/case-state](./scripts/case-state)
+  - [scripts/validate-evals](./scripts/validate-evals) — local sanity check for `evals/*.json`
 - Schemas:
-  - [schemas/case.yaml](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/schemas/case.yaml)
-  - [schemas/excavation-plan.yaml](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/schemas/excavation-plan.yaml)
+  - [schemas/case.yaml](./schemas/case.yaml)
+  - [schemas/excavation-plan.yaml](./schemas/excavation-plan.yaml)
 - Templates:
-  - [templates/investigation.md](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/templates/investigation.md)
+  - [templates/investigation.md](./templates/investigation.md)
 - Internal implementation detail:
-  - [scripts/case_state.py](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/scripts/case_state.py)
-- Evals: [evals/evals.json](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/evals/evals.json)
+  - [scripts/case_state.py](./scripts/case_state.py)
+  - [scripts/validate_evals.py](./scripts/validate_evals.py)
+- Evals: [evals/evals.json](./evals/evals.json), [evals/routing-evals.json](./evals/routing-evals.json)
 
 ## Operating Rules
 
-- Use the skill-local wrapper `scripts/case-state` for all case.yaml mutations. Never hand-edit `case.yaml`.
+- **Context lifecycle:** This skill's content persists for the entire session. If the context window compacts (each skill is capped at ~5,000 tokens after compaction), re-run `/issue-triage` to restore the full workflow. The `case.yaml` and `investigation.md` on disk preserve all state across compactions.
+- **Extended thinking:** This skill involves multi-phase reasoning, hypothesis generation, and evidence synthesis. Use `ultrathink` when evaluating competing hypotheses or deciding dispositions on ambiguous evidence.
+- Use the skill-local wrapper `./scripts/case-state` for all `case.yaml` mutations. Resolve the wrapper from the skill directory; never assume the target repo cwd contains a matching `scripts/` entry. Never hand-edit `case.yaml`.
 - **Evidence excavation MUST go through sub-agents (task tool)** in Phase 2b. The main agent never reads full raw logs itself in this skill. Its job is to plan tasks (Phase 2a) and synthesize returned findings (Phase 3).
 - Normalize the target before planning excavation:
   - `primary_question`

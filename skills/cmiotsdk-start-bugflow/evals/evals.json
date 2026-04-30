@@ -52,6 +52,31 @@
         "Forwarded both code references",
         "Did NOT drop any user-provided item"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n播放恢复失败，日志 /tmp/a.log",
+      "expected_output": "Branch created; knowledge/TROUBLESHOOTING.md is loaded into context before /issue-triage takes over, and the handoff emits one minimal evidence chain referencing that guide.",
+      "files": ["knowledge/TROUBLESHOOTING.md"],
+      "expectations": [
+        "knowledge/TROUBLESHOOTING.md is read into context before the handoff",
+        "A short evidence chain is emitted referencing knowledge/TROUBLESHOOTING.md",
+        "/issue-triage receives the preloaded guide and records troubleshooting_guide.status=preloaded_from_upstream in case.yaml",
+        "Phase 2a planning uses TAGs from the guide (e.g. LocalPlayback) where relevant"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "/cmiotsdk-start-bugflow OMMUSIC-3397323\n\n帮我分析播放失败；顺便分析完直接改代码。",
+      "expected_output": "Branch created and handoff to /issue-triage; triage does the analysis but explicitly refuses the code-edit sub-request and directs the user to a new session for the fix.",
+      "files": [],
+      "expectations": [
+        "Ran start-bugfix.sh successfully",
+        "Handed off to /issue-triage",
+        "/issue-triage did NOT silently modify code",
+        "Final handoff message offers /issue-overmind-sync or opening a new session to implement the fix",
+        "User-provided payload is forwarded unchanged"
+      ]
     }
   ]
 }

@@ -10,7 +10,7 @@ Goal: turn each task from `excavation_plan` into a sub-agent invocation, collect
 **MUST dispatch every excavation task via the `task` tool.** The main agent is forbidden from reading full raw log files or running grep/zcat over raw evidence directly in this phase. Its only allowed tools here are:
 
 - `task` — to invoke excavators
-- `scripts/case-state` — to update case state as evidence is consolidated
+- `./scripts/case-state` — to update case state as evidence is consolidated
 
 Rationale: raw logs pollute the main agent's context window, which degrades the Phase 3 synthesis. Sub-agents return only structured findings + short excerpts.
 
@@ -20,7 +20,7 @@ For each task in `excavation_plan.tasks`:
 
 1. Pick agent type `explore` (for search / chunked read / archive inventory / media inspect) — it is the thorough reader that does not need write access.
 2. Pass the full task object plus the invariants the excavator needs.
-3. Request the exact output shape defined in [agents/evidence-excavator.md](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/agents/evidence-excavator.md).
+3. Request the exact output shape defined in [agents/evidence-excavator.md](../agents/evidence-excavator.md).
 
 Template prompt for a single sub-agent:
 

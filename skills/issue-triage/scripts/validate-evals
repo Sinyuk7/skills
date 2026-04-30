@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Skill-local wrapper for issue-triage eval validator.
+# Resolves the skill root independently so it works regardless of
+# the agent's current working directory.
+set -euo pipefail
+
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+SKILL_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PYTHON_IMPL="$SKILL_ROOT/scripts/validate_evals.py"
+
+if [[ ! -f "$PYTHON_IMPL" ]]; then
+  printf 'validate-evals wrapper error: missing implementation: %s\n' "$PYTHON_IMPL" >&2
+  exit 1
+fi
+
+exec python3 "$PYTHON_IMPL" "$@"

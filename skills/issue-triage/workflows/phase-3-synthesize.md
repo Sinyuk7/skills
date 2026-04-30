@@ -67,7 +67,7 @@ Pick exactly one `disposition.type`:
 ## 3.5 Write investigation.md
 <!-- mutation_step -->
 
-Use [templates/investigation.md](/Users/shenyeke01/Documents/Workspace/skills/skills/issue-triage/templates/investigation.md) as the skeleton.
+Use [templates/investigation.md](../templates/investigation.md) as the skeleton.
 
 Required sections, in order:
 
@@ -93,7 +93,7 @@ Based on disposition, call exactly ONE of:
 ### root_caused / wont_fix / duplicate / already_fixed / cannot_reproduce
 
 ```bash
-scripts/case-state close \
+./scripts/case-state close \
   --project-root "$PROJECT_ROOT" \
   --case-id "$CASE_ID" \
   --type <type> \
@@ -108,7 +108,7 @@ scripts/case-state close \
 ### direction_only
 
 ```bash
-scripts/case-state set-direction \
+./scripts/case-state set-direction \
   --project-root "$PROJECT_ROOT" \
   --case-id "$CASE_ID" \
   --summary "<one-line summary>" \
@@ -122,7 +122,7 @@ scripts/case-state set-direction \
 ### blocked
 
 ```bash
-scripts/case-state record-blocked \
+./scripts/case-state record-blocked \
   --project-root "$PROJECT_ROOT" \
   --case-id "$CASE_ID" \
   --kind missing_evidence|ambiguous_anchor|anchor_mismatch|insufficient_context \

@@ -27,7 +27,7 @@ Resolve `case_id` from an explicit case ID, ticket ID, or a stable issue slug.
 Create or reopen the case via the skill-local wrapper:
 
 ```bash
-scripts/case-state init-case \
+./scripts/case-state init-case \
   --project-root "$PROJECT_ROOT" \
   --case-id "$CASE_ID" \
   --summary "<one-line summary>" \
@@ -35,7 +35,7 @@ scripts/case-state init-case \
   --evidence-sources '<JSON array of {kind, path, note}>'
 ```
 
-The wrapper owns skill-root path resolution and delegates to `case_state.py`. The underlying tool owns `case.yaml` creation, timestamp updates, unknown-key preservation, and evidence-source merging.
+The wrapper owns skill-root path resolution and delegates to `case_state.py`. Resolve the wrapper path from the skill directory rather than the target repository cwd. The underlying tool owns `case.yaml` creation, timestamp updates, unknown-key preservation, and evidence-source merging.
 
 If the case already exists, `init-case` reopens it and merges new evidence sources without dropping existing ones. Do not hand-maintain `case.yaml` at any point.
 
@@ -54,7 +54,7 @@ If the target is ambiguous (multiple plausible primary questions or anchors) sto
 Persist the normalized target:
 
 ```bash
-scripts/case-state record-target \
+./scripts/case-state record-target \
   --project-root "$PROJECT_ROOT" \
   --case-id "$CASE_ID" \
   --primary-question "..." \

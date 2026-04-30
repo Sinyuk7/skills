@@ -140,6 +140,56 @@
         "The workflow does not treat one cached write failure as proof that every cached field must be reprobed.",
         "The workflow reports whether the failure came from stale cache, field writability, or another write-time problem."
       ]
+    },
+    {
+      "id": 12,
+      "prompt": "case 状态是 blocked 或者 investigating，直接同步到 overmind 吧。",
+      "expected_output": "The skill refuses to sync a case that has not reached a concrete non-blocked disposition, stops with a clear message pointing the user back to /issue-triage, and does not invent field values.",
+      "files": [],
+      "expectations": [
+        "The workflow reads case.yaml and checks status + disposition.type.",
+        "Refuses when status=blocked or status=investigating.",
+        "Refuses when disposition.type=blocked or disposition.type=direction_only.",
+        "Tells the user to complete /issue-triage first.",
+        "Does not write to Overmind in these states."
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "这个 case 的 disposition 是 already_fixed，引用的是 PR #123。同步到 overmind。",
+      "expected_output": "The skill uses disposition.type=already_fixed and disposition.reference as the source for `解决方案`, does not require root_cause_location, and drafts `问题原因` consistent with the close-out type rather than inventing a high-confidence root cause.",
+      "files": [],
+      "expectations": [
+        "The workflow reads disposition.reference for the fix pointer.",
+        "The workflow does NOT require disposition.root_cause_location for already_fixed.",
+        "`解决方案` draft references the PR/commit pointer.",
+        "`问题原因` draft reflects the close-out reason, not a fabricated root cause.",
+        "Confirmation draft is shown before any write."
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "同步到 overmind。这个 case 是 duplicate of OMMUSIC-3000001。",
+      "expected_output": "The skill reads disposition.type=duplicate and disposition.duplicate_of, drafts fields consistent with a duplicate disposition, and does not generate fabricated investigation content for the duplicate.",
+      "files": [],
+      "expectations": [
+        "The workflow detects disposition.type=duplicate.",
+        "`解决方案` draft states the duplicate relationship and references disposition.duplicate_of.",
+        "`问题原因` draft does not invent a root cause for the duplicate.",
+        "The workflow optionally asks the user whether to also write a back-reference in 备注说明."
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "case.yaml 里没有 disposition 字段（老版本遗留），但有 resolution.md。能同步吗？",
+      "expected_output": "The skill enters a legacy-compat path: reads resolution.md + investigation.md if present, drafts fields from legacy artifacts, and flags this as legacy mode in the confirmation draft. If neither legacy artifacts nor disposition are available, refuses.",
+      "files": [],
+      "expectations": [
+        "The workflow detects missing disposition and triggers legacy fallback.",
+        "Reads resolution.md / investigation.md as legacy sources.",
+        "Confirmation draft explicitly notes it used legacy artifacts.",
+        "If no legacy or disposition artifact is available, the workflow stops and asks the user."
+      ]
     }
   ]
 }

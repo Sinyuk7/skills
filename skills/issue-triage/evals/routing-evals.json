@@ -1,0 +1,165 @@
+{
+  "skill_name": "issue-triage",
+  "purpose": "Routing-layer evaluation: does /issue-triage trigger when it should, stay silent when it shouldn't, and correctly hand off when the request is multi-intent?",
+  "cases": [
+    {
+      "id": "route-001",
+      "request": "帮我分析一下这个问题，日志在 /tmp/player.log，重点看 14:05:42 为什么没恢复播放。",
+      "expected_skills": ["issue-triage"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Direct triage intent with evidence path and time anchor",
+      "notes": "Positive baseline — must not under-trigger"
+    },
+    {
+      "id": "route-002",
+      "request": "continue investigating OMMUSIC-3397323, i added /tmp/new.log",
+      "expected_skills": ["issue-triage"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Continuation of an existing case with new evidence",
+      "notes": "Must reopen not duplicate the case"
+    },
+    {
+      "id": "route-003",
+      "request": "这个 case 其实在 PR #123 已经修了，帮我关一下。",
+      "expected_skills": ["issue-triage"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Close-out with already_fixed disposition is a triage responsibility",
+      "notes": "Must route to triage, not directly to overmind-sync; disposition=already_fixed"
+    },
+    {
+      "id": "route-004",
+      "request": "这个问题是 design-by-intent，我们不修。请关单。",
+      "expected_skills": ["issue-triage"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Close-out with wont_fix disposition is a triage responsibility",
+      "notes": "Must route to triage; triage sets disposition.type=wont_fix"
+    },
+    {
+      "id": "route-005",
+      "request": "这个 bug 和 OMMUSIC-3000001 是同一个，标个重复。",
+      "expected_skills": ["issue-triage"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Close-out with duplicate disposition",
+      "notes": "Must route to triage; disposition.duplicate_of is required"
+    },
+    {
+      "id": "route-006",
+      "request": "case 已经分析完了，把结果同步到 Overmind。",
+      "expected_skills": ["issue-overmind-sync"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Pure post-triage sync — should NOT re-enter triage",
+      "notes": "Negative for triage, positive for overmind-sync"
+    },
+    {
+      "id": "route-007",
+      "request": "帮我切个 bugfix 分支，ticket 是 OMMUSIC-3397323。",
+      "expected_skills": ["cmiotsdk-start-bugflow"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Branch bootstrap only, no analysis requested",
+      "notes": "Negative for triage — must not skip branch step"
+    },
+    {
+      "id": "route-008",
+      "request": "/cmiotsdk-start-bugflow OMMUSIC-3397323 播放恢复失败，日志 /tmp/a.log",
+      "expected_skills": ["cmiotsdk-start-bugflow", "issue-triage"],
+      "expected_mode": "sequential",
+      "ambiguity": "low",
+      "reason": "Multi-intent: bootstrap branch, then triage with the same payload",
+      "notes": "Handoff chain: bugflow → triage; guide preloaded in the handoff"
+    },
+    {
+      "id": "route-009",
+      "request": "帮我分析这个 case 并直接改代码修掉。",
+      "expected_skills": ["issue-triage"],
+      "expected_mode": "partial_refuse",
+      "ambiguity": "medium",
+      "reason": "Triage handles analysis; refuses the code-modification part",
+      "notes": "Critical multi-intent case. Triage must: (1) do the triage; (2) explicitly refuse code edits; (3) suggest opening a new session for the fix. Must NOT silently modify code."
+    },
+    {
+      "id": "route-010",
+      "request": "分析完这个 case 就顺手开个 PR 把修复提交了。",
+      "expected_skills": ["issue-triage"],
+      "expected_mode": "partial_refuse",
+      "ambiguity": "medium",
+      "reason": "Triage does analysis only; PR creation is out of scope",
+      "notes": "Same refusal pattern as route-009. Triage finishes with disposition, then points user to a new session for the fix + PR."
+    },
+    {
+      "id": "route-011",
+      "request": "帮我生成一个 issue-flow case 然后 sync 到 overmind。",
+      "expected_skills": ["issue-triage", "issue-overmind-sync"],
+      "expected_mode": "sequential",
+      "ambiguity": "medium",
+      "reason": "Multi-intent: triage first, sync after disposition",
+      "notes": "Sync must NOT run before triage produces a non-blocked, non-direction_only disposition"
+    },
+    {
+      "id": "route-012",
+      "request": "重新优化一下 issue-triage skill 的触发精度。",
+      "expected_skills": ["skill-trigger-router-optimizer"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Skill meta-work, not triage invocation",
+      "notes": "Negative for triage — must not loop on itself"
+    },
+    {
+      "id": "route-013",
+      "request": "你能帮我检查下这段 Kotlin 代码吗？",
+      "expected_skills": [],
+      "expected_mode": "abstain",
+      "ambiguity": "low",
+      "reason": "Generic code review, no issue-flow context",
+      "notes": "Negative for triage"
+    },
+    {
+      "id": "route-014",
+      "request": "我这边复现不出来这个 bug，请给个结论。",
+      "expected_skills": ["issue-triage"],
+      "expected_mode": "exclusive",
+      "ambiguity": "medium",
+      "reason": "Close-out candidate with disposition=cannot_reproduce; triage still has to verify before closing",
+      "notes": "Must NOT immediately set cannot_reproduce without running at least one excavation pass on any available evidence"
+    },
+    {
+      "id": "route-015",
+      "request": "证据还不够，我一时半会儿拿不到更多日志。给我几个排查方向就行。",
+      "expected_skills": ["issue-triage"],
+      "expected_mode": "exclusive",
+      "ambiguity": "low",
+      "reason": "Explicit request for direction_only disposition",
+      "notes": "Triage runs with disposition.type=direction_only and ranked hypotheses; next_step=resume_in_new_session"
+    },
+    {
+      "id": "route-016",
+      "request": "把 investigation.md 里的 root cause 翻译成英文。",
+      "expected_skills": [],
+      "expected_mode": "abstain",
+      "ambiguity": "low",
+      "reason": "Document translation, not triage",
+      "notes": "Negative — triage does not re-trigger for file-level text tasks on its own artifacts"
+    }
+  ],
+  "expected_mode_legend": {
+    "exclusive": "exactly this single skill should trigger",
+    "sequential": "listed skills should chain in the given order",
+    "partial_refuse": "the listed skill handles its scope but MUST refuse the out-of-scope sub-request",
+    "abstain": "no skill should claim this request"
+  },
+  "failure_modes_covered": [
+    "under-trigger on close-out dispositions (route-003/004/005)",
+    "over-trigger on pure sync (route-006)",
+    "over-trigger on pure branch bootstrap (route-007)",
+    "silently accepting code-edit sub-requests (route-009/010)",
+    "premature cannot_reproduce (route-014)",
+    "self-loop / meta confusion (route-012)",
+    "mis-routing generic code review (route-013)"
+  ]
+}

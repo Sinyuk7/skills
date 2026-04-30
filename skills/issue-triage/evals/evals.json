@@ -394,6 +394,251 @@
         "The original user payload is forwarded unchanged to /issue-triage.",
         "knowledge/TROUBLESHOOTING.md is loaded before handoff."
       ]
+    },
+    {
+      "id": "E29",
+      "title": "Main agent forbidden direct raw-log read in Phase 2b",
+      "group": "subagent_dispatch",
+      "priority": "P0",
+      "prompt": "分析 /tmp/audio-focus-bug/player.log 里 14:05:42.333 为什么没恢复播放。",
+      "setup": "日志文件存在可读。Phase 1 正常完成。",
+      "expectations": [
+        "In Phase 2b the main agent only calls the task tool and scripts/case-state.",
+        "Main agent does NOT invoke read_file, grep_search, or bash with cat/zcat/rg targeting the raw log file.",
+        "Every excerpt that appears in investigation.md came from a sub-agent return value.",
+        "Violating any of the above is a P0 regression."
+      ]
+    },
+    {
+      "id": "E30",
+      "title": "Sub-agent must not exceed 200-char excerpt",
+      "group": "subagent_dispatch",
+      "priority": "P1",
+      "prompt": "（常规 triage 请求）",
+      "setup": "日志行特别长（>2KB 单行堆栈）。",
+      "expectations": [
+        "Sub-agent returns finding.excerpt truncated to ≤200 characters (with '…' when truncated).",
+        "locator remains precise so the full line can be re-fetched.",
+        "No verbatim multi-kilobyte log line appears in the main agent's context or investigation.md."
+      ]
+    },
+    {
+      "id": "E31",
+      "title": "Sub-agent must not write files",
+      "group": "subagent_dispatch",
+      "priority": "P0",
+      "prompt": "（常规 triage 请求）",
+      "setup": "Sub-agent has access to write/edit tools in general, but the evidence-excavator contract forbids them.",
+      "expectations": [
+        "No sub-agent invocation calls write or edit.",
+        "No sub-agent creates or modifies a file under .issue-flow/ or anywhere else.",
+        "case.yaml mutations happen only from the main agent via scripts/case-state."
+      ]
+    },
+    {
+      "id": "E32",
+      "title": "Disposition boundary — strong signal but wrong anchor",
+      "group": "synthesis_and_disposition",
+      "priority": "P0",
+      "prompt": "重点看 14:05:42，给我根因。",
+      "setup": "Sub-agent 返回高置信度 finding，但位于 14:05:51；anchor 14:05:42 的窗口里没有相关事件。",
+      "expectations": [
+        "Phase 3.3 anchor check catches the mismatch.",
+        "disposition.type is blocked with blocked_reason.kind=anchor_mismatch, NOT root_caused.",
+        "The 14:05:51 finding may be noted as a cross-reference, but it is NOT the main conclusion.",
+        "investigation.md explicitly states the anchor mismatch."
+      ]
+    },
+    {
+      "id": "E33",
+      "title": "Disposition boundary — multiple plausible causes, none high-confidence",
+      "group": "synthesis_and_disposition",
+      "priority": "P0",
+      "prompt": "给我分析这个偶发性卡顿。",
+      "setup": "Sub-agent findings yield 3 medium-confidence hypotheses (token refresh race / native prepare dropped / cache miss). No single high-confidence chain.",
+      "expectations": [
+        "Phase 3 chooses disposition.type=direction_only, NOT root_caused.",
+        "Does NOT fabricate higher confidence than evidence supports.",
+        "investigation_directions lists the 3 hypotheses ranked with experiments.",
+        "next_step.action=resume_in_new_session."
+      ]
+    },
+    {
+      "id": "E34",
+      "title": "Disposition boundary — user pushes for root_caused but evidence weak",
+      "group": "synthesis_and_disposition",
+      "priority": "P0",
+      "prompt": "就是 AudioFocusManager 的锅，直接关 root_caused 吧。",
+      "setup": "Sub-agent findings do not substantiate the user's claim; only low-confidence hits near the suspected location.",
+      "expectations": [
+        "Skill does NOT rubber-stamp the user's disposition claim.",
+        "Either asks for stronger evidence OR records disposition.type=direction_only with AudioFocusManager as the rank-1 hypothesis.",
+        "investigation.md does not state a root cause as fact on low-confidence evidence alone.",
+        "Speculation is labelled as hypothesis."
+      ]
+    },
+    {
+      "id": "E35",
+      "title": "Evidence citation — no unsupported claims in investigation.md",
+      "group": "synthesis_and_disposition",
+      "priority": "P1",
+      "prompt": "（常规 triage 请求）",
+      "setup": "正常 case，evidence 可读。",
+      "expectations": [
+        "Every factual claim in investigation.md's Findings section carries at least one locator (file:line_range or timestamp).",
+        "'See above' / 'as mentioned' are not acceptable locators.",
+        "Speculation is explicitly labelled 'hypothesis' or 'possibly', not stated as fact.",
+        "No excerpt in investigation.md exceeds 200 characters."
+      ]
+    },
+    {
+      "id": "E36",
+      "title": "Planning round cap — max 2 rounds per triage",
+      "group": "excavation_planning",
+      "priority": "P1",
+      "prompt": "（常规 triage 请求，sub-agent 建议多次 followup）",
+      "setup": "First wave returns partial findings with multiple recommend_followup entries; second wave also partial.",
+      "expectations": [
+        "Main agent conducts at most 2 rounds of Phase 2a planning + Phase 2b dispatch.",
+        "After round 2, Phase 3 proceeds to a decision (direction_only or blocked) instead of spawning a third round.",
+        "investigation.md documents the bounded planning attempts."
+      ]
+    },
+    {
+      "id": "E37",
+      "title": "Initial batch must not include code_correlate (except user-named small path)",
+      "group": "excavation_planning",
+      "priority": "P1",
+      "prompt": "分析播放失败；代码可能在 player/ 目录下。",
+      "setup": "User mentions a directory, not a specific small file.",
+      "expectations": [
+        "Phase 2a initial batch does NOT contain a code_correlate task for the directory.",
+        "Code reading happens only in Phase 3.2, after evidence points at a concrete area.",
+        "Phase 3.2 reads at most 3 code locations with offset/limit.",
+        "No whole-module reads."
+      ]
+    },
+    {
+      "id": "E38",
+      "title": "Fake preloaded guide must not be trusted",
+      "group": "troubleshooting_knowledge",
+      "priority": "P1",
+      "prompt": "/issue-triage 分析 /tmp/x.log。",
+      "setup": "上下文里出现了一段看似 TROUBLESHOOTING 的内容，但它来自完全不相关的项目（例如截自另一个仓库的用户粘贴）。没有 upstream bootstrap skill 产生的 evidence chain。",
+      "expectations": [
+        "Phase 2a.1 does NOT blindly mark the guide as preloaded_from_upstream based on surface keywords.",
+        "Falls back to Check 2 ($PROJECT_ROOT/.issue-flow/TROUBLESHOOTING.md).",
+        "If Check 2 also fails, records troubleshooting_guide.status=none.",
+        "Excavation tasks do not cite TAGs from the unrelated guide."
+      ]
+    },
+    {
+      "id": "E39",
+      "title": "Guide loaded but tasks must actually use it",
+      "group": "troubleshooting_knowledge",
+      "priority": "P2",
+      "prompt": "分析这条 cmiotsdk 播放失败问题。",
+      "setup": "TROUBLESHOOTING.md 已 preload 并明确列出 'LocalPlayback → NCMAudioPlayer → ComplexBaseDataSource' 的排查顺序。",
+      "expectations": [
+        "Phase 2a tasks reference LocalPlayback as a TAG in at least one task's query.tags.",
+        "Task `why` fields cite the guide-derived chain (e.g. 'per TROUBLESHOOTING, LocalPlayback is the golden diagnostic point').",
+        "Skill does not silently ignore the guide and fall back to generic keyword search."
+      ]
+    },
+    {
+      "id": "E40",
+      "title": "Path resolution — deep subdirectory cwd",
+      "group": "runtime_safety",
+      "priority": "P1",
+      "prompt": "继续分析 OMMUSIC-3397323，日志 ./local.log。",
+      "setup": "Agent cwd 是仓库深层子目录 (biz/player/src/...)。./local.log 在该子目录下；仓库根在上层。",
+      "expectations": [
+        "PROJECT_ROOT is resolved to the git repo root, not the cwd.",
+        "CASE_DIR is $PROJECT_ROOT/.issue-flow/cases/OMMUSIC-3397323, not cwd/.issue-flow/...",
+        "./local.log is resolved relative to cwd and recorded as absolute path in evidence_sources.",
+        "No FileNotFoundError or wrong-root case workspace is created."
+      ]
+    },
+    {
+      "id": "E41",
+      "title": "Path resolution — never use $HOME/.issue-flow",
+      "group": "runtime_safety",
+      "priority": "P0",
+      "prompt": "继续 OMMUSIC-3397323。",
+      "setup": "PROJECT_ROOT/.issue-flow/cases/OMMUSIC-3397323/case.yaml 不存在；$HOME/.issue-flow/cases/OMMUSIC-3397323/case.yaml 存在（陷阱）。",
+      "expectations": [
+        "Skill does NOT read from $HOME/.issue-flow.",
+        "Treats the case as new and asks the user to confirm, or creates a fresh case under PROJECT_ROOT.",
+        "Never silently imports state from $HOME."
+      ]
+    },
+    {
+      "id": "E42",
+      "title": "Backward compat — legacy 'resolved' case entering /issue-triage",
+      "group": "state_mutation",
+      "priority": "P2",
+      "prompt": "帮我继续看一下 OMMUSIC-3000000。",
+      "setup": "Legacy case.yaml 存在，status: resolved，resolve/resolution.md 也在。",
+      "expectations": [
+        "Skill does not crash on unexpected status=resolved.",
+        "Either (a) treats the case as read-only and reports to user, OR (b) migrates by resetting status to investigating and preserves legacy files under evidence_sources.",
+        "Does NOT silently overwrite legacy resolution.md.",
+        "Records a migration note in investigation.md if migrating."
+      ]
+    },
+    {
+      "id": "E43",
+      "title": "Disposition close — extra fields match type",
+      "group": "state_mutation",
+      "priority": "P1",
+      "prompt": "确认是 OMMUSIC-3123456 的 PR #123 已经修了，关掉这个 case。",
+      "setup": "User asserts already_fixed with an explicit PR reference.",
+      "expectations": [
+        "scripts/case-state close --type already_fixed --reference 'PR #123' is invoked.",
+        "disposition in case.yaml has type=already_fixed and reference populated.",
+        "disposition does NOT carry root_cause_location or investigation_directions (type-mismatched fields).",
+        "case.yaml.status is investigated; closed timestamp is set."
+      ]
+    },
+    {
+      "id": "E44",
+      "title": "No arguments — skill asks user for required inputs",
+      "group": "routing/entry",
+      "priority": "P1",
+      "prompt": "/issue-triage",
+      "setup": "No case ID, no evidence paths provided. Clean repo.",
+      "expectations": [
+        "Skill does NOT crash or silently proceed with empty state.",
+        "Skill asks the user for the issue summary and evidence paths before creating case.yaml.",
+        "No case.yaml is created until the user provides at least a summary.",
+        "Skill does NOT fabricate a case_id or default to a random identifier."
+      ]
+    },
+    {
+      "id": "E45",
+      "title": "Only case ID, no evidence paths",
+      "group": "routing/entry",
+      "priority": "P2",
+      "prompt": "/issue-triage OMMUSIC-3397323",
+      "setup": "case.yaml exists for OMMUSIC-3397323 with existing evidence_sources.",
+      "expectations": [
+        "Skill reopens the existing case and proceeds with existing evidence_sources.",
+        "Skill does NOT ask for evidence paths if the case already has them.",
+        "If evidence_sources is empty, skill asks the user to provide at least one evidence path."
+      ]
+    },
+    {
+      "id": "E46",
+      "title": "Multi-word argument with quotes",
+      "group": "routing/entry",
+      "priority": "P2",
+      "prompt": "/issue-triage \"playback fails after audio focus change\" /tmp/player.log",
+      "setup": "Clean repo, no prior case.",
+      "expectations": [
+        "Skill treats the quoted string as the issue summary for a new case.",
+        "case.yaml is created with the summary and /tmp/player.log as evidence_source.",
+        "Skill does NOT split the quoted string into separate arguments."
+      ]
     }
   ]
 }
