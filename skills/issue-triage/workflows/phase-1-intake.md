@@ -49,7 +49,17 @@ Before deep evidence work, extract:
 - `named_stakeholders` — people the user referenced
 - `secondary_anchors` — only when they matter as cross-references
 
-If the target is ambiguous (multiple plausible primary questions or anchors) stop and ask the user. Do NOT pick one silently.
+If the target is ambiguous (multiple plausible primary questions or anchors):
+
+1. Call `record-blocked` first to persist the ambiguity before asking the user — this ensures state survives session interruption:
+   ```bash
+   ./scripts/case-state record-blocked \
+     --project-root "$PROJECT_ROOT" \
+     --case-id "$CASE_ID" \
+     --kind ambiguous_anchor \
+     --detail "<what is ambiguous and why>"
+   ```
+2. Then ask the user to disambiguate. Do NOT pick one silently.
 
 Persist the normalized target:
 
