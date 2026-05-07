@@ -38,8 +38,18 @@ def validate_skill(skill_path):
     except yaml.YAMLError as e:
         return False, f"Invalid YAML in frontmatter: {e}"
 
-    # Define allowed properties
-    ALLOWED_PROPERTIES = {'name', 'description', 'license', 'allowed-tools', 'metadata', 'compatibility'}
+    # Match the target agent schema rather than legacy local-only keys.
+    ALLOWED_PROPERTIES = {
+        'argument-hint',
+        'compatibility',
+        'context',
+        'description',
+        'disable-model-invocation',
+        'license',
+        'metadata',
+        'name',
+        'user-invocable',
+    }
 
     # Check for unexpected properties (excluding nested keys under metadata)
     unexpected_keys = set(frontmatter.keys()) - ALLOWED_PROPERTIES
@@ -90,6 +100,25 @@ def validate_skill(skill_path):
             return False, f"Compatibility must be a string, got {type(compatibility).__name__}"
         if len(compatibility) > 500:
             return False, f"Compatibility is too long ({len(compatibility)} characters). Maximum is 500 characters."
+
+    argument_hint = frontmatter.get('argument-hint', '')
+    if argument_hint and not isinstance(argument_hint, str):
+        return False, f"argument-hint must be a string, got {type(argument_hint).__name__}"
+
+    context = frontmatter.get('context', '')
+    if context and not isinstance(context, str):
+        return False, f"context must be a string, got {type(context).__name__}"
+
+    disable_model_invocation = frontmatter.get('disable-model-invocation')
+    if disable_model_invocation is not None and not isinstance(disable_model_invocation, bool):
+        return False, (
+            "disable-model-invocation must be a boolean, "
+            f"got {type(disable_model_invocation).__name__}"
+        )
+
+    user_invocable = frontmatter.get('user-invocable')
+    if user_invocable is not None and not isinstance(user_invocable, bool):
+        return False, f"user-invocable must be a boolean, got {type(user_invocable).__name__}"
 
     return True, "Skill is valid!"
 

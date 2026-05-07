@@ -1,14 +1,13 @@
 ---
 name: cmiotsdk-start-bugflow
-description: Start a cmiotsdk bugfix workflow. Create or reuse bugfix/<TICKET-ID> from origin/develop, then optionally hand off the same payload to /issue-triage.
+description: Start a cmiotsdk bugfix workflow. Create or reuse a bugfix branch from origin/develop. If auto_enter_investigate=true (default), hand off the original payload to /issue-triage; otherwise stop after branch bootstrap.
 disable-model-invocation: true
 argument-hint: "[TICKET-ID] [optional context, logs, screenshots]"
-allowed-tools: Bash Read Grep
 ---
 
 # cmiotsdk Start Bugflow
 
-Repo-aware wrapper that bootstraps a `bugfix/<TICKET-ID>` branch in `cmiotsdk`, then optionally hands the same payload to `/issue-triage`.
+Repo-aware wrapper that bootstraps a `bugfix/<TICKET-ID>` branch in `cmiotsdk`, then hands the same payload to `/issue-triage` only when `auto_enter_investigate=true`.
 
 ## Input
 
@@ -19,13 +18,15 @@ Repo-aware wrapper that bootstraps a `bugfix/<TICKET-ID>` branch in `cmiotsdk`, 
 | `user_context` | No | Original issue description |
 | `materials` | No | Logs, screenshots, archives, notes |
 | `code_references` | No | Relevant source paths |
-| `auto_enter_investigate` | No | Default `true`. Set `false` to stop after branch bootstrap. |
+| `auto_enter_investigate` | No | Default `true`. When `true`, hand off to `/issue-triage` after branch bootstrap. When `false`, stop after branch bootstrap. |
 
-Preserve every user-provided material for transparent forwarding.
+Forward every user-provided material to `/issue-triage` without modification, and tell the user which materials were forwarded.
 
 ## Step 1: Validate Repository
 
 Validate that the current repository is `cmiotsdk`. Run the skill-local wrapper entry; if it reports that the current repo is not `cmiotsdk`, stop and tell the user to run the workflow from the correct repository.
+
+If repository validation still fails after the user confirms they are in the intended repo, tell them to verify that `origin` points to the `cmiotsdk` remote and re-run the workflow. Do not fall through to `/issue-triage` when repository validation fails.
 
 ## Step 2: Validate Ticket ID
 
@@ -44,7 +45,9 @@ bash "$SKILL_DIR/scripts/start-bugfix.sh" "<TICKET-ID>"
 
 The wrapper entry resolves the skill-local implementation and runs the deterministic git safety checks and branch creation flow.
 
-## Step 4: Optional handoff to /issue-triage
+If the script exits non-zero, stop immediately. Report the script error to the user, suggest checking repository state or git remote configuration as indicated by the error, and do not hand off to `/issue-triage`.
+
+## Step 4: Conditional handoff to /issue-triage
 
 ### Payload mapping
 
@@ -80,10 +83,11 @@ If `auto_enter_investigate` is `false`, stop after reporting the branch and tell
 
 ## Rules
 
-- Scope: validate repository context, validate ticket ID, bootstrap or reuse `bugfix/<TICKET-ID>`, and optionally forward the original payload to `/issue-triage`
+- Scope: validate repository context, validate ticket ID, bootstrap or reuse `bugfix/<TICKET-ID>`, and forward the original payload to `/issue-triage` only when `auto_enter_investigate=true`
 - Non-goals: evidence collection, case workspace creation, and source-code analysis
 - Refuse when the current repository is not `cmiotsdk`
-- Preserve all user-provided materials for transparent forwarding
+- Forward all user-provided materials without modification and report the forwarded items to the user
+- Stop on any wrapper-script failure and do not continue into `/issue-triage`
 
 ## Done When
 

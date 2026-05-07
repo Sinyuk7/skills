@@ -18,9 +18,11 @@
 #   --force-all     Override including REAL DIRECTORIES (DESTRUCTIVE - will delete data!)
 #   --refresh       Remove and recreate same-name entries before linking
 #   --kill-stale    Terminate known CodeMaker/Qzhddr backend processes after sync
+#   --skill <name>  Sync only the specified skill (can be repeated). REQUIRED.
 #   --help          Show this help message
 #
 # Without options, syncs to default agents: .agents, .claude, .codex, .codemaker
+# A specific skill MUST be selected via --skill <name>; bulk/all-skill sync is disabled.
 #
 # Notes:
 #   - Uses absolute paths for symlinks to avoid relative path resolution issues
@@ -158,6 +160,7 @@ FORCE_ALL=false
 REFRESH=false
 KILL_STALE=false
 SELECTED_AGENTS=()
+SELECTED_SKILLS=()
 
 # ========================================
 # Help
@@ -184,18 +187,21 @@ OPTIONS:
     --force-all     Override including REAL DIRECTORIES (DESTRUCTIVE!)
     --refresh       Remove and recreate same-name entries before linking
     --kill-stale    Terminate known CodeMaker/Qzhddr backend processes after sync
+    --skill <name>  Sync only the specified skill (REQUIRED, can be repeated)
     --help          Show this help message
 
 EXAMPLES:
-    ./init.sh                       # Sync to default agents (.agents, .claude, .codex, .codemaker)
-    ./init.sh --claude --codex      # Sync only to Claude and Codex
-    ./init.sh --all                 # Sync to all known agents
-    ./init.sh --dry-run             # Preview what would be done
-    ./init.sh --force               # Override conflicting symlinks
-    ./init.sh --force-all           # Override everything (DANGER: deletes real directories!)
-    ./init.sh --refresh             # Recreate managed entries even if already linked
-    ./init.sh --refresh --kill-stale
-                                   # Recreate links, then restart stale CodeMaker backends
+    ./init.sh --skill issue-triage                   # Sync only issue-triage to default agents
+    ./init.sh --skill issue-triage --skill mcp-builder
+                                                     # Sync multiple specific skills
+    ./init.sh --claude --codex --skill issue-triage  # Sync only issue-triage to Claude and Codex
+    ./init.sh --all --skill issue-triage             # Sync issue-triage to all known agents
+    ./init.sh --dry-run --skill issue-triage         # Preview what would be done
+    ./init.sh --force --skill issue-triage           # Override conflicting symlinks
+    ./init.sh --force-all --skill issue-triage       # Override everything (DANGER: deletes real directories!)
+    ./init.sh --refresh --skill issue-triage         # Recreate managed entries even if already linked
+    ./init.sh --refresh --kill-stale --skill issue-triage
+                                                     # Recreate links, then restart stale CodeMaker backends
 
 NOTES:
     - Uses absolute symlink paths to avoid resolution issues
@@ -207,6 +213,7 @@ NOTES:
     - --force-all WILL DELETE real directories (use with extreme caution!)
     - --refresh touches only same-name managed skill entries under selected agent roots
     - --kill-stale only affects known CodeMaker/Qzhddr backend processes
+    - --skill <name> is REQUIRED; the script refuses to sync all skills at once
     - Default agents: .agents (canonical), .claude, .codex, .codemaker
 
 EOF
@@ -261,6 +268,23 @@ parse_args() {
                 fi
                 shift
                 ;;
+            --skill)
+                if [[ $# -lt 2 || -z "${2:-}" || "${2:0:2}" == "--" ]]; then
+                    log_error "--skill requires a skill name argument"
+                    exit 1
+                fi
+                SELECTED_SKILLS+=("$2")
+                shift 2
+                ;;
+            --skill=*)
+                skill_value="${1#--skill=}"
+                if [[ -z "$skill_value" ]]; then
+                    log_error "--skill requires a skill name argument"
+                    exit 1
+                fi
+                SELECTED_SKILLS+=("$skill_value")
+                shift
+                ;;
             *)
                 log_error "Unknown option: $1"
                 echo "Use --help for usage information"
@@ -281,6 +305,22 @@ parse_args() {
     else
         # Use defaults if no agents selected
         SELECTED_AGENTS=("${DEFAULT_AGENTS[@]}")
+    fi
+
+    # A specific skill MUST be selected; bulk sync is intentionally disabled.
+    if [[ ${#SELECTED_SKILLS[@]} -eq 0 ]]; then
+        log_error "You must specify at least one skill via --skill <name>"
+        echo "Use --help for usage information"
+        exit 1
+    fi
+
+    # Deduplicate selected skills
+    local -a skills_deduped=()
+    while IFS= read -r s; do
+        [[ -n "$s" ]] && skills_deduped+=("$s")
+    done < <(dedupe_array "${SELECTED_SKILLS[@]}")
+    if [[ ${#skills_deduped[@]} -gt 0 ]]; then
+        SELECTED_SKILLS=("${skills_deduped[@]}")
     fi
 }
 
@@ -558,6 +598,7 @@ main() {
     log_info "User Home: $USER_HOME"
     log_info "Source: $SOURCE_DIR"
     log_info "Target Agents: ${SELECTED_AGENTS[*]}"
+    log_info "Selected Skills: ${SELECTED_SKILLS[*]}"
     echo ""
     
     # Validate source directory
@@ -565,36 +606,33 @@ main() {
         log_error "Source directory does not exist: $SOURCE_DIR"
         exit 1
     fi
-    
-    # Get list of skills (subdirectories and symlinked directories in SOURCE_DIR)
+
+    # Validate every requested skill exists in source dir (directory or symlink)
     local skills=()
-    if command -v find > /dev/null 2>&1; then
-        # Use find if available (most portable)
-        while IFS= read -r skill_path; do
-            [[ -z "$skill_path" ]] && continue
-            skill_name=$(basename "$skill_path")
-            # Skip hidden directories
-            if [[ "$skill_name" != .* ]]; then
-                skills+=("$skill_name")
-            fi
-        done < <(find "$SOURCE_DIR" -mindepth 1 -maxdepth 1 \( -type d -o -type l \) 2>/dev/null | sort)
-    else
-        # Fallback to simple ls
-        for item in "$SOURCE_DIR"/*; do
-            [[ ! -e "$item" ]] && continue
-            skill_name=$(basename "$item")
-            if [[ "$skill_name" != .* ]] && [[ -d "$item" || -L "$item" ]]; then
-                skills+=("$skill_name")
-            fi
+    local missing_skills=()
+    for skill_name in "${SELECTED_SKILLS[@]}"; do
+        local skill_path="$SOURCE_DIR/$skill_name"
+        if [[ -d "$skill_path" || -L "$skill_path" ]]; then
+            skills+=("$skill_name")
+        else
+            missing_skills+=("$skill_name")
+        fi
+    done
+
+    if [[ ${#missing_skills[@]} -gt 0 ]]; then
+        log_error "The following requested skill(s) do not exist under $SOURCE_DIR:"
+        for m in "${missing_skills[@]}"; do
+            echo "  - $m"
         done
+        exit 1
     fi
     
     if [[ ${#skills[@]} -eq 0 ]]; then
-        log_warning "No skills found in $SOURCE_DIR"
+        log_warning "No skills resolved from --skill arguments"
         exit 0
     fi
     
-    log_info "Found ${#skills[@]} skill(s):"
+    log_info "Syncing ${#skills[@]} skill(s):"
     for skill in "${skills[@]}"; do
         echo "  - $skill"
     done

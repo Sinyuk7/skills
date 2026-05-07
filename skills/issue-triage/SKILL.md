@@ -1,30 +1,32 @@
 ---
 name: issue-triage
-description: Triage issue-flow cases end to end: create or reopen a case, normalize the investigation target, dispatch sub-agents to excavate evidence, and conclude with a cited disposition. Use when a user reports a new issue, continues analysis with more logs or screenshots, asks for root cause analysis, or wants the case closed as wont_fix, duplicate, already_fixed, or cannot_reproduce. Also matches Chinese requests such as 分析问题、根因分析、继续分析、补充日志、关闭问题。
-when_to_use: |
-  - User reports a bug or issue with evidence (logs, screenshots, traces)
-  - User asks for root cause analysis or 根因分析
-  - User continues an existing case with new evidence or 补充日志
-  - User wants to close a case as wont_fix, duplicate, already_fixed, or cannot_reproduce
-  - User asks for investigation directions when evidence is insufficient
-  - NOT for pure code review, branch bootstrap, or post-triage Overmind sync
-disable-model-invocation: false
-user-invocable: true
-arguments:
-  - name: case_id
-    description: Existing case ID (e.g. OMMUSIC-3397323) or a short issue summary for new cases
-    required: false
-  - name: evidence_paths
-    description: One or more absolute paths to evidence files (logs, screenshots, archives)
-    required: false
-argument-hint: "[case-id or issue summary] [evidence paths...]"
-allowed-tools: Bash Read Write Edit Grep Glob Task
-effort: high
+description: Triage issue-flow cases end to end - create or reopen a case, normalize the investigation target, dispatch sub-agents to excavate evidence, and conclude with a cited disposition. Use when a user reports a new bug or issue with logs, screenshots, or traces, continues an existing case with supplementary evidence, asks for root cause analysis, requests investigation directions when evidence is insufficient, or wants a case closed as wont_fix, duplicate, already_fixed, or cannot_reproduce. Also matches Chinese requests such as 分析问题、根因分析、继续分析、补充日志、关闭问题。Do not use for pure code review, branch bootstrap, or post-triage Overmind sync.
 ---
 
 # Issue Triage
 
 Single entry point for issue-flow: intake, plan, dispatch sub-agents to excavate evidence, synthesize a disposition.
+
+## Invocation
+
+- **Primary argument**: an existing case ID (e.g. `OMMUSIC-3397323`) or a short issue summary for a new case.
+- **Optional argument(s)**: one or more absolute paths to evidence files (logs, screenshots, archives).
+- **Argument hint**: `[case-id or issue summary] [evidence paths...]`
+- **Effort profile**: high — expect multi-phase investigation with sub-agent dispatch.
+
+## When to Use
+
+- User reports a bug or issue with evidence (logs, screenshots, traces).
+- User asks for root cause analysis or 根因分析.
+- User continues an existing case with new evidence or 补充日志.
+- User wants to close a case as `wont_fix`, `duplicate`, `already_fixed`, or `cannot_reproduce`.
+- User asks for investigation directions when evidence is insufficient.
+
+## When NOT to Use
+
+- Pure code review.
+- Branch bootstrap or repo setup.
+- Post-triage Overmind field sync (delegate to `issue-overmind-sync`).
 
 ## Capability Contract
 
