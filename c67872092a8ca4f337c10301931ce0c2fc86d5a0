@@ -1,0 +1,48 @@
+skills/issue-triage/scripts/case-state
+  h_06a7404f25f628 1-17
+skills/issue-triage/workflows/phase-2b-dispatch-excavators.md
+  h_06a7404f25f628 1-95
+skills/issue-overmind-sync/SKILL.md
+  h_06a7404f25f628 3,8,14,17-18,29,34-36,43,46,57,103-106,108-116,122,192-193,195-197,203
+skills/issue-triage/templates/investigation.md
+  h_06a7404f25f628 1-72
+skills/issue-triage/SKILL.md
+  h_06a7404f25f628 1-119
+skills/issue-triage/schemas/excavation-plan.yaml
+  h_06a7404f25f628 1-50
+skills/issue-triage/scripts/case_state.py
+  h_06a7404f25f628 1-412
+skills/issue-triage/workflows/phase-1-intake.md
+  h_06a7404f25f628 1-80
+skills/issue-triage/schemas/case.yaml
+  h_06a7404f25f628 1-134
+skills/cmiotsdk-start-bugflow/SKILL.md
+  h_06a7404f25f628 3,11,47,51-53,64,67,74,77,79,83,92
+skills/issue-triage/evals/evals.json
+  h_06a7404f25f628 1-399
+skills/issue-flow-core/README.md
+  h_06a7404f25f628 3,7,9-10,12,20-23,26,32-33,35,37,39-48,52-53,55-57,64,66,68,70-79,84,86-95,98,106-112
+skills/issue-triage/agents/evidence-excavator.md
+  h_06a7404f25f628 1-139
+skills/cmiotsdk-start-bugflow/scripts/start-bugfix-impl.sh
+  h_06a7404f25f628 40
+skills/issue-flow-core/templates/case.yaml
+  h_06a7404f25f628 5-6,30-33,35,39,41-42,44,48-50,52
+skills/cmiotsdk-start-bugflow/evals/evals.json
+  h_06a7404f25f628 7,12-13,21,26-27,39,45,49
+skills/issue-triage/workflows/phase-3-synthesize.md
+  h_06a7404f25f628 1-144
+skills/issue-triage/workflows/phase-2a-plan-excavation.md
+  h_06a7404f25f628 1-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "c67872092a8ca4f337c10301931ce0c2fc86d5a0",
+  "prompts": {},
+  "humans": {
+    "h_06a7404f25f628": {
+      "author": "sinyuk"
+    }
+  }
+}

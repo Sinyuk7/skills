@@ -1,0 +1,34 @@
+skills/cmiotsdk-start-bugflow/evals/evals.json
+  h_06a7404f25f628 55-79
+skills/issue-triage/workflows/phase-3-synthesize.md
+  h_06a7404f25f628 70,96,111,125
+skills/issue-triage/workflows/phase-1-intake.md
+  h_06a7404f25f628 30,38,57
+skills/issue-triage/scripts/validate-evals
+  h_06a7404f25f628 1-17
+skills/issue-triage/SKILL.md
+  h_06a7404f25f628 3-22,79-89,96-99,104,106-107,109-110,112,114-116,120-122
+skills/issue-triage/evals/evals.json
+  h_06a7404f25f628 397-641
+skills/issue-triage/workflows/phase-2a-plan-excavation.md
+  h_06a7404f25f628 23,41,53,67
+skills/issue-triage/workflows/phase-2b-dispatch-excavators.md
+  h_06a7404f25f628 13,23
+skills/issue-overmind-sync/evals/evals.json
+  h_06a7404f25f628 143-192
+skills/issue-triage/evals/routing-evals.json
+  h_06a7404f25f628 1-165
+skills/issue-triage/scripts/validate_evals.py
+  h_06a7404f25f628 1-260
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "33cb08968e1790d34a08fdf194d71ede7bef4982",
+  "prompts": {},
+  "humans": {
+    "h_06a7404f25f628": {
+      "author": "sinyuk"
+    }
+  }
+}

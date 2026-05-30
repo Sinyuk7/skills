@@ -1,0 +1,31 @@
+init.sh
+  h_06a7404f25f628 21,25,163,190,194-203,216,271-287,309-324,601,609-610,612-615,618-625,627,631,635
+skills/skill-creator/scripts/quick_validate.py
+  s_077dbd7ac12bf3::t_fc5bd163317f40 41-52,104-122,132
+skills/issue-triage/SKILL.md
+  h_06a7404f25f628 3,10-29
+skills/cmiotsdk-start-bugflow/SKILL.md
+  s_077dbd7ac12bf3::t_fc5bd163317f40 3,10,21,23,29-30,48,86,89-90
+  s_077dbd7ac12bf3::t_88bfccb96bb4e9 50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "25c497cb7d2c0b6c57ea920a86f9712168c5dc36",
+  "prompts": {},
+  "humans": {
+    "h_06a7404f25f628": {
+      "author": "sinyuk"
+    }
+  },
+  "sessions": {
+    "s_077dbd7ac12bf3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e001f-4e5e-7b92-8b32-1d383f886813",
+        "model": "gpt-5.4"
+      },
+      "human_author": "sinyuk <wb.shenyeke01@mesg.corp.netease.com>"
+    }
+  }
+}
