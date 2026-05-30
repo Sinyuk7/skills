@@ -1,0 +1,759 @@
+skills/claude-api/typescript/claude-api/README.md
+  c77ee97921303dc9 1-333
+skills/skill-creator/LICENSE.txt
+  c77ee97921303dc9 190
+skills/claude-api/typescript/claude-api/tool-use.md
+  c77ee97921303dc9 1-527
+skills/claude-api/curl/examples.md
+  c77ee97921303dc9 1-216
+skills/claude-api/python/claude-api/batches.md
+  c77ee97921303dc9 1-185
+skills/claude-api/shared/model-migration.md
+  c77ee97921303dc9 1-879
+skills/claude-api/shared/managed-agents-api-reference.md
+  c77ee97921303dc9 1-378
+skills/claude-api/shared/managed-agents-multiagent.md
+  c77ee97921303dc9 1-99
+skills/claude-api/ruby/claude-api.md
+  c77ee97921303dc9 1-113
+skills/claude-api/shared/error-codes.md
+  c77ee97921303dc9 1-213
+skills/claude-api/go/claude-api.md
+  c77ee97921303dc9 1-421
+skills/claude-api/shared/managed-agents-self-hosted-sandboxes.md
+  c77ee97921303dc9 1-173
+skills/claude-api/typescript/claude-api/files-api.md
+  c77ee97921303dc9 1-98
+skills/claude-api/shared/models.md
+  c77ee97921303dc9 1-124
+skills/claude-api/go/managed-agents/README.md
+  c77ee97921303dc9 1-561
+skills/claude-api/shared/tool-use-concepts.md
+  c77ee97921303dc9 1-327
+skills/claude-api/csharp/claude-api.md
+  c77ee97921303dc9 1-402
+skills/claude-api/shared/managed-agents-core.md
+  c77ee97921303dc9 1-237
+skills/claude-api/shared/managed-agents-onboarding.md
+  c77ee97921303dc9 1-114
+skills/claude-api/python/claude-api/streaming.md
+  c77ee97921303dc9 1-162
+skills/claude-api/python/claude-api/tool-use.md
+  c77ee97921303dc9 1-590
+skills/claude-api/ruby/managed-agents/README.md
+  c77ee97921303dc9 1-389
+skills/claude-api/shared/managed-agents-webhooks.md
+  c77ee97921303dc9 1-110
+skills/claude-api/curl/managed-agents.md
+  c77ee97921303dc9 1-336
+skills/claude-api/php/claude-api.md
+  c77ee97921303dc9 1-375
+skills/claude-api/python/managed-agents/README.md
+  c77ee97921303dc9 1-332
+skills/claude-api/typescript/managed-agents/README.md
+  c77ee97921303dc9 1-359
+skills/claude-api/shared/prompt-caching.md
+  c77ee97921303dc9 1-171
+skills/claude-api/shared/agent-design.md
+  c77ee97921303dc9 1-101
+skills/claude-api/typescript/claude-api/streaming.md
+  c77ee97921303dc9 1-178
+skills/claude-api/shared/managed-agents-client-patterns.md
+  c77ee97921303dc9 1-209
+skills/claude-api/php/managed-agents/README.md
+  c77ee97921303dc9 1-435
+skills/claude-api/shared/managed-agents-events.md
+  c77ee97921303dc9 1-193
+skills/claude-api/LICENSE.txt
+  c77ee97921303dc9 1-202
+skills/claude-api/shared/live-sources.md
+  c77ee97921303dc9 1-135
+README.md
+  c77ee97921303dc9 3-4
+skills/claude-api/java/managed-agents/README.md
+  c77ee97921303dc9 1-442
+skills/mcp-builder/LICENSE.txt
+  c77ee97921303dc9 190
+skills/claude-api/shared/managed-agents-environments.md
+  c77ee97921303dc9 1-215
+skills/claude-api/typescript/claude-api/batches.md
+  c77ee97921303dc9 1-106
+skills/claude-api/python/claude-api/README.md
+  c77ee97921303dc9 1-420
+skills/claude-api/SKILL.md
+  c77ee97921303dc9 1-325
+skills/claude-api/shared/managed-agents-overview.md
+  c77ee97921303dc9 1-68
+skills/claude-api/python/claude-api/files-api.md
+  c77ee97921303dc9 1-165
+skills/claude-api/shared/managed-agents-memory.md
+  c77ee97921303dc9 1-197
+skills/claude-api/java/claude-api.md
+  c77ee97921303dc9 1-432
+skills/claude-api/shared/managed-agents-tools.md
+  c77ee97921303dc9 1-320
+skills/claude-api/shared/managed-agents-outcomes.md
+  c77ee97921303dc9 1-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.6",
+  "base_commit_sha": "4c8a8bb72dd59e775105d14f18b0a708d5fa890a",
+  "prompts": {
+    "c77ee97921303dc9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e76d8-d479-7a81-a666-8bf037b4edce",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Sinyuk",
+      "messages": [],
+      "total_additions": 38202,
+      "total_deletions": 19813,
+      "accepted_lines": 25228,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        ".claude/settings.local.json": {
+          "additions": 10,
+          "deletions": 10,
+          "accepted_lines": 10
+        },
+        "skills/claude-api/go/managed-agents/README.md": {
+          "additions": 1122,
+          "deletions": 561,
+          "accepted_lines": 561
+        },
+        "skills/claude-api/java/claude-api.md": {
+          "additions": 864,
+          "deletions": 432,
+          "accepted_lines": 432
+        },
+        "skills/claude-api/php/managed-agents/readme.md": {
+          "additions": 435,
+          "accepted_lines": 435
+        },
+        "skills/claude-api/shared/managed-agents-events.md": {
+          "additions": 388,
+          "deletions": 195,
+          "accepted_lines": 193
+        },
+        "skills/claude-api/php/managed-agents/README.md": {
+          "additions": 870,
+          "deletions": 435,
+          "accepted_lines": 435
+        },
+        "skills/cmiotsdk-start-bugflow/knowledge/troubleshooting.md": {
+          "additions": 204,
+          "accepted_lines": 204
+        },
+        "skills/claude-api/curl/managed-agents.md": {
+          "additions": 672,
+          "deletions": 336,
+          "accepted_lines": 336
+        },
+        "skills/claude-api/php/claude-api.md": {
+          "additions": 750,
+          "deletions": 375,
+          "accepted_lines": 375
+        },
+        "skills/skill-creator/LICENSE.txt": {
+          "additions": 402,
+          "deletions": 402,
+          "accepted_lines": 201
+        },
+        "skills/skill-evidence-transformer/evals/evals.json": {
+          "additions": 35,
+          "deletions": 35,
+          "accepted_lines": 35
+        },
+        "claude.md": {
+          "additions": 3,
+          "accepted_lines": 3
+        },
+        "skills/issue-overmind-sync/templates/confirmation-draft.txt": {
+          "additions": 7,
+          "deletions": 7,
+          "accepted_lines": 7
+        },
+        "skills/skill-trigger-router-optimizer/templates/rewrite-proposals.md": {
+          "additions": 34,
+          "deletions": 34,
+          "accepted_lines": 34
+        },
+        "skills/claude-api/shared/live-sources.md": {
+          "additions": 270,
+          "deletions": 135,
+          "accepted_lines": 135
+        },
+        "skills/issue-triage/schemas/case.yaml": {
+          "additions": 134,
+          "deletions": 134,
+          "accepted_lines": 134
+        },
+        "skills/claude-api/python/claude-api/streaming.md": {
+          "additions": 324,
+          "deletions": 162,
+          "accepted_lines": 162
+        },
+        "skills/claude-api/shared/managed-agents-self-hosted-sandboxes.md": {
+          "additions": 346,
+          "deletions": 173,
+          "accepted_lines": 173
+        },
+        "skills/skill-machine-instruction-analysis/skill.md": {
+          "additions": 31,
+          "accepted_lines": 31
+        },
+        "skills/issue-overmind-sync/skill.md": {
+          "additions": 327,
+          "accepted_lines": 327
+        },
+        "skills/issue-triage/scripts/case-state": {
+          "additions": 17,
+          "deletions": 17,
+          "accepted_lines": 17
+        },
+        "skills/issue-triage/workflows/phase-3-synthesize.md": {
+          "additions": 144,
+          "deletions": 144,
+          "accepted_lines": 144
+        },
+        "skills/claude-api/java/managed-agents/readme.md": {
+          "additions": 442,
+          "accepted_lines": 442
+        },
+        "skills/claude-api/curl/examples.md": {
+          "additions": 432,
+          "deletions": 216,
+          "accepted_lines": 216
+        },
+        "skills/skill-trigger-router-optimizer/examples/mcp-builder-sample/conflict-register.md": {
+          "additions": 21,
+          "deletions": 21,
+          "accepted_lines": 21
+        },
+        "skills/skill-machine-instruction-analysis/knowledge/conversion-rules.md": {
+          "additions": 258,
+          "deletions": 258,
+          "accepted_lines": 258
+        },
+        "skills/claude-api/shared/managed-agents-memory.md": {
+          "additions": 394,
+          "deletions": 197,
+          "accepted_lines": 197
+        },
+        "skills/skill-trigger-router-optimizer/examples/openspec-explore-sample/routing-matrix.json": {
+          "additions": 62,
+          "deletions": 62,
+          "accepted_lines": 62
+        },
+        "skills/claude-api/shared/managed-agents-tools.md": {
+          "additions": 641,
+          "deletions": 321,
+          "accepted_lines": 320
+        },
+        "skills/skill-trigger-router-optimizer/templates/conflict-register.md": {
+          "additions": 19,
+          "deletions": 19,
+          "accepted_lines": 19
+        },
+        "skills/skill-creator/scripts/quick_validate.py": {
+          "additions": 132,
+          "deletions": 132,
+          "accepted_lines": 132
+        },
+        "skills/claude-api/shared/tool-use-concepts.md": {
+          "additions": 654,
+          "deletions": 327,
+          "accepted_lines": 327
+        },
+        "skills/skill-trigger-router-optimizer/templates/routing-matrix.json": {
+          "additions": 23,
+          "deletions": 23,
+          "accepted_lines": 23
+        },
+        "README.md": {
+          "additions": 192,
+          "deletions": 190,
+          "accepted_lines": 96
+        },
+        "skills/claude-api/license.txt": {
+          "additions": 202,
+          "accepted_lines": 202
+        },
+        "skills/claude-api/python/claude-api/readme.md": {
+          "additions": 420,
+          "accepted_lines": 420
+        },
+        "skills/claude-api/shared/managed-agents-onboarding.md": {
+          "additions": 228,
+          "deletions": 114,
+          "accepted_lines": 114
+        },
+        "skills/skill-evidence-transformer/workflows/analysis.md": {
+          "additions": 71,
+          "deletions": 71,
+          "accepted_lines": 71
+        },
+        "skills/issue-flow-core/templates/case.yaml": {
+          "additions": 52,
+          "deletions": 52,
+          "accepted_lines": 52
+        },
+        "skills/issue-triage/scripts/case_state.py": {
+          "additions": 412,
+          "deletions": 412,
+          "accepted_lines": 412
+        },
+        "skills/issue-triage/workflows/phase-2a-plan-excavation.md": {
+          "additions": 114,
+          "deletions": 114,
+          "accepted_lines": 114
+        },
+        "skills/skill-trigger-router-optimizer/examples/openspec-explore-sample/routing-audit.md": {
+          "additions": 62,
+          "deletions": 62,
+          "accepted_lines": 62
+        },
+        "skills/issue-flow-core/templates/investigation.md": {
+          "additions": 72,
+          "deletions": 72,
+          "accepted_lines": 72
+        },
+        "skills/claude-api/shared/agent-design.md": {
+          "additions": 202,
+          "deletions": 101,
+          "accepted_lines": 101
+        },
+        "skills/claude-api/ruby/managed-agents/README.md": {
+          "additions": 778,
+          "deletions": 389,
+          "accepted_lines": 389
+        },
+        "skills/claude-api/ruby/managed-agents/readme.md": {
+          "additions": 389,
+          "accepted_lines": 389
+        },
+        "skills/claude-api/shared/managed-agents-api-reference.md": {
+          "additions": 756,
+          "deletions": 378,
+          "accepted_lines": 378
+        },
+        "skills/skill-trigger-router-optimizer/knowledge/observability-hooks.md": {
+          "additions": 49,
+          "deletions": 49,
+          "accepted_lines": 49
+        },
+        "skills/issue-triage/scripts/validate-evals": {
+          "additions": 17,
+          "deletions": 17,
+          "accepted_lines": 17
+        },
+        "skills/cmiotsdk-start-bugflow/evals/evals.json": {
+          "additions": 82,
+          "deletions": 82,
+          "accepted_lines": 82
+        },
+        "skills/skill-trigger-router-optimizer/readme.md": {
+          "additions": 70,
+          "accepted_lines": 70
+        },
+        "skills/claude-api/typescript/claude-api/files-api.md": {
+          "additions": 196,
+          "deletions": 98,
+          "accepted_lines": 98
+        },
+        "skills/issue-triage/evals/evals.json": {
+          "additions": 644,
+          "deletions": 644,
+          "accepted_lines": 644
+        },
+        "agents.md": {
+          "additions": 258,
+          "accepted_lines": 258
+        },
+        "skills/skill-trigger-router-optimizer/examples/mcp-builder-sample/routing-evals.json": {
+          "additions": 58,
+          "deletions": 58,
+          "accepted_lines": 58
+        },
+        "skills/cmiotsdk-start-bugflow/tests/test-start-bugfix.sh": {
+          "additions": 250,
+          "deletions": 250,
+          "accepted_lines": 250
+        },
+        "skills/skill-trigger-router-optimizer/templates/router-policy.md": {
+          "additions": 49,
+          "deletions": 49,
+          "accepted_lines": 49
+        },
+        "skills/cmiotsdk-start-bugflow/skill.md": {
+          "additions": 97,
+          "accepted_lines": 97
+        },
+        "skills/mcp-builder/license.txt": {
+          "additions": 202,
+          "accepted_lines": 202
+        },
+        "skills/issue-triage/skill.md": {
+          "additions": 155,
+          "accepted_lines": 155
+        },
+        "skills/cmiotsdk-start-bugflow/scripts/start-bugfix-impl.sh": {
+          "additions": 93,
+          "deletions": 93,
+          "accepted_lines": 93
+        },
+        "skills/claude-api/shared/managed-agents-outcomes.md": {
+          "additions": 212,
+          "deletions": 106,
+          "accepted_lines": 106
+        },
+        "skills/skill-trigger-router-optimizer/skill.md": {
+          "additions": 47,
+          "accepted_lines": 47
+        },
+        "skills/claude-api/SKILL.md": {
+          "additions": 650,
+          "deletions": 325,
+          "accepted_lines": 325
+        },
+        "skills/issue-triage/templates/investigation.md": {
+          "additions": 72,
+          "deletions": 72,
+          "accepted_lines": 72
+        },
+        "skills/claude-api/typescript/claude-api/streaming.md": {
+          "additions": 356,
+          "deletions": 178,
+          "accepted_lines": 178
+        },
+        "skills/issue-overmind-sync/schemas/iot-bug-target-fields.yaml": {
+          "additions": 81,
+          "deletions": 81,
+          "accepted_lines": 81
+        },
+        "skills/issue-triage/agents/evidence-excavator.md": {
+          "additions": 139,
+          "deletions": 139,
+          "accepted_lines": 139
+        },
+        "skills/issue-triage/workflows/phase-2b-dispatch-excavators.md": {
+          "additions": 95,
+          "deletions": 95,
+          "accepted_lines": 95
+        },
+        "skills/claude-api/shared/error-codes.md": {
+          "additions": 426,
+          "deletions": 213,
+          "accepted_lines": 213
+        },
+        "skills/claude-api/java/managed-agents/README.md": {
+          "additions": 884,
+          "deletions": 442,
+          "accepted_lines": 442
+        },
+        "skills/skill-trigger-router-optimizer/examples/openspec-explore-sample/router-policy.md": {
+          "additions": 55,
+          "deletions": 55,
+          "accepted_lines": 55
+        },
+        "skills/claude-api/python/claude-api/README.md": {
+          "additions": 840,
+          "deletions": 420,
+          "accepted_lines": 420
+        },
+        "skills/claude-api/shared/managed-agents-multiagent.md": {
+          "additions": 198,
+          "deletions": 99,
+          "accepted_lines": 99
+        },
+        "skills/skill-trigger-router-optimizer/evals/evals.json": {
+          "additions": 78,
+          "deletions": 78,
+          "accepted_lines": 78
+        },
+        "skills/cmiotsdk-start-bugflow/scripts/start-bugfix.sh": {
+          "additions": 20,
+          "deletions": 20,
+          "accepted_lines": 20
+        },
+        "skills/claude-api/skill.md": {
+          "additions": 325,
+          "accepted_lines": 325
+        },
+        "skills/claude-api/python/managed-agents/readme.md": {
+          "additions": 332,
+          "accepted_lines": 332
+        },
+        "skills/claude-api/python/claude-api/files-api.md": {
+          "additions": 330,
+          "deletions": 165,
+          "accepted_lines": 165
+        },
+        "skills/claude-api/shared/managed-agents-webhooks.md": {
+          "additions": 220,
+          "deletions": 110,
+          "accepted_lines": 110
+        },
+        "skills/skill-machine-instruction-analysis/templates/analysis-schema.json": {
+          "additions": 30,
+          "deletions": 30,
+          "accepted_lines": 30
+        },
+        "skills/skill-trigger-router-optimizer/examples/mcp-builder-sample/routing-audit.md": {
+          "additions": 69,
+          "deletions": 69,
+          "accepted_lines": 69
+        },
+        "skills/issue-flow-core/readme.md": {
+          "additions": 112,
+          "accepted_lines": 112
+        },
+        "skills/skill-trigger-router-optimizer/examples/openspec-explore-sample/rewrite-proposals.md": {
+          "additions": 37,
+          "deletions": 37,
+          "accepted_lines": 37
+        },
+        "skills/skill-trigger-router-optimizer/examples/mcp-builder-sample/rewrite-proposals.md": {
+          "additions": 63,
+          "deletions": 63,
+          "accepted_lines": 63
+        },
+        "skills/skill-evidence-transformer/workflows/transformation.md": {
+          "additions": 111,
+          "deletions": 111,
+          "accepted_lines": 111
+        },
+        "skills/claude-api/shared/models.md": {
+          "additions": 248,
+          "deletions": 124,
+          "accepted_lines": 124
+        },
+        "skills/skill-trigger-router-optimizer/examples/mcp-builder-sample/routing-matrix.json": {
+          "additions": 111,
+          "deletions": 111,
+          "accepted_lines": 111
+        },
+        "skills/skill-trigger-router-optimizer/workflows/router-optimization.md": {
+          "additions": 295,
+          "deletions": 295,
+          "accepted_lines": 295
+        },
+        "skills/skill-trigger-router-optimizer/templates/routing-evals.json": {
+          "additions": 13,
+          "deletions": 13,
+          "accepted_lines": 13
+        },
+        "skills/claude-api/typescript/claude-api/batches.md": {
+          "additions": 212,
+          "deletions": 106,
+          "accepted_lines": 106
+        },
+        "skills/claude-api/shared/prompt-caching.md": {
+          "additions": 342,
+          "deletions": 171,
+          "accepted_lines": 171
+        },
+        ".sisyphus/ralph-loop.local.md": {
+          "additions": 14,
+          "deletions": 14,
+          "accepted_lines": 14
+        },
+        "skills/issue-triage/schemas/excavation-plan.yaml": {
+          "additions": 50,
+          "deletions": 50,
+          "accepted_lines": 50
+        },
+        "skills/claude-api/ruby/claude-api.md": {
+          "additions": 226,
+          "deletions": 113,
+          "accepted_lines": 113
+        },
+        "skills/skill-machine-instruction-analysis/workflows/refactor-workflow.md": {
+          "additions": 129,
+          "deletions": 129,
+          "accepted_lines": 129
+        },
+        "skills/skill-trigger-router-optimizer/templates/routing-audit.md": {
+          "additions": 37,
+          "deletions": 37,
+          "accepted_lines": 37
+        },
+        "skills/claude-api/csharp/claude-api.md": {
+          "additions": 804,
+          "deletions": 402,
+          "accepted_lines": 402
+        },
+        "skills/skill-machine-instruction-analysis/templates/refactored-skill.md": {
+          "additions": 128,
+          "deletions": 128,
+          "accepted_lines": 128
+        },
+        "skills/skill-evidence-transformer/skill.md": {
+          "additions": 29,
+          "accepted_lines": 29
+        },
+        "skills/issue-overmind-sync/evals/evals.json": {
+          "additions": 195,
+          "deletions": 195,
+          "accepted_lines": 195
+        },
+        "skills/claude-api/typescript/claude-api/README.md": {
+          "additions": 666,
+          "deletions": 333,
+          "accepted_lines": 333
+        },
+        "skills/claude-api/shared/model-migration.md": {
+          "additions": 1758,
+          "deletions": 879,
+          "accepted_lines": 879
+        },
+        "skills/issue-triage/scripts/validate_evals.py": {
+          "additions": 260,
+          "deletions": 260,
+          "accepted_lines": 260
+        },
+        "skills/claude-api/shared/managed-agents-overview.md": {
+          "additions": 136,
+          "deletions": 68,
+          "accepted_lines": 68
+        },
+        "skills/skill-evidence-transformer/templates/evidence-structure.md": {
+          "additions": 44,
+          "deletions": 44,
+          "accepted_lines": 44
+        },
+        "skills/skill-evidence-transformer/knowledge/evidence-chain-design.md": {
+          "additions": 42,
+          "deletions": 42,
+          "accepted_lines": 42
+        },
+        "skills/claude-api/typescript/claude-api/tool-use.md": {
+          "additions": 1054,
+          "deletions": 527,
+          "accepted_lines": 527
+        },
+        "skills/claude-api/python/managed-agents/README.md": {
+          "additions": 664,
+          "deletions": 332,
+          "accepted_lines": 332
+        },
+        "skills/claude-api/LICENSE.txt": {
+          "additions": 403,
+          "deletions": 201,
+          "accepted_lines": 202
+        },
+        "skills/skill-creator/license.txt": {
+          "additions": 202,
+          "accepted_lines": 202
+        },
+        "skills/skill-trigger-router-optimizer/examples/openspec-explore-sample/conflict-register.md": {
+          "additions": 21,
+          "deletions": 21,
+          "accepted_lines": 21
+        },
+        "skills/skill-trigger-router-optimizer/knowledge/routing-patterns.md": {
+          "additions": 66,
+          "deletions": 66,
+          "accepted_lines": 66
+        },
+        "skills/skill-trigger-router-optimizer/examples/mcp-builder-sample/router-policy.md": {
+          "additions": 59,
+          "deletions": 59,
+          "accepted_lines": 59
+        },
+        "skills/claude-api/shared/managed-agents-core.md": {
+          "additions": 475,
+          "deletions": 238,
+          "accepted_lines": 237
+        },
+        "skills/claude-api/shared/managed-agents-environments.md": {
+          "additions": 430,
+          "deletions": 215,
+          "accepted_lines": 215
+        },
+        "skills/claude-api/typescript/managed-agents/README.md": {
+          "additions": 718,
+          "deletions": 359,
+          "accepted_lines": 359
+        },
+        "skills/issue-overmind-sync/knowledge/field-discovery-policy.md": {
+          "additions": 43,
+          "deletions": 43,
+          "accepted_lines": 43
+        },
+        "skills/skill-trigger-router-optimizer/examples/openspec-explore-sample/routing-evals.json": {
+          "additions": 49,
+          "deletions": 49,
+          "accepted_lines": 49
+        },
+        "skills/issue-triage/workflows/phase-1-intake.md": {
+          "additions": 90,
+          "deletions": 90,
+          "accepted_lines": 90
+        },
+        "skills/claude-api/typescript/managed-agents/readme.md": {
+          "additions": 359,
+          "accepted_lines": 359
+        },
+        ".gitignore": {
+          "additions": 10,
+          "deletions": 10,
+          "accepted_lines": 10
+        },
+        "skills/claude-api/python/claude-api/batches.md": {
+          "additions": 370,
+          "deletions": 185,
+          "accepted_lines": 185
+        },
+        "init_readme.md": {
+          "additions": 283,
+          "accepted_lines": 283
+        },
+        "skills/claude-api/typescript/claude-api/readme.md": {
+          "additions": 333,
+          "accepted_lines": 333
+        },
+        "skills/claude-api/go/claude-api.md": {
+          "additions": 842,
+          "deletions": 421,
+          "accepted_lines": 421
+        },
+        "skills/claude-api/go/managed-agents/readme.md": {
+          "additions": 561,
+          "accepted_lines": 561
+        },
+        "init.sh": {
+          "additions": 751,
+          "deletions": 751,
+          "accepted_lines": 751
+        },
+        "readme.md": {
+          "additions": 96,
+          "accepted_lines": 96
+        },
+        "skills/issue-triage/evals/routing-evals.json": {
+          "additions": 165,
+          "deletions": 165,
+          "accepted_lines": 165
+        },
+        "skills/claude-api/python/claude-api/tool-use.md": {
+          "additions": 1180,
+          "deletions": 590,
+          "accepted_lines": 590
+        },
+        "skills/claude-api/shared/managed-agents-client-patterns.md": {
+          "additions": 418,
+          "deletions": 209,
+          "accepted_lines": 209
+        },
+        "skills/mcp-builder/LICENSE.txt": {
+          "additions": 402,
+          "deletions": 402,
+          "accepted_lines": 201
+        }
+      }
+    }
+  }
+}
