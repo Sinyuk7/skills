@@ -1,283 +1,83 @@
-# Skills Init Script
+# Skills Sync
 
-同步当前项目的 skills 到各种 AI agent 的用户目录。
-
-## 🎯 核心改进
-
-这个脚本解决了原始版本的 **6 个关键问题**：
-
-### ✅ 问题 1：正确的目录路径
-- ✓ 使用 `~/.codex/skills` 而不是 `~/codex/skills`
-- ✓ 添加 `~/.agents/skills` 作为 canonical user-level store（符合 Codex/open-agent-skills 标准）
-- ✓ 支持 `.claude`, `.codex`, `.agents`, `.codemaker`, `.cursor` 等
-
-### ✅ 问题 2：修复 `set -e` 陷阱
-- ✓ 使用 `created=$((created + 1))` 而不是 `((created++))`
-- ✓ 避免算术表达式返回 0 导致脚本退出的问题
-
-### ✅ 问题 3：准确的跨平台说明
-- ✓ 明确标注：macOS / Linux / Windows (Git Bash/WSL with Developer Mode)
-- ✓ Windows 下失败时提示需要 Developer Mode 或 admin 权限
-- ✓ 不夸大为"完全兼容 Windows"
-
-### ✅ 问题 4：使用绝对路径
-- ✓ `ln -s "$source" "$target"` 使用绝对路径
-- ✓ 避免当目标目录本身是 symlink 时的相对路径解析问题
-
-### ✅ 问题 5：智能冲突检测
-- ✓ 检查已存在的 symlink 是否指向正确位置
-- ✓ 区分 symlink / 真实目录 / 文件
-- ✓ 提供详细的冲突信息
-
-### ✅ 问题 6：完全可配置化
-- ✓ 支持 `--claude`, `--codex`, `--agents` 等参数选择目标 agent
-- ✓ 支持 `--all` 同步到所有已知 agent
-- ✓ 支持 `--dry-run` 预览模式
-- ✓ 支持 `--force` 强制覆盖冲突
-- ✓ 内置可扩展的 agent 目录映射表
-
-### ✅ 问题 7：面向更新场景的强刷新
-- ✓ `--refresh` 会先删除选中 agent 下的同名 skill 条目，再重建 symlink
-- ✓ 同名条目无论是 symlink、真实目录还是文件，都能统一刷新
-- ✓ 只影响“本次要同步的 skill 名称”，不会清空整个 `skills/` 根目录
-
-### ✅ 问题 8：CodeMaker stale 进程兜底
-- ✓ `--kill-stale` 会在同步成功后终止已知的 CodeMaker/Qzhddr 后台进程
-- ✓ 适合 `SKILL.md` 已更新但客户端仍旧吃旧快照的场景
-- ✓ 默认不启用，避免脚本悄悄中断正在运行的客户端
-
-## 🚀 使用方法
-
-### 基本用法
+这个仓库使用 Node-first 同步器把 `./skills` 下的有效 skill 同步到本机已存在的 agent 用户目录。主入口是：
 
 ```bash
-# 同步到默认 agents (.agents, .claude, .codex, .codemaker)
-./init.sh
-
-# 只同步到 Claude
-./init.sh --claude
-
-# 只同步到 Codex
-./init.sh --codex
-
-# 同步到 canonical store
-./init.sh --agents
-
-# 同步到所有已知 agents
-./init.sh --all
-
-# 组合使用
-./init.sh --claude --codex
-
-# 强制刷新同名 skill 项
-./init.sh --refresh
-
-# 刷新 skill 并重启已知 CodeMaker 后台
-./init.sh --refresh --kill-stale
+npm run sync
 ```
 
-### 高级选项
+`init.sh` 只保留为兼容 wrapper，内部调用同一个 Node 同步器，不再包含 Bash 版同步、删除或杀进程逻辑。
+
+## 默认行为
+
+- 自动扫描 `$HOME` 下已存在的 agent 根目录：`.agents`、`.claude`、`.codemaker`、`.codex`、`.gemini`、`.opencode`、`.cursor`。
+- 为每个已存在的 agent 根目录创建 `<agent>/skills` 子目录。
+- 只同步包含 `SKILL.md` 的目录；没有 `SKILL.md` 的目录会被跳过并报告。
+- Windows 使用 directory junction，macOS/Linux 使用 directory symlink。
+- 每个目标 `skills` 目录写入 `.skills-sync-state.json`，记录本仓库托管的 skill。
+- 默认只删除 state 中证明由本仓库托管、但源仓库已删除的 stale skill。
+- 未托管的同名目录、文件或指向其他位置的链接默认只报告 conflict，不覆盖、不删除。
+- 已存在且指向本仓库的旧链接默认报告为 adoptable；传 `--adopt-links` 后才纳入 state。
+
+Codex/OpenAI 生态的主目标是 `~/.agents/skills`；如果 `~/.codex` 已存在，同步器会把 `~/.codex/skills` 作为兼容目标处理。
+
+## 常用命令
 
 ```bash
-# 预览模式（不实际创建链接）
+# 同步到自动发现的已有 agent 目标
+npm run sync
+
+# 预览，不写文件
+npm run sync:dry-run
+npm run sync -- --dry-run
+
+# 只同步到指定 agent
+npm run sync -- --agent agents
+npm run sync -- --agent claude --agent agents
+
+# 只同步指定 skill
+npm run sync -- --skill skill-creator
+
+# 认领已经指向本仓库的旧 symlink/junction
+npm run sync -- --adopt-links
+
+# 只报告 stale managed skill，不删除
+npm run sync -- --prune report
+
+# 重建 state 中已托管但目标异常的条目
+npm run sync -- --replace-managed
+
+# 运行测试
+npm test
+```
+
+`init.sh` 仍可用于旧习惯：
+
+```bash
 ./init.sh --dry-run
-
-# 强制覆盖已存在的目录/链接
-./init.sh --force
-
-# 删除同名 skill 条目后重建
-./init.sh --refresh
-
-# 删除同名条目后重建，并清理 stale CodeMaker 后台
-./init.sh --refresh --kill-stale
-
-# 预览强制模式
-./init.sh --dry-run --force
-
-# 组合使用
-./init.sh --claude --codex --force
+./init.sh --agent agents
 ```
 
-### 查看帮助
+## 安全模型
 
-```bash
-./init.sh --help
-```
+同步器只会自动删除满足全部条件的目标：
 
-## 📋 支持的 Agents
+1. 目标记录在 `.skills-sync-state.json` 中。
+2. state 的 `sourceRoot` 是当前仓库的 `skills` 目录。
+3. 源仓库中对应 skill 已不存在。
+4. 目标路径位于当前 agent 的 `skills` 目录下。
+5. 目标是 symlink/junction，而不是真实目录。
 
-| Agent | 目录 | 说明 |
-|-------|------|------|
-| `agents` | `~/.agents/skills` | Canonical user-level store (Codex/open-agent-skills 标准) |
-| `claude` | `~/.claude/skills` | Claude Code |
-| `codex` | `~/.codex/skills` | Codex |
-| `codemaker` | `~/.codemaker/skills` | CodeMaker |
-| `cursor` | `~/.cursor/skills` | Cursor |
+真实目录或未知链接不会被默认删除。需要修复托管项时使用 `--replace-managed`；非托管冲突需要人工处理。
 
-**默认 agents**：`.agents`, `.claude`, `.codex`, `.codemaker`
+## Agent 缓存限制
 
-## 🔍 工作原理
+同步器只更新磁盘文件，不会热更新已经激活的 agent 会话：
 
-1. 扫描 `./skills/` 目录下的所有子目录（跳过隐藏目录）
-2. 为每个 skill 在目标 agent 目录创建**绝对路径**符号链接
-3. 智能处理冲突：
-   - ✅ 如果 symlink 已存在且指向正确，跳过
-   - ⚠️ 如果 symlink 指向其他位置，显示警告（`--force` 可覆盖）
-   - ⚠️ 如果存在真实目录/文件，显示警告（`--force` 可覆盖）
-4. 输出详细的统计信息
-5. 可选：如果传入 `--kill-stale`，在同步成功后终止已知 CodeMaker/Qzhddr 后台进程
+- 已激活 skill 的说明可能已被 agent 快照到当前会话。
+- 修改 `SKILL.md` 后，如果行为没变，优先新开会话或重启对应 agent。
+- 同步器不会 kill CodeMaker、Qzhddr 或其他后台进程。
 
-## ⚠️ Agent 缓存注意事项
+## 设计说明
 
-`init.sh` 的职责只是把 skill 同步到目标目录。它**不会**：
-
-- 热更新已经在 agent 会话里激活过的 skill 指令
-- 清理 agent 自己的 skill 缓存或索引
-- 改变 agent 运行时使用的工作目录（cwd）
-
-这点对 `CodeMaker` 尤其重要：
-
-- 已经激活过的 skill，通常会在激活时把 `SKILL.md` 内容快照进当前会话
-- 即使你随后重新执行 `./init.sh --codemaker`，当前会话也可能继续使用旧快照
-- 某次运行里的相对路径解析，仍然取决于 CodeMaker 当前打开的工程 / 会话 cwd，不取决于 `init.sh`
-
-推荐做法：
-
-```bash
-# 1. 同步磁盘上的 skill
-./init.sh --codemaker --refresh
-
-# 2. 如果怀疑旧快照卡住，再清理 stale 后台
-./init.sh --codemaker --refresh --kill-stale
-```
-
-如果你刚修改了 `SKILL.md`、workflow 或 template，看到行为没变，优先怀疑是 agent 会话缓存，而不是 symlink 没更新。
-
-## 📊 输出示例
-
-```bash
-$ ./init.sh --claude --dry-run
-
-[INFO] ======================================
-[INFO] Skills Sync Script
-[INFO] ======================================
-[DRY-RUN] Running in DRY-RUN mode (no changes will be made)
-
-[INFO] User Home: /Users/shenyeke01
-[INFO] Source: /Users/shenyeke01/Documents/Workspace/skills/skills
-[INFO] Target Agents: claude
-
-[INFO] Found 16 skill(s):
-  - brand-guidelines
-  - claude-api
-  - doc-coauthoring
-  ...
-
-[INFO] Processing: claude (/Users/shenyeke01/.claude/skills)
-[DRY-RUN] Would create: brand-guidelines -> /Users/.../skills/brand-guidelines
-[DRY-RUN] Would create: claude-api -> /Users/.../skills/claude-api
-...
-
-[INFO] Summary for claude:
-[✓]   Created/OK: 16
-
-[INFO] ======================================
-[INFO] Overall Summary
-[INFO] ======================================
-[✓] Created/OK: 16
-
-[INFO] This was a dry-run. Run without --dry-run to apply changes.
-```
-
-## 🛡️ 安全特性
-
-- **默认跳过冲突**：不会意外覆盖已存在的文件/目录
-- **Dry-run 模式**：可以先预览再执行
-- **Refresh 模式只清同名项**：不会整目录清空
-- **Stale 清理显式开启**：只有传 `--kill-stale` 才会杀已知后台进程
-- **详细日志**：清晰显示每个操作的结果
-- **绝对路径**：避免 symlink 解析问题
-- **退出状态**：失败时返回非零退出码
-
-## 💡 最佳实践
-
-### 推荐工作流
-
-```bash
-# 1. 先预览
-./init.sh --dry-run
-
-# 2. 确认无误后执行
-./init.sh
-
-# 3. 如果你在做 skill 更新，优先用 refresh
-./init.sh --refresh
-
-# 4. 如果 CodeMaker 还在吃旧快照，再带上 stale 清理
-./init.sh --refresh --kill-stale
-```
-
-### 添加新的 Agent
-
-编辑 `init.sh` 中的 `KNOWN_AGENTS` 配置：
-
-```bash
-declare -A KNOWN_AGENTS=(
-    ["agents"]=".agents/skills"
-    ["claude"]=".claude/skills"
-    ["codex"]=".codex/skills"
-    ["myagent"]=".myagent/skills"  # 添加新 agent
-)
-```
-
-然后使用：
-
-```bash
-./init.sh --myagent
-```
-
-## 🔧 故障排查
-
-### Windows 下创建 symlink 失败
-
-**原因**：Windows 需要 Developer Mode 或管理员权限
-
-**解决方案**：
-1. 启用 Developer Mode：设置 → 更新和安全 → 开发者选项 → 开发人员模式
-2. 或以管理员身份运行 Git Bash
-
-### 链接已存在但指向错误位置
-
-**现象**：
-```
-[!] Conflict: skill-name points to /other/path (use --force to override)
-```
-
-**解决方案**：
-```bash
-./init.sh --force
-```
-
-## 📚 设计理念
-
-遵循 **open-agent-skills** 和 **Codex** 生态的最佳实践：
-
-1. **Canonical Store 优先**：支持 `~/.agents/skills` 作为标准存储位置
-2. **绝对路径 Symlink**：避免相对路径在嵌套 symlink 场景下的解析问题
-3. **用户友好**：默认安全（跳过冲突），提供 `--force` 选项
-4. **更新优先**：提供 `--refresh` 覆盖“同名目录残留 / 旧 symlink”场景
-5. **可观测性**：详细的日志和统计信息
-6. **可扩展性**：易于添加新的 agent 支持
-
-## 📝 技术说明
-
-- **Bash 版本**：需要 Bash 4.0+ (支持关联数组)
-- **依赖**：`find`, `ln`, `readlink`, `mkdir` (标准 Unix 工具)
-- **测试环境**：macOS, Linux, Windows Git Bash
-
-## 🙏 致谢
-
-设计灵感来自：
-- Vercel skills CLI 的 `--global`, `--agent`, `--copy` 设计
-- Codex 的用户级 skills 发现机制
-- open-agent-skills 的 canonical store 理念
+旧 Bash 脚本依赖 `ln -s`、Git Bash/WSL 或管理员权限，在 Windows 上很容易失效。新同步器把跨平台路径、junction/symlink、状态文件、managed prune 和 dry-run 都放到 Node CLI 中，保证一个入口在 Windows 和 macOS 上保持一致。

@@ -1,0 +1,13 @@
+{
+  "name": "agent-skills-sync",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync-skills.mjs sync",
+    "sync:dry-run": "node scripts/sync-skills.mjs sync --dry-run",
+    "test": "node --test tests/sync-skills.test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
