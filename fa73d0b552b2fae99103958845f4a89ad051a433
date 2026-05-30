@@ -1,0 +1,54 @@
+skills/skill-lora-tagger/exsample/dataset-2/_meta/raw_responses/image_0001.json
+  c77ee97921303dc9 25
+  dcee782eae308c68 1-2,4-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8-ntes.6",
+  "base_commit_sha": "fa73d0b552b2fae99103958845f4a89ad051a433",
+  "prompts": {
+    "c77ee97921303dc9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e76d8-d479-7a81-a666-8bf037b4edce",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Sinyuk",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 47,
+      "accepted_lines": 1,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "skills/skill-lora-tagger/exsample/dataset-2/_meta/raw_responses/image_0001.json": {
+          "additions": 25,
+          "deletions": 32,
+          "accepted_lines": 1
+        },
+        "skills/skill-lora-tagger/scripts/lora_tagger_cli.py": {
+          "deletions": 15
+        }
+      }
+    },
+    "dcee782eae308c68": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e76d8-f942-7810-bea6-8dfd12ff646d",
+        "model": "unknown"
+      },
+      "human_author": "Sinyuk",
+      "messages": [],
+      "total_additions": 24,
+      "total_deletions": 24,
+      "accepted_lines": 24,
+      "overriden_lines": 0,
+      "per_file_stats": {
+        "skills/skill-lora-tagger/exsample/dataset-2/_meta/raw_responses/image_0001.json": {
+          "additions": 24,
+          "deletions": 24,
+          "accepted_lines": 24
+        }
+      }
+    }
+  }
+}
